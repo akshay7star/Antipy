@@ -1,0 +1,123 @@
+---
+title: "Context Managers"
+description: "The with statement — automatic resource management."
+order: 2
+---
+
+# Context Managers: Automatic Cleanup
+
+Context managers ensure resources are properly cleaned up — files get closed, database connections get released, locks get freed. The `with` statement is the most Pythonic way to handle resource management.
+
+## How `with` Works
+
+```python
+# Without context manager — error-prone
+f = open("data.txt")
+try:
+    content = f.read()
+finally:
+    f.close()              # Must remember to close!
+
+# With context manager — automatic cleanup
+with open("data.txt") as f:
+    content = f.read()
+# File is automatically closed here, even if an error occurred
+```
+
+<MermaidDiagram>
+graph LR
+  ENTER["__enter__: Acquire resource"] --> USE["Use the resource"]
+  USE --> EXIT["__exit__: Release resource"]
+  style ENTER fill:#3b82f6,stroke:#2563eb,color:#fff
+  style EXIT fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## Creating Custom Context Managers
+
+### Class-Based
+
+```python
+class Timer:
+    def __enter__(self):
+        self.start = time.time()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.elapsed = time.time() - self.start
+        print(f"Elapsed: {self.elapsed:.4f}s")
+        return False   # Don't suppress exceptions
+```
+
+### Practice: Context Manager
+
+<interactive-code>
+import time
+
+class Timer:
+    def __enter__(self):
+        self.start = time.time()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.elapsed = time.time() - self.start
+        print(f"  Elapsed: {self.elapsed:.4f}s")
+        return False
+
+# Use it!
+with Timer():
+    total = sum(i ** 2 for i in range(100_000))
+    print(f"  Sum: {total:,}")
+
+# Using contextlib for simpler cases
+from contextlib import contextmanager
+
+@contextmanager
+def section(name):
+    print(f"\n--- {name} ---")
+    yield
+    print(f"--- End {name} ---")
+
+with section("Data Processing"):
+    data = [x ** 2 for x in range(10)]
+    print(f"  Result: {data}")
+</interactive-code>
+
+## `contextlib` — Simplified Context Managers
+
+The `@contextmanager` decorator turns a generator function into a context manager:
+
+```python
+from contextlib import contextmanager
+
+@contextmanager
+def managed_file(path, mode):
+    f = open(path, mode)
+    try:
+        yield f           # Everything before yield = __enter__
+    finally:
+        f.close()         # Everything after yield = __exit__
+```
+
+> **Pro Tip:** Use `contextlib.suppress()` to silently ignore specific exceptions: `with suppress(FileNotFoundError): os.remove("temp.txt")`.
+
+> **Common Mistake:** Not using `with` for files. If your program crashes between `open()` and `close()`, the file handle leaks. Always use `with`.
+
+<InlineQuiz id="quiz-ctx-1" question="What Python keyword is used with context managers?" options={["using", "context", "with", "manage"]} correct={2} explanation="The 'with' statement is used with context managers: with open('file.txt') as f:. It ensures proper setup and cleanup." />
+
+<InlineQuiz id="quiz-ctx-2" question="What methods define a context manager class?" options={["open() and close()", "__enter__ and __exit__", "__init__ and __del__", "start() and stop()"]} correct={1} explanation="A context manager class implements __enter__ (setup, called on entering 'with') and __exit__ (cleanup, called on leaving)." />
+
+<InlineQuiz id="quiz-ctx-3" question="What does __exit__ receive as parameters?" options={["Nothing", "The return value", "Exception type, value, and traceback", "The file object"]} correct={2} explanation="__exit__(self, exc_type, exc_val, exc_tb) receives exception info. If no exception occurred, all three are None." />
+
+<InlineQuiz id="quiz-ctx-4" question="What does the contextlib module provide?" options={["File operations", "Utilities for creating context managers, including @contextmanager decorator", "Database connections", "Threading tools"]} correct={1} explanation="contextlib provides @contextmanager (create context managers from generators), suppress(), redirect_stdout(), and more." />
+
+<InlineQuiz id="quiz-ctx-5" question="What does @contextmanager from contextlib do?" options={["Creates a class-based context manager", "Turns a generator function into a context manager", "Manages memory", "Creates a decorator"]} correct={1} explanation="@contextmanager lets you write context managers as generators. Code before 'yield' is __enter__, code after is __exit__." />
+
+<InlineQuiz id="quiz-ctx-6" question="Can you use multiple context managers in one 'with' statement?" options={["No, only one", "Yes: with open(&apos;a&apos;) as f1, open(&apos;b&apos;) as f2:", "Only with contextlib", "Only in Python 3.10+"]} correct={1} explanation="You can stack context managers with commas: with open('a') as f1, open('b') as f2:. Both are properly managed." />
+
+<InlineQuiz id="quiz-ctx-7" question="What happens if an exception is raised inside a 'with' block?" options={["It is silently ignored", "__exit__ is still called before the exception propagates", "The context manager crashes", "__enter__ is called again"]} correct={1} explanation="The context manager's __exit__ is ALWAYS called, even if an exception occurs. This ensures cleanup happens reliably." />
+
+<InlineQuiz id="quiz-ctx-8" question="What is contextlib.suppress() used for?" options={["Suppressing output", "Ignoring specific exceptions", "Suppressing warnings", "Reducing memory"]} correct={1} explanation="suppress(ExceptionType) silently ignores the specified exception: with suppress(FileNotFoundError): os.remove('file')." />
+
+<InlineQuiz id="quiz-ctx-9" question="Why use context managers instead of try/finally?" options={["They are faster", "They are more readable and less error-prone", "try/finally doesn&apos;t work", "Context managers catch exceptions"]} correct={1} explanation="Context managers encapsulate cleanup logic in a reusable way, making code cleaner and less prone to forgetting cleanup." />
+
+<InlineQuiz id="quiz-ctx-10" question="What does the 'as' clause in 'with open(f) as file:' do?" options={["Names the context manager", "Captures the return value of __enter__", "Creates an alias", "Opens the file"]} correct={1} explanation="'as variable' captures whatever __enter__ returns. For open(), __enter__ returns the file object." />

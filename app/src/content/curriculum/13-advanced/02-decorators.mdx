@@ -1,0 +1,184 @@
+---
+title: "Decorators"
+description: "Wrapping functions with extra behavior — Python's most powerful pattern."
+order: 3
+---
+
+# Decorators: Modifying Functions
+
+A decorator is a function that takes another function and extends its behavior without modifying the original. Think of it like gift wrapping — the present stays the same, but the wrapper adds something extra.
+
+## How Decorators Work
+
+<MermaidDiagram>
+graph LR
+  ORIG["Original Function"] --> WRAP["Decorator wraps it"]
+  WRAP --> ENHANCED["Enhanced Function"]
+  style ORIG fill:#3b82f6,stroke:#2563eb,color:#fff
+  style ENHANCED fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+```python
+def my_decorator(func):
+    def wrapper(*args, **kwargs):
+        print("Before function call")
+        result = func(*args, **kwargs)     # Call the original function
+        print("After function call")
+        return result
+    return wrapper
+
+@my_decorator                               # Sugar for: greet = my_decorator(greet)
+def greet(name):
+    print(f"Hello, {name}!")
+
+greet("Alice")
+# Before function call
+# Hello, Alice!
+# After function call
+```
+
+## Practical Decorators
+
+### Practice: Timer Decorator
+
+<interactive-code>
+import time
+from functools import wraps
+
+def timer(func):
+    @wraps(func)  # Preserves original function name/docstring
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        elapsed = time.time() - start
+        print(f"  {func.__name__} took {elapsed:.4f}s")
+        return result
+    return wrapper
+
+def retry(max_attempts=3):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    print(f"  Attempt {attempt} failed: {e}")
+            raise Exception(f"All {max_attempts} attempts failed")
+        return wrapper
+    return decorator
+
+# Using the timer decorator
+@timer
+def slow_sum(n):
+    return sum(i**2 for i in range(n))
+
+print("Timer decorator:")
+result = slow_sum(1_000_000)
+print(f"  Result: {result:,}")
+
+# Simulating the retry decorator
+@retry(max_attempts=3)
+def unreliable_api():
+    import random
+    if random.random() < 0.7:
+        raise ConnectionError("Server down")
+    return "Success!"
+
+print("\nRetry decorator:")
+try:
+    print(f"  {unreliable_api()}")
+except Exception as e:
+    print(f"  Final: {e}")
+</interactive-code>
+
+## Decorators with Arguments
+
+Decorators can accept parameters by adding an extra layer of nesting:
+
+```python
+def repeat(times):                    # Decorator factory
+    def decorator(func):              # Actual decorator
+        def wrapper(*args, **kwargs):
+            for _ in range(times):
+                result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator
+
+@repeat(times=3)
+def say_hello():
+    print("Hello!")
+```
+
+## Built-in Decorators
+
+Python includes several useful decorators:
+
+| Decorator | Purpose |
+|-----------|---------|
+| `@property` | Make a method act like an attribute |
+| `@staticmethod` | Method that doesn't need self |
+| `@classmethod` | Method that receives the class, not instance |
+| `@functools.wraps` | Preserve function metadata in decorators |
+| `@functools.lru_cache` | Automatic memoization/caching |
+
+### Practice: Property Decorator
+
+<interactive-code>
+class Circle:
+    def __init__(self, radius):
+        self._radius = radius
+    
+    @property
+    def radius(self):
+        return self._radius
+    
+    @radius.setter
+    def radius(self, value):
+        if value < 0:
+            raise ValueError("Radius cannot be negative")
+        self._radius = value
+    
+    @property
+    def area(self):
+        import math
+        return math.pi * self._radius ** 2
+
+c = Circle(5)
+print(f"Radius: {c.radius}")
+print(f"Area: {c.area:.2f}")
+
+c.radius = 10
+print(f"\nNew radius: {c.radius}")
+print(f"New area: {c.area:.2f}")
+
+try:
+    c.radius = -1
+except ValueError as e:
+    print(f"\nError: {e}")
+</interactive-code>
+
+> **Pro Tip:** Always use `@functools.wraps(func)` in your decorator wrappers. Without it, the decorated function loses its `__name__` and `__doc__`, making debugging harder.
+
+> **Common Mistake:** Forgetting that `@decorator` is syntactic sugar. `@my_dec` on `def foo()` is identical to `foo = my_dec(foo)`. Understanding this makes complex decorators less mysterious.
+
+<InlineQuiz id="quiz-deco-1" question="What is a decorator?" options={["A design pattern", "A function that wraps another function to modify its behavior", "A class attribute", "A type of loop"]} correct={1} explanation="Decorators wrap functions to extend or modify their behavior without changing the original code. @decorator syntax applies them." />
+
+<InlineQuiz id="quiz-deco-2" question="What does @my_decorator above a function do?" options={["Deletes the function", "Equivalent to: func = my_decorator(func)", "Comments out the function", "Makes the function private"]} correct={1} explanation="@decorator is syntactic sugar. @my_decorator\ndef f(): is equivalent to def f(): ... f = my_decorator(f)" />
+
+<InlineQuiz id="quiz-deco-3" question="What does functools.wraps do?" options={["Makes decorators faster", "Preserves the original function&apos;s name, docstring, and metadata", "Wraps strings", "Creates a wrapper class"]} correct={1} explanation="Without @wraps, the decorated function loses its original __name__ and __doc__. @wraps(func) copies these from the original." />
+
+<InlineQuiz id="quiz-deco-4" question="Can you stack multiple decorators?" options={["No, only one", "Yes, they are applied bottom-up", "Yes, they are applied top-down", "Only two maximum"]} correct={1} explanation="Decorators stack and are applied bottom-up: @A\n@B\ndef f() means f = A(B(f)). B is applied first, then A." />
+
+<InlineQuiz id="quiz-deco-5" question="What is a common use case for decorators?" options={["Sorting data", "Logging, timing, authentication, caching", "File I/O", "String formatting"]} correct={1} explanation="Decorators are ideal for cross-cutting concerns: @login_required, @cache, @retry, @log_calls, @timer." />
+
+<InlineQuiz id="quiz-deco-6" question="What is @staticmethod?" options={["A regular method", "A method that doesn&apos;t receive self or cls", "A class constructor", "A private method"]} correct={1} explanation="@staticmethod defines a method that doesn't receive self or cls. It's a regular function that lives inside a class for organizational purposes." />
+
+<InlineQuiz id="quiz-deco-7" question="What is @lru_cache used for?" options={["Limiting function calls", "Caching function results for repeated inputs", "Reducing memory", "Logging return values"]} correct={1} explanation="@lru_cache (functools) memoizes function results. If called again with the same args, it returns the cached result instantly." />
+
+<InlineQuiz id="quiz-deco-8" question="Can decorators take arguments?" options={["No", "Yes, but you need a decorator factory (3 levels of nesting)", "Only built-in decorators", "Only string arguments"]} correct={1} explanation="Decorator factories are functions that return decorators: @repeat(3) requires def repeat(n): def decorator(func): def wrapper: ..." />
+
+<InlineQuiz id="quiz-deco-9" question="Can you decorate a class?" options={["No, only functions", "Yes, class decorators modify the class", "Only with @dataclass", "Only abstract classes"]} correct={1} explanation="Class decorators work similarly: @decorator\nclass MyClass: is equivalent to MyClass = decorator(MyClass). @dataclass is a common example." />
+
+<InlineQuiz id="quiz-deco-10" question="What is the @dataclass decorator?" options={["Creates a database model", "Auto-generates __init__, __repr__, __eq__ for classes", "Makes a class callable", "Converts to JSON"]} correct={1} explanation="@dataclass automatically generates boilerplate methods (__init__, __repr__, __eq__, etc.) based on class attributes." />

@@ -1,0 +1,90 @@
+---
+title: "Regular Expressions"
+description: "Pattern matching in text — finding, extracting, and replacing with regex."
+order: 4
+---
+
+# Regular Expressions (Regex)
+
+Regular expressions are patterns that match text. They're used everywhere — form validation, log parsing, data extraction, search-and-replace. Python's `re` module provides full regex support.
+
+## Basic Patterns
+
+| Pattern | Matches | Example |
+|---------|---------|---------|
+| `.` | Any character | `c.t` → `cat`, `cut`, `c8t` |
+| `\d` | Any digit | `\d\d` → `42`, `99` |
+| `\w` | Word character (letter/digit/_) | `\w+` → `hello_world` |
+| `\s` | Whitespace | `\s+` → spaces, tabs, newlines |
+| `^` | Start of string | `^Hello` |
+| `$` | End of string | `world$` |
+| `*` | 0 or more | `ab*c` → `ac`, `abc`, `abbc` |
+| `+` | 1 or more | `ab+c` → `abc`, `abbc` |
+| `?` | 0 or 1 | `colou?r` → `color`, `colour` |
+| `[]` | Character class | `[aeiou]` → any vowel |
+
+## Core Functions
+
+```python
+import re
+
+re.search(pattern, text)     # Find first match anywhere
+re.match(pattern, text)      # Match at start only
+re.findall(pattern, text)    # Find ALL matches
+re.sub(pattern, repl, text)  # Find and replace
+re.split(pattern, text)      # Split by pattern
+```
+
+### Practice: Regex Operations
+
+<interactive-code>
+import re
+
+text = "Contact us at support@example.com or sales@company.org for info."
+
+# Find all email addresses
+emails = re.findall(r'\b[\w.+-]+@[\w-]+\.\w+\b', text)
+print(f"Emails found: {emails}")
+
+# Find all words starting with a capital letter
+capitals = re.findall(r'\b[A-Z]\w*', text)
+print(f"Capitalized: {capitals}")
+
+# Replace phone format
+phone_text = "Call 123-456-7890 or 987-654-3210"
+formatted = re.sub(r'(\d{3})-(\d{3})-(\d{4})', r'(\1) \2-\3', phone_text)
+print(f"\nFormatted: {formatted}")
+
+# Validate a pattern
+def is_valid_email(email):
+    pattern = r'^[\w.+-]+@[\w-]+\.\w{2,}$'
+    return bool(re.match(pattern, email))
+
+test_emails = ["user@example.com", "bad@", "test@site.co.uk", "@nope.com"]
+for email in test_emails:
+    print(f"  {email}: {'valid' if is_valid_email(email) else 'invalid'}")
+</interactive-code>
+
+> **Pro Tip:** Use raw strings `r'...'` for regex patterns. Without the `r`, backslashes get interpreted by Python before regex sees them: `r'\d+'` is correct, `'\d+'` requires `'\\d+'`.
+
+> **Common Mistake:** Using regex when simple string methods work. `"hello" in text` is faster and clearer than `re.search(r"hello", text)`. Use regex only when you need pattern matching.
+
+<InlineQuiz id="quiz-regex-1" question="What module provides regular expressions in Python?" options={["regex", "re", "regexp", "pattern"]} correct={1} explanation="The 're' module provides regular expression support: import re. Use re.search(), re.match(), re.findall(), etc." />
+
+<InlineQuiz id="quiz-regex-2" question="What does the dot (.) match in regex?" options={["Only a literal dot", "Any single character except newline", "Only letters", "Nothing"]} correct={1} explanation="The dot matches any single character except newline. To match a literal dot, escape it: \\." />
+
+<InlineQuiz id="quiz-regex-3" question="What does * mean in regex?" options={["Match exactly one", "Match zero or more of the previous character", "Match any character", "End of string"]} correct={1} explanation="* is a quantifier meaning 'zero or more'. ab* matches 'a', 'ab', 'abb', 'abbb', etc." />
+
+<InlineQuiz id="quiz-regex-4" question="What is the difference between re.match() and re.search()?" options={["No difference", "match checks START of string only, search checks entire string", "search is faster", "match returns all results"]} correct={1} explanation="re.match() only matches at the BEGINNING of the string. re.search() scans the entire string for the first match." />
+
+<InlineQuiz id="quiz-regex-5" question="What does \\d match?" options={["A dot", "Any digit (0-9)", "A letter", "A delimiter"]} correct={1} explanation="\\d matches any digit character [0-9]. \\D matches any NON-digit. \\d+ matches one or more digits." />
+
+<InlineQuiz id="quiz-regex-6" question="What does re.findall() return?" options={["The first match", "A list of all matches", "True or False", "A match object"]} correct={1} explanation="findall() returns a list of all non-overlapping matches in the string. Unlike search() which returns only the first." />
+
+<InlineQuiz id="quiz-regex-7" question="What does ^ mean in regex?" options={["Exponentiation", "Start of string", "End of string", "Negation inside []"]} correct={1} explanation="^ matches the start of a string: ^Hello matches 'Hello World' but not 'Say Hello'. Inside [], ^ means negation: [^abc]." />
+
+<InlineQuiz id="quiz-regex-8" question="What does a raw string r'...' do for regex?" options={["Makes regex faster", "Prevents Python from interpreting backslashes", "Enables regex mode", "Makes the pattern case-insensitive"]} correct={1} explanation="Raw strings r'\\d+' prevent Python from interpreting \\d as an escape sequence. Without r, you'd need '\\\\d+'." />
+
+<InlineQuiz id="quiz-regex-9" question="What are capture groups?" options={["Groups of regex functions", "Parentheses () that capture matched text", "A way to count matches", "Named variables in regex"]} correct={1} explanation="Parentheses create capture groups: re.search(r'(\\d+)-(\\d+)', '123-456') captures '123' and '456' separately." />
+
+<InlineQuiz id="quiz-regex-10" question="What does re.sub(pattern, replacement, string) do?" options={["Searches for pattern", "Replaces all matches of pattern with replacement", "Splits the string", "Counts matches"]} correct={1} explanation="re.sub() replaces all occurrences of the pattern: re.sub(r'\\d+', 'NUM', 'abc123def456') -> 'abcNUMdefNUM'." />

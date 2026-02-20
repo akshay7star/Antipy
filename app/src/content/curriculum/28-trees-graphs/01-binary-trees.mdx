@@ -1,0 +1,211 @@
+---
+title: "Binary Trees & Graph Basics"
+description: "Hierarchical and networked data — traversal, search, and real-world applications."
+order: 1
+---
+
+# Trees & Graphs: Beyond Linear Data
+
+Trees and graphs model hierarchical and networked relationships — file systems, org charts, social networks, web links, game states. They're the most complex data structures you'll encounter, and understanding them unlocks the hardest problems.
+
+## Binary Trees
+
+Each node has at most **two** children (left and right):
+
+<MermaidDiagram>
+graph TD
+  ROOT["Root: 10"] --> LEFT["Left: 5"]
+  ROOT --> RIGHT["Right: 15"]
+  LEFT --> LL["3"]
+  LEFT --> LR["7"]
+  RIGHT --> RL["12"]
+  RIGHT --> RR["20"]
+  style ROOT fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style LEFT fill:#3b82f6,stroke:#2563eb,color:#fff
+  style RIGHT fill:#3b82f6,stroke:#2563eb,color:#fff
+</MermaidDiagram>
+
+```python
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+```
+
+## Tree Traversals
+
+| Order | Pattern | Result for tree above |
+|-------|---------|----------------------|
+| **In-order** | Left → Root → Right | 3, 5, 7, 10, 12, 15, 20 |
+| **Pre-order** | Root → Left → Right | 10, 5, 3, 7, 15, 12, 20 |
+| **Post-order** | Left → Right → Root | 3, 7, 5, 12, 20, 15, 10 |
+| **Level-order** | Top to bottom, left to right | 10, 5, 15, 3, 7, 12, 20 |
+
+### Practice: Tree Operations
+
+<interactive-code>
+from collections import deque
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+# Build a tree:       10
+#                   /    \
+#                  5      15
+#                / \     / \
+#               3   7   12  20
+
+root = TreeNode(10,
+    TreeNode(5, TreeNode(3), TreeNode(7)),
+    TreeNode(15, TreeNode(12), TreeNode(20))
+)
+
+# In-order traversal (sorted for BST!)
+def inorder(node):
+    if not node:
+        return []
+    return inorder(node.left) + [node.val] + inorder(node.right)
+
+# Level-order (BFS) traversal
+def level_order(root):
+    if not root:
+        return []
+    result = []
+    queue = deque([root])
+    while queue:
+        node = queue.popleft()
+        result.append(node.val)
+        if node.left:
+            queue.append(node.left)
+        if node.right:
+            queue.append(node.right)
+    return result
+
+# Tree properties
+def max_depth(node):
+    if not node:
+        return 0
+    return 1 + max(max_depth(node.left), max_depth(node.right))
+
+print(f"In-order:    {inorder(root)}")
+print(f"Level-order: {level_order(root)}")
+print(f"Max depth:   {max_depth(root)}")
+
+# Search in BST — O(log n)
+def search_bst(node, target):
+    if not node:
+        return False
+    if node.val == target:
+        return True
+    elif target < node.val:
+        return search_bst(node.left, target)
+    else:
+        return search_bst(node.right, target)
+
+print(f"\nSearch 7:  {search_bst(root, 7)}")
+print(f"Search 11: {search_bst(root, 11)}")
+</interactive-code>
+
+## Graphs: Networks of Connections
+
+A graph is nodes connected by edges. Unlike trees, graphs can have cycles:
+
+```python
+# Adjacency list representation
+graph = {
+    "A": ["B", "C"],
+    "B": ["A", "D"],
+    "C": ["A", "D"],
+    "D": ["B", "C"],
+}
+```
+
+### Practice: Graph Traversal
+
+<interactive-code>
+from collections import deque
+
+graph = {
+    "A": ["B", "C"],
+    "B": ["A", "D", "E"],
+    "C": ["A", "F"],
+    "D": ["B"],
+    "E": ["B", "F"],
+    "F": ["C", "E"],
+}
+
+# BFS — Breadth-First Search (explore level by level)
+def bfs(graph, start):
+    visited = set()
+    queue = deque([start])
+    order = []
+    
+    while queue:
+        node = queue.popleft()
+        if node not in visited:
+            visited.add(node)
+            order.append(node)
+            for neighbor in graph[node]:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+    return order
+
+# DFS — Depth-First Search (explore as deep as possible)
+def dfs(graph, start, visited=None):
+    if visited is None:
+        visited = set()
+    visited.add(start)
+    order = [start]
+    for neighbor in graph[start]:
+        if neighbor not in visited:
+            order.extend(dfs(graph, neighbor, visited))
+    return order
+
+print(f"BFS from A: {bfs(graph, 'A')}")
+print(f"DFS from A: {dfs(graph, 'A')}")
+
+# Shortest path (BFS)
+def shortest_path(graph, start, end):
+    queue = deque([(start, [start])])
+    visited = {start}
+    while queue:
+        node, path = queue.popleft()
+        if node == end:
+            return path
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, path + [neighbor]))
+    return None
+
+print(f"\nShortest A→F: {shortest_path(graph, 'A', 'F')}")
+print(f"Shortest A→D: {shortest_path(graph, 'A', 'D')}")
+</interactive-code>
+
+> **Pro Tip:** BFS finds the **shortest path** in unweighted graphs. DFS is better for exploring all paths or checking connectivity.
+
+> **Common Mistake:** Forgetting the `visited` set in graph traversal. Without it, cycles cause infinite loops. Always track which nodes you've already visited.
+
+<InlineQuiz id="quiz-tree-1" question="What is a binary tree?" options={["A tree with two roots", "A tree where each node has at most 2 children", "A sorted array", "A linked list variant"]} correct={1} explanation="A binary tree is a hierarchical structure where each node has at most two children: left and right." />
+
+<InlineQuiz id="quiz-tree-2" question="What is the root of a tree?" options={["The bottom node", "The topmost node with no parent", "The leftmost node", "Any node"]} correct={1} explanation="The root is the topmost node � the entry point of the tree. It has no parent. All other nodes descend from it." />
+
+<InlineQuiz id="quiz-tree-3" question="What is a leaf node?" options={["A green node", "A node with no children", "The root node", "A node with one child"]} correct={1} explanation="Leaf nodes are at the bottom � they have no children (both left and right are None)." />
+
+<InlineQuiz id="quiz-tree-4" question="What are the three types of depth-first traversal?" options={["Left, Right, Center", "Inorder, Preorder, Postorder", "BFS, DFS, UCS", "Top-down, Bottom-up, Level"]} correct={1} explanation="Inorder (Left-Root-Right), Preorder (Root-Left-Right), Postorder (Left-Right-Root). Each visits nodes in a different order." />
+
+<InlineQuiz id="quiz-tree-5" question="What is a Binary Search Tree (BST)?" options={["Any binary tree", "A binary tree where left < root < right for every node", "A balanced tree", "A complete tree"]} correct={1} explanation="In a BST, for every node: all left descendants are smaller, all right descendants are larger. Enables O(log n) search." />
+
+<InlineQuiz id="quiz-tree-6" question="What is the time complexity of search in a balanced BST?" options={["O(n)", "O(log n)", "O(1)", "O(n)"]} correct={1} explanation="In a balanced BST, each comparison eliminates half the remaining nodes � similar to binary search. O(log n) for search, insert, delete." />
+
+<InlineQuiz id="quiz-tree-7" question="What traversal gives BST elements in sorted order?" options={["Preorder", "Inorder", "Postorder", "Level-order"]} correct={1} explanation="Inorder traversal (Left  Root  Right) visits BST nodes in ascending sorted order." />
+
+<InlineQuiz id="quiz-tree-8" question="What is tree height (depth)?" options={["Number of nodes", "Length of longest path from root to a leaf", "Number of leaves", "Width of the tree"]} correct={1} explanation="Height is the longest path from root to any leaf. A single-node tree has height 0. A balanced tree with n nodes has height ~log n." />
+
+<InlineQuiz id="quiz-tree-9" question="What is BFS traversal of a tree also called?" options={["Depth-first", "Level-order traversal", "Inorder", "Preorder"]} correct={1} explanation="BFS visits nodes level by level (top to bottom, left to right). It uses a queue." />
+
+<InlineQuiz id="quiz-tree-10" question="When does a BST degrade to O(n) performance?" options={["Never", "When the tree becomes skewed (like a linked list)", "When there are too many nodes", "When values are negative"]} correct={1} explanation="If you insert sorted data into a BST, it becomes a straight line (no branching) � essentially a linked list with O(n) operations." />

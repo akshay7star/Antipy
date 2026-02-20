@@ -1,0 +1,7 @@
+{
+    "id": "trees-graphs",
+    "title": "Trees & Graphs",
+    "description": "Traverse hierarchical data with BFS and DFS algorithms.",
+    "icon": "Network",
+    "order": 28
+}

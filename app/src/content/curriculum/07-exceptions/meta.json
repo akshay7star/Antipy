@@ -1,0 +1,6 @@
+{
+    "id": "exceptions",
+    "title": "Exception Handling",
+    "description": "Graceful error management.",
+    "order": 7
+}

@@ -1,0 +1,6 @@
+{
+    "id": "data-science",
+    "title": "Data Science & Analysis",
+    "description": "Analyze and visualize data with Pandas, NumPy, and Matplotlib.",
+    "order": 19
+}

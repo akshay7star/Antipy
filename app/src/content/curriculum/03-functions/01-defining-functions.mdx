@@ -1,0 +1,196 @@
+---
+title: "Defining Functions"
+description: "Creating reusable blocks of logic — the foundation of clean code."
+order: 1
+---
+
+# Functions: Your Building Blocks
+
+Imagine you cook a recipe. Would you write out every step each time you make it? No — you'd save the recipe and follow it whenever you need it. Functions are your code recipes. You write the logic once, give it a name, and then "call" it whenever you need that logic again.
+
+## Anatomy of a Function
+
+<MermaidDiagram>
+graph LR
+  DEF["def keyword"] --> NAME["function name"]
+  NAME --> PARAMS["(parameters)"]
+  PARAMS --> COLON[":"]
+  COLON --> BODY["Indented body"]
+  BODY --> RETURN["return value"]
+  style DEF fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style RETURN fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+```python
+def greet(name):                  # 'def' creates the function, 'name' is the parameter
+    message = f"Hello, {name}!"   # The body — what the function DOES
+    return message                # 'return' sends a value back to the caller
+
+result = greet("Akshay")          # Calling the function with argument "Akshay"
+print(result)                     # "Hello, Akshay!"
+```
+
+**Key terminology:**
+- **`def`** — keyword that says "I'm defining a function"
+- **Parameter** — the variable name in the function definition (`name`)
+- **Argument** — the actual value you pass when calling it (`"Akshay"`)
+- **`return`** — sends a value back. Without it, the function returns `None`
+
+## Parameters vs Arguments
+
+This confuses beginners, but it's simple:
+
+```python
+def add(a, b):          # a and b are PARAMETERS (placeholders)
+    return a + b
+
+result = add(3, 5)      # 3 and 5 are ARGUMENTS (actual values)
+```
+
+Parameters are like empty boxes with labels. Arguments are the actual items you put in those boxes.
+
+## Default Parameters
+
+You can give parameters default values. If the caller doesn't provide a value, the default is used:
+
+```python
+def greet(name, greeting="Hello"):
+    return f"{greeting}, {name}!"
+
+print(greet("Alice"))              # "Hello, Alice!" — uses default
+print(greet("Alice", "Hi"))        # "Hi, Alice!" — overrides default
+```
+
+**Rule:** Default parameters must come AFTER non-default ones:
+```python
+def wrong(a="default", b):  # SyntaxError!
+    pass
+
+def right(b, a="default"):  # This works
+    pass
+```
+
+## Return Values
+
+`return` does two things: (1) sends a value back, and (2) immediately exits the function.
+
+```python
+def check_age(age):
+    if age < 0:
+        return "Invalid age"    # Exit immediately — code below never runs
+    if age >= 18:
+        return "Adult"
+    return "Minor"
+```
+
+### Returning Multiple Values
+
+Python lets you return multiple values as a **tuple** — this is unique and very handy:
+
+```python
+def divide(a, b):
+    quotient = a // b
+    remainder = a % b
+    return quotient, remainder      # Returns a tuple
+
+q, r = divide(17, 5)               # Unpack into two variables
+print(f"17 ÷ 5 = {q} remainder {r}")  # "17 ÷ 5 = 3 remainder 2"
+```
+
+### Practice: Building Functions
+
+<interactive-code>
+# 1. Basic function
+def is_even(n):
+    return n % 2 == 0
+
+print(f"4 is even: {is_even(4)}")
+print(f"7 is even: {is_even(7)}")
+
+# 2. Function with default parameter
+def power(base, exponent=2):
+    return base ** exponent
+
+print(f"\n3 squared: {power(3)}")
+print(f"2 cubed: {power(2, 3)}")
+
+# 3. Multiple return values
+def min_max(numbers):
+    return min(numbers), max(numbers)
+
+low, high = min_max([3, 7, 1, 9, 4])
+print(f"\nMin: {low}, Max: {high}")
+</interactive-code>
+
+## Functions as First-Class Objects
+
+In Python, functions are **values** — just like numbers and strings. You can store them in variables, pass them to other functions, and return them from functions.
+
+```python
+def shout(text):
+    return text.upper()
+
+def whisper(text):
+    return text.lower()
+
+# Store a function in a variable
+speak = shout
+print(speak("hello"))  # "HELLO"
+
+speak = whisper
+print(speak("HELLO"))  # "hello"
+```
+
+This is incredibly powerful. It's the foundation of **callbacks**, **decorators**, and **functional programming** — concepts you'll encounter later.
+
+### Practice: Functions Calling Functions
+
+<interactive-code>
+def apply_operation(func, value):
+    """Takes a function and a value, applies the function to the value."""
+    return func(value)
+
+def double(x):
+    return x * 2
+
+def triple(x):
+    return x * 3
+
+# Pass different functions as arguments
+print(apply_operation(double, 5))   # 10
+print(apply_operation(triple, 5))   # 15
+
+# Even built-in functions work!
+print(apply_operation(abs, -42))    # 42
+print(apply_operation(str, 123))    # "123"
+</interactive-code>
+
+> **Pro Tip:** Keep functions small and focused. A function should do ONE thing well. If its name needs "and" in it (like `validate_and_save_and_email`), it's probably doing too much — split it up.
+
+> **Common Mistake:** Forgetting `return`. If your function doesn't have a `return` statement, it returns `None`. This causes subtle bugs when you try to use the result: `result = my_function()` → `result` is `None`.
+
+<InlineQuiz
+  id="quiz-functions-1"
+  question="What happens when you call a function without a return statement?"
+  options={["It raises an error", "It returns 0", "It returns None", "It returns an empty string"]}
+  correct={2}
+  explanation="In Python, if a function doesn't explicitly return a value, it automatically returns None. This is Python's way of representing 'nothing'."
+/>
+
+<InlineQuiz id="quiz-func-2" question="What is a parameter vs an argument?" options={["They are the same thing", "Parameter is in the function definition, argument is the value passed when calling", "Argument is in the definition, parameter is when calling", "Parameters are for classes only"]} correct={1} explanation="Parameters are the variable names in the function definition. Arguments are the actual values you pass when calling the function." />
+
+<InlineQuiz id="quiz-func-3" question="What is a default parameter?" options={["A parameter that must be provided", "A parameter with a pre-assigned value used when no argument is given", "The first parameter of any function", "A parameter that cannot be changed"]} correct={1} explanation="Default parameters have a fallback value: def greet(name='World'). If no argument is passed, the default is used." />
+
+<InlineQuiz id="quiz-func-4" question="What does *args do in a function definition?" options={["Makes arguments optional", "Collects extra positional arguments into a tuple", "Creates a list of argument names", "Multiplies all arguments"]} correct={1} explanation="*args collects any extra positional arguments into a tuple. def func(*args): lets you call func(1, 2, 3) and args will be (1, 2, 3)." />
+
+<InlineQuiz id="quiz-func-5" question="What does **kwargs do in a function definition?" options={["Doubles the arguments", "Collects extra keyword arguments into a dictionary", "Creates two copies of args", "Raises an error for unknown arguments"]} correct={1} explanation="**kwargs collects extra keyword arguments into a dict. def func(**kwargs): lets you call func(a=1, b=2) and kwargs will be {'a': 1, 'b': 2}." />
+
+<InlineQuiz id="quiz-func-6" question="Can a function return multiple values?" options={["No, only one value", "Yes, as a tuple", "Yes, as a list only", "Only in Python 3"]} correct={1} explanation="Python functions can return multiple values separated by commas: return a, b, c. They are automatically packed into a tuple." />
+
+<InlineQuiz id="quiz-func-7" question="What is a docstring?" options={["A comment with #", "A triple-quoted string at the start of a function that documents it", "A string variable inside a function", "A type annotation"]} correct={1} explanation="A docstring is a triple-quoted string immediately after the function definition. It documents what the function does and is accessible via help()." />
+
+<InlineQuiz id="quiz-func-8" question="What is recursion?" options={["A loop that runs forever", "A function that calls itself", "A function with many parameters", "A type of error"]} correct={1} explanation="Recursion is when a function calls itself. It needs a base case to stop the recursion, otherwise it leads to a RecursionError." />
+
+<InlineQuiz id="quiz-func-9" question="What is a lambda function?" options={["A regular function", "An anonymous one-line function", "A function that takes no arguments", "A function inside a class"]} correct={1} explanation="Lambda functions are anonymous, one-expression functions: square = lambda x: x**2. They are useful for short callbacks." />
+
+<InlineQuiz id="quiz-func-10" question="What does it mean that functions are 'first-class objects' in Python?" options={["They run first", "They can be passed as arguments, returned, and assigned to variables", "They are the most important feature", "They are compiled before other code"]} correct={1} explanation="First-class means functions can be treated like any other value � passed to other functions, returned from functions, stored in lists, etc." />

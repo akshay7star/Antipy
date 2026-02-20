@@ -1,0 +1,15 @@
+import { Category } from '../types';
+
+export const fileIO: Category = {
+    id: 'file-io',
+    name: 'File I/O & OS',
+    description: 'Reading/writing files, pathlib, os module, JSON, CSV, and file system navigation',
+    icon: 'FolderOpen',
+    entries: [
+        { id: 'io-open', name: 'open() & with', signature: 'with open(file, mode, encoding) as f: ...', description: 'Opens a file. ALWAYS use "with" statement for automatic cleanup. Modes: r, w, a, rb, wb.', example: '# Read entire file\nwith open("data.txt", "r") as f:\n    content = f.read()\n\n# Write (creates/overwrites)\nwith open("output.txt", "w") as f:\n    f.write("Hello, World!\\n")\n\n# Append\nwith open("log.txt", "a") as f:\n    f.write("New log entry\\n")\n\n# Read line by line (memory efficient)\nwith open("big_file.txt") as f:\n    for line in f:\n        print(line.strip())', tags: ['open', 'read', 'write', 'with'] },
+        { id: 'io-read-methods', name: 'File Read Methods', signature: 'f.read() | f.readline() | f.readlines()', description: 'Different ways to read file content: all at once, line by line, or as a list of lines.', example: 'with open("data.txt") as f:\n    # Read everything\n    all_text = f.read()\n\nwith open("data.txt") as f:\n    # Read one line\n    first_line = f.readline()\n\nwith open("data.txt") as f:\n    # Read all lines as list\n    lines = f.readlines()  # [\'line1\\n\', \'line2\\n\', ...]\n\n# Best: iterate directly\nwith open("data.txt") as f:\n    for line in f:  # Memory efficient\n        print(line.strip())', tags: ['read', 'readline', 'readlines'] },
+        { id: 'io-write-methods', name: 'File Write Methods', signature: 'f.write(str) | f.writelines(list)', description: 'Write string(s) to a file. write() for single strings, writelines() for lists.', example: '# Write a string\nwith open("output.txt", "w") as f:\n    f.write("Line 1\\n")\n    f.write("Line 2\\n")\n\n# Write multiple lines\nlines = ["Line 1\\n", "Line 2\\n", "Line 3\\n"]\nwith open("output.txt", "w") as f:\n    f.writelines(lines)\n\n# Write with print()\nwith open("output.txt", "w") as f:\n    print("Hello", file=f)', edgeCases: ['writelines() does NOT add newlines automatically.', 'Include \\n in each line.'], tags: ['write', 'writelines', 'output'] },
+        { id: 'io-encoding', name: 'File Encoding', signature: 'open(file, encoding="utf-8")', description: 'Always specify encoding when working with text files to avoid platform-dependent behavior.', example: '# Always use UTF-8 explicitly\nwith open("data.txt", "r", encoding="utf-8") as f:\n    content = f.read()\n\n# Handle encoding errors\nwith open("data.txt", "r", encoding="utf-8", errors="replace") as f:\n    content = f.read()  # Invalid bytes replaced with ?\n\n# Binary mode (no encoding)\nwith open("image.png", "rb") as f:\n    data = f.read()  # bytes object', edgeCases: ['On Windows, default encoding was "cp1252" until Python 3.15.', 'Always specify "utf-8".'], tags: ['encoding', 'utf-8', 'binary'] },
+
+    ]
+};

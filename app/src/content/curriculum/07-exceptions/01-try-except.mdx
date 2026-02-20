@@ -1,0 +1,234 @@
+---
+title: "Handling Errors"
+description: "Try, except, finally — writing code that doesn't crash gracefully."
+order: 1
+---
+
+# Error Handling: When Things Go Wrong
+
+No program runs perfectly every time. Users enter bad data. Files go missing. Networks fail. The difference between amateur and professional code is how it handles these inevitable problems. Python's `try/except` system lets your program **recover** from errors instead of crashing.
+
+## Why Error Handling Matters
+
+Without error handling, one bad input crashes your entire program:
+
+```python
+# This crashes if user types "hello" instead of a number
+age = int(input("Enter age: "))   # ValueError: invalid literal for int()
+```
+
+With error handling, you catch the problem and respond gracefully:
+
+```python
+try:
+    age = int(input("Enter age: "))
+except ValueError:
+    print("Please enter a valid number!")
+```
+
+## The Error Handling Flow
+
+<MermaidDiagram>
+graph TD
+  TRY["try: risky code"] --> ERROR{"Error occurs?"}
+  ERROR -- No --> ELSE["else: runs if no error"]
+  ERROR -- Yes --> MATCH{"Matches except type?"}
+  MATCH -- Yes --> EXCEPT["except: handle the error"]
+  MATCH -- No --> CRASH["Program crashes"]
+  ELSE --> FINALLY["finally: ALWAYS runs"]
+  EXCEPT --> FINALLY
+  style TRY fill:#3b82f6,stroke:#2563eb,color:#fff
+  style EXCEPT fill:#f59e0b,stroke:#d97706,color:#000
+  style FINALLY fill:#22c55e,stroke:#16a34a,color:#fff
+  style CRASH fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+## The Full Structure
+
+```python
+try:
+    # Code that might fail
+    result = 10 / 0
+except ZeroDivisionError as e:
+    # Runs ONLY if ZeroDivisionError occurs
+    print(f"Error: {e}")
+except ValueError as e:
+    # Runs ONLY if ValueError occurs
+    print(f"Bad value: {e}")
+except Exception as e:
+    # Catch-all for any other error
+    print(f"Unexpected: {e}")
+else:
+    # Runs ONLY if NO error occurred
+    print(f"Result: {result}")
+finally:
+    # ALWAYS runs — error or no error
+    print("Done.")
+```
+
+## Common Exception Types
+
+| Exception | When It Happens | Example |
+|-----------|----------------|---------|
+| `ValueError` | Wrong type of value | `int("hello")` |
+| `TypeError` | Wrong type for operation | `"2" + 2` |
+| `KeyError` | Missing dictionary key | `d["missing"]` |
+| `IndexError` | List index out of range | `[1,2][5]` |
+| `FileNotFoundError` | File doesn't exist | `open("nope.txt")` |
+| `ZeroDivisionError` | Division by zero | `1 / 0` |
+| `AttributeError` | Method doesn't exist | `5.upper()` |
+| `NameError` | Variable not defined | `print(xyz)` |
+
+<MethodUnit category="error-handling" />
+
+### Practice: Safe Division
+
+<interactive-code>
+def safe_divide(a, b):
+    try:
+        result = a / b
+    except ZeroDivisionError:
+        return "Cannot divide by zero!"
+    except TypeError:
+        return "Both arguments must be numbers!"
+    else:
+        return round(result, 2)
+    finally:
+        print(f"  Attempted: {a} / {b}")
+
+print(safe_divide(10, 3))
+print(safe_divide(5, 0))
+print(safe_divide("10", 3))
+</interactive-code>
+
+## Raising Exceptions
+
+Sometimes YOU want to signal an error. Use `raise` to throw an exception:
+
+```python
+def set_age(age):
+    if age < 0:
+        raise ValueError("Age cannot be negative!")
+    if age > 150:
+        raise ValueError("Age seems unrealistic!")
+    return age
+```
+
+### Practice: Input Validation with Exceptions
+
+<interactive-code>
+def create_user(name, age):
+    # Validate inputs
+    if not isinstance(name, str) or len(name) == 0:
+        raise ValueError("Name must be a non-empty string")
+    if not isinstance(age, int) or age < 0:
+        raise ValueError("Age must be a non-negative integer")
+    if age > 150:
+        raise ValueError("Age must be realistic")
+    
+    return {"name": name, "age": age}
+
+# Test with various inputs
+test_cases = [
+    ("Alice", 30),
+    ("", 25),
+    ("Bob", -5),
+    ("Charlie", 200),
+]
+
+for name, age in test_cases:
+    try:
+        user = create_user(name, age)
+        print(f"Created: {user}")
+    except ValueError as e:
+        print(f"Failed ({name}, {age}): {e}")
+</interactive-code>
+
+## Custom Exceptions
+
+For larger projects, create your own exception classes:
+
+```python
+class InsufficientFundsError(Exception):
+    def __init__(self, balance, amount):
+        self.balance = balance
+        self.amount = amount
+        super().__init__(f"Cannot withdraw ${amount}. Balance: ${balance}")
+```
+
+### Practice: Bank Account with Custom Errors
+
+<interactive-code>
+class InsufficientFundsError(Exception):
+    pass
+
+class InvalidAmountError(Exception):
+    pass
+
+class BankAccount:
+    def __init__(self, balance=0):
+        self.balance = balance
+    
+    def deposit(self, amount):
+        if amount <= 0:
+            raise InvalidAmountError("Deposit must be positive")
+        self.balance += amount
+        return self.balance
+    
+    def withdraw(self, amount):
+        if amount <= 0:
+            raise InvalidAmountError("Withdrawal must be positive")
+        if amount > self.balance:
+            raise InsufficientFundsError(
+                f"Cannot withdraw ${amount}. Balance: ${self.balance}"
+            )
+        self.balance -= amount
+        return self.balance
+
+# Test the account
+account = BankAccount(100)
+print(f"Balance: ${account.balance}")
+
+try:
+    account.deposit(50)
+    print(f"After deposit: ${account.balance}")
+    
+    account.withdraw(30)
+    print(f"After withdrawal: ${account.balance}")
+    
+    account.withdraw(200)  # This will fail!
+except InsufficientFundsError as e:
+    print(f"Error: {e}")
+except InvalidAmountError as e:
+    print(f"Error: {e}")
+</interactive-code>
+
+> **Pro Tip:** Catch specific exceptions, not bare `except:`. Bare `except` catches everything including keyboard interrupts (`Ctrl+C`), making your program hard to stop.
+
+> **Common Mistake:** Using try/except to hide bugs. If you catch an exception and do nothing (`except: pass`), bugs will go unnoticed. At minimum, log the error.
+
+<InlineQuiz
+  id="quiz-exceptions-1"
+  question="What is the purpose of the 'finally' block?"
+  options={["It runs only if an exception occurs", "It runs only if no exception occurs", "It ALWAYS runs, whether an exception occurred or not", "It catches exceptions not caught by except"]}
+  correct={2}
+  explanation="The 'finally' block always executes, regardless of whether an exception was raised or caught. It is used for cleanup tasks like closing files or database connections."
+/>
+
+<InlineQuiz id="quiz-exc-2" question="What is the base class for all built-in exceptions?" options={["Error", "Exception", "BaseException", "RuntimeError"]} correct={2} explanation="BaseException is the root of all exceptions. Exception inherits from it and is the base for most non-system-exiting exceptions." />
+
+<InlineQuiz id="quiz-exc-3" question="Can you have multiple except blocks?" options={["No, only one", "Yes, to handle different exception types", "Only with finally", "Only in Python 3"]} correct={1} explanation="You can chain multiple except blocks to handle different exception types differently. Python executes the first matching one." />
+
+<InlineQuiz id="quiz-exc-4" question="What does 'raise' do?" options={["Catches an exception", "Manually triggers an exception", "Ignores an exception", "Logs an exception"]} correct={1} explanation="'raise ExceptionType(message)' manually triggers an exception. Useful for creating custom error conditions." />
+
+<InlineQuiz id="quiz-exc-5" question="What is the 'else' clause in try/except?" options={["Runs if an exception occurs", "Runs if NO exception occurs", "Runs always", "Catches unknown exceptions"]} correct={1} explanation="The 'else' block runs only if the try block completed WITHOUT any exceptions. It's for code that should run only on success." />
+
+<InlineQuiz id="quiz-exc-6" question="When should you use a bare 'except:' (without specifying an exception type)?" options={["Always, it catches everything", "Never � it catches too much and hides bugs", "For production code only", "For quick prototyping"]} correct={1} explanation="Bare 'except:' catches ALL exceptions including KeyboardInterrupt and SystemExit. Always specify the exception type." />
+
+<InlineQuiz id="quiz-exc-7" question="How do you create a custom exception?" options={["def MyError():", "class MyError(Exception): pass", "raise custom MyError", "exception MyError:"]} correct={1} explanation="Custom exceptions are classes that inherit from Exception (or a more specific exception). class MyError(Exception): pass" />
+
+<InlineQuiz id="quiz-exc-8" question="What does 'except ValueError as e:' do?" options={["Catches ValueError and ignores it", "Catches ValueError and stores the error object in variable &apos;e&apos;", "Only catches errors named &apos;e&apos;", "Renames ValueError to &apos;e&apos;"]} correct={1} explanation="'as e' captures the exception object in variable e. You can then access e.args, str(e), or print(e) for details." />
+
+<InlineQuiz id="quiz-exc-9" question="What is EAFP?" options={["Error After Function Processing", "Easier to Ask Forgiveness than Permission", "Exception And Finally Protocol", "Error Analysis For Python"]} correct={1} explanation="EAFP means try the operation first, handle exceptions if they occur. This is Python's preferred style over checking conditions first (LBYL)." />
+
+<InlineQuiz id="quiz-exc-10" question="What happens if an exception is not caught?" options={["It is silently ignored", "The program crashes with a traceback", "It is automatically logged", "Python retries the operation"]} correct={1} explanation="Uncaught exceptions cause the program to terminate and display a traceback showing the error type, message, and call stack." />

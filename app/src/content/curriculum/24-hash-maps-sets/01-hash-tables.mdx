@@ -1,0 +1,127 @@
+---
+title: "Hash Tables Deep Dive"
+description: "How hash maps work internally and when to use them for O(1) lookups."
+order: 1
+---
+
+# Hash Tables: O(1) Lookup Power
+
+Hash tables (Python's `dict` and `set`) are the most important data structure in programming. They provide **O(1) average-case** lookup, insert, and delete — making them the go-to solution for counting, grouping, caching, and deduplication.
+
+## How Hash Tables Work
+
+<MermaidDiagram>
+graph TD
+  KEY["Key: 'alice'"] --> HASH["Hash Function"]
+  HASH --> INDEX["Index: 3"]
+  INDEX --> BUCKET["Bucket 3: 'alice' → 95"]
+  style KEY fill:#3b82f6,stroke:#2563eb,color:#fff
+  style HASH fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style BUCKET fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+1. **Hash** the key → produces an integer
+2. **Index** into an array using that integer
+3. **Store/retrieve** the value at that index
+
+## The Classic: Two Sum
+
+The most famous coding interview problem, solved elegantly with a hash map:
+
+```python
+def two_sum(nums, target):
+    seen = {}                       # value → index
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:      # O(1) lookup!
+            return [seen[complement], i]
+        seen[num] = i
+    return []
+```
+
+### Practice: Hash Map Patterns
+
+<interactive-code>
+# Pattern 1: Two Sum
+def two_sum(nums, target):
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return (seen[complement], i)
+        seen[num] = i
+    return None
+
+print("Two Sum [2,7,11,15] target 9:", two_sum([2,7,11,15], 9))
+print("Two Sum [3,2,4] target 6:", two_sum([3,2,4], 6))
+
+# Pattern 2: Frequency Counter
+def top_k_frequent(nums, k):
+    freq = {}
+    for num in nums:
+        freq[num] = freq.get(num, 0) + 1
+    sorted_items = sorted(freq.items(), key=lambda x: -x[1])
+    return [item[0] for item in sorted_items[:k]]
+
+nums = [1,1,1,2,2,3,3,3,3,4]
+print(f"\nTop 2 frequent in {nums}: {top_k_frequent(nums, 2)}")
+
+# Pattern 3: Group Anagrams
+def group_anagrams(words):
+    groups = {}
+    for word in words:
+        key = "".join(sorted(word))
+        groups.setdefault(key, []).append(word)
+    return list(groups.values())
+
+words = ["eat", "tea", "tan", "ate", "nat", "bat"]
+print(f"\nAnagram groups: {group_anagrams(words)}")
+
+# Pattern 4: First unique character
+def first_unique(s):
+    freq = {}
+    for c in s:
+        freq[c] = freq.get(c, 0) + 1
+    for i, c in enumerate(s):
+        if freq[c] == 1:
+            return i
+    return -1
+
+print(f"\nFirst unique in 'leetcode': index {first_unique('leetcode')}")
+</interactive-code>
+
+## Hash Set: When You Only Need Keys
+
+Sets are hash tables without values — perfect for deduplication and membership checks:
+
+```python
+seen = set()
+for num in [1, 2, 2, 3, 3, 3]:
+    if num in seen:          # O(1) check
+        print(f"Duplicate: {num}")
+    seen.add(num)
+```
+
+> **Pro Tip:** When you see "find if X exists" or "count occurrences," think hash map. It's the answer to ~40% of coding interview problems.
+
+> **Common Mistake:** Using a list for lookups when a set would be O(1). `if x in my_list` is O(n), but `if x in my_set` is O(1).
+
+<InlineQuiz id="quiz-hash-1" question="What is a hash table?" options={["A table of random numbers", "A data structure that maps keys to values using a hash function", "A sorted array", "A linked list"]} correct={1} explanation="Hash tables use a hash function to compute an index for each key, providing O(1) average lookup, insertion, and deletion." />
+
+<InlineQuiz id="quiz-hash-2" question="What is a hash function?" options={["A function that encrypts data", "A function that converts a key to an array index", "A random number generator", "A sorting function"]} correct={1} explanation="A hash function maps keys to indices: hash('hello') -> 42. The index determines where the value is stored in the array." />
+
+<InlineQuiz id="quiz-hash-3" question="What is a hash collision?" options={["When two different keys hash to the same index", "When a hash table is full", "When keys are duplicated", "A programming error"]} correct={0} explanation="Collisions occur when different keys produce the same hash index. Good hash tables handle this with chaining (lists) or open addressing." />
+
+<InlineQuiz id="quiz-hash-4" question="What is the average time complexity of dict operations?" options={["O(n)", "O(log n)", "O(1)", "O(n)"]} correct={2} explanation="Dict lookup, insert, and delete are all O(1) on average thanks to hashing. Worst case O(n) with many collisions, but very rare." />
+
+<InlineQuiz id="quiz-hash-5" question="What Python types can be dict keys?" options={["Any type", "Only strings", "Only integers", "Any hashable (immutable) type"]} correct={3} explanation="Dict keys must be hashable: str, int, float, tuple, frozenset. Mutable types (list, dict, set) cannot be keys." />
+
+<InlineQuiz id="quiz-hash-6" question="What is the 'two sum' problem?" options={["Adding two numbers", "Finding two numbers in an array that add up to a target", "Summing an array", "Finding the maximum sum"]} correct={1} explanation="Given an array and a target sum, find two numbers that add up to it. A hash map solves this in O(n) time." />
+
+<InlineQuiz id="quiz-hash-7" question="How does a hash map help solve 'two sum' in O(n)?" options={["By sorting first", "By storing seen numbers and checking if complement exists", "By using two pointers", "By brute force"]} correct={1} explanation="For each number, compute complement = target - num. Check if complement is in the hash map. If not, store num. O(n) total." />
+
+<InlineQuiz id="quiz-hash-8" question="What is a Counter in Python?" options={["A loop counter", "A dict subclass that counts hashable objects", "A timer", "A random number"]} correct={1} explanation="collections.Counter counts elements: Counter('hello') -> {'l': 2, 'h': 1, 'e': 1, 'o': 1}. Great for frequency problems." />
+
+<InlineQuiz id="quiz-hash-9" question="What is the load factor of a hash table?" options={["The hash function quality", "The ratio of entries to table size", "The number of collisions", "The memory usage"]} correct={1} explanation="Load factor = n/capacity. Higher load factors mean more collisions. Python dicts resize when load factor exceeds ~2/3." />
+
+<InlineQuiz id="quiz-hash-10" question="What is defaultdict?" options={["A regular dict", "A dict that provides a default value for missing keys", "A sorted dict", "An ordered dict"]} correct={1} explanation="defaultdict(list) automatically creates an empty list for new keys: d['new_key'].append(1) works without checking key existence first." />

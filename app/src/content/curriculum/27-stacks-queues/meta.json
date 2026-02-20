@@ -1,0 +1,7 @@
+{
+    "id": "stacks-queues",
+    "title": "Stacks & Queues",
+    "description": "Master LIFO/FIFO patterns for processing data in order.",
+    "icon": "Layers",
+    "order": 27
+}

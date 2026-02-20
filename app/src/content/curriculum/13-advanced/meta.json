@@ -1,0 +1,6 @@
+{
+    "id": "advanced",
+    "title": "Advanced Python",
+    "description": "Decorators, Context Managers, Regex, and Asynchronous Programming.",
+    "order": 13
+}

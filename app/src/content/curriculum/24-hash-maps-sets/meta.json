@@ -1,0 +1,7 @@
+{
+    "id": "hash-maps-sets",
+    "title": "Hash Maps & Sets",
+    "description": "Leverage O(1) lookups and frequency counting to solve problems instantly.",
+    "icon": "Table",
+    "order": 24
+}

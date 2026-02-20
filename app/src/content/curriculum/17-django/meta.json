@@ -1,0 +1,6 @@
+{
+    "id": "django",
+    "title": "Django Framework",
+    "description": " The battery-included web framework for perfectionists with deadlines.",
+    "order": 17
+}

@@ -1,0 +1,191 @@
+---
+title: "Writing & Serialization"
+description: "Creating files, appending data, and working with JSON — saving structured data."
+order: 2
+---
+
+# Writing Files & Serialization
+
+Writing files is how your programs create lasting output — logs, reports, saved game states, configuration files, exported data. Let's go beyond simple text writing and learn how to work with structured data formats.
+
+## Write vs Append
+
+This distinction trips up many beginners:
+
+<MermaidDiagram>
+graph TD
+  W["Mode 'w': Write"] --> DESTROY["Deletes ALL existing content"]
+  DESTROY --> WRITE["Writes new content"]
+  A["Mode 'a': Append"] --> KEEP["Keeps existing content"]
+  KEEP --> ADD["Adds to the end"]
+  style W fill:#ef4444,stroke:#dc2626,color:#fff
+  style A fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+```python
+# WARNING: "w" mode DESTROYS existing content!
+with open("output.txt", "w") as f:
+    f.write("This replaces everything.\n")
+
+# "a" mode adds to the end safely
+with open("output.txt", "a") as f:
+    f.write("This is added at the end.\n")
+```
+
+### Writing Multiple Lines
+
+```python
+# Method 1: write() with \n
+with open("output.txt", "w") as f:
+    f.write("Line 1\n")
+    f.write("Line 2\n")
+
+# Method 2: writelines() with a list
+lines = ["Line 1\n", "Line 2\n", "Line 3\n"]
+with open("output.txt", "w") as f:
+    f.writelines(lines)
+```
+
+### Practice: File Writing
+
+<interactive-code>
+# Build a log file
+import time
+
+with open("app.log", "w") as log:
+    log.write("=== Application Log ===\n\n")
+    
+    events = [
+        ("INFO", "Application started"),
+        ("INFO", "User logged in"),
+        ("WARN", "High memory usage"),
+        ("ERROR", "Database connection lost"),
+        ("INFO", "Reconnected to database"),
+    ]
+    
+    for level, message in events:
+        log.write(f"[{level:5}] {message}\n")
+
+# Read it back
+with open("app.log") as f:
+    print(f.read())
+</interactive-code>
+
+## JSON: Structured Data
+
+JSON (JavaScript Object Notation) is the most common format for saving and loading structured data. Python's `json` module handles the conversion between Python dicts/lists and JSON strings.
+
+```python
+import json
+
+# Python dict → JSON string (serialization)
+data = {"name": "Alice", "scores": [95, 88, 92]}
+json_string = json.dumps(data, indent=2)
+
+# JSON string → Python dict (deserialization)
+parsed = json.loads(json_string)
+```
+
+### Saving to JSON File
+
+```python
+import json
+
+data = {"users": [{"name": "Alice"}, {"name": "Bob"}]}
+
+# Save to file
+with open("data.json", "w") as f:
+    json.dump(data, f, indent=2)
+
+# Load from file
+with open("data.json") as f:
+    loaded = json.load(f)
+```
+
+### Practice: JSON Operations
+
+<interactive-code>
+import json
+
+# Create structured data
+game_state = {
+    "player": "Hero",
+    "level": 5,
+    "health": 85,
+    "inventory": ["sword", "shield", "potion"],
+    "position": {"x": 120, "y": 45},
+    "achievements": ["first_kill", "treasure_hunter"]
+}
+
+# Save to JSON file
+with open("save_game.json", "w") as f:
+    json.dump(game_state, f, indent=2)
+print("Game saved!")
+
+# Load it back
+with open("save_game.json") as f:
+    loaded = json.load(f)
+
+print(f"\nLoaded save for: {loaded['player']}")
+print(f"Level {loaded['level']}, HP: {loaded['health']}")
+print(f"Inventory: {', '.join(loaded['inventory'])}")
+print(f"Position: ({loaded['position']['x']}, {loaded['position']['y']})")
+</interactive-code>
+
+## Challenge: Write Numbers to File
+
+Create a function `write_numbers(n)` that writes numbers 1 to n into a file.
+
+<interactive-code
+    lessonId="filesystem-writing"
+    testCode={`
+# Test Code
+import os
+if os.path.exists("numbers.txt"):
+    os.remove("numbers.txt")
+
+write_numbers(3)
+
+assert os.path.exists("numbers.txt"), "File numbers.txt was not created"
+with open("numbers.txt", "r") as f:
+    content = f.read().splitlines()
+
+assert content == ["1", "2", "3"], f"Expected ['1', '2', '3'] but got {content}"
+`}
+>
+def write_numbers(n):
+    # Write numbers 1 to n, each on its own line
+    with open("numbers.txt", "w") as f:
+        for i in range(1, n + 1):
+            f.write(str(i) + "\n")
+
+write_numbers(5)
+
+# Verify
+with open("numbers.txt") as f:
+    print(f.read())
+</interactive-code>
+
+> **Pro Tip:** Use `json.dumps(data, indent=2)` during development for readable output. In production, skip `indent` for smaller file sizes — `json.dumps(data)` produces compact JSON.
+
+> **Common Mistake:** Opening a file in `"w"` mode when you meant `"a"`. `"w"` silently destroys all existing content without warning. If you're adding to a log, always use `"a"`.
+
+<InlineQuiz id="quiz-write-1" question="What does 'w' mode do if the file already exists?" options={["Appends to it", "Raises an error", "Overwrites it completely", "Does nothing"]} correct={2} explanation="'w' mode OVERWRITES the file � all existing content is deleted! Use 'a' mode to append without losing data." />
+
+<InlineQuiz id="quiz-write-2" question="What mode should you use to add data to an existing file?" options={["w (write)", "r (read)", "a (append)", "x (exclusive)"]} correct={2} explanation="'a' (append) mode adds new content to the END of the file without deleting existing content." />
+
+<InlineQuiz id="quiz-write-3" question="What does f.write() return?" options={["None", "The string that was written", "The number of characters written", "True if successful"]} correct={2} explanation="write() returns the number of characters (or bytes in binary mode) that were written to the file." />
+
+<InlineQuiz id="quiz-write-4" question="What is the difference between write() and writelines()?" options={["No difference", "write() takes a string, writelines() takes a list of strings", "writelines() adds newlines automatically", "write() is faster"]} correct={1} explanation="write() writes a single string. writelines() writes a list of strings but does NOT add newlines � you must include them yourself." />
+
+<InlineQuiz id="quiz-write-5" question="What does 'x' mode do?" options={["Exclusive create � fails if file exists", "Execute mode", "Extra write mode", "Extended read mode"]} correct={0} explanation="'x' mode creates a new file for writing, but raises FileExistsError if the file already exists. Prevents accidental overwrites." />
+
+<InlineQuiz id="quiz-write-6" question="What does f.flush() do?" options={["Deletes the file", "Forces buffered data to be written to disk", "Empties the file", "Closes the file"]} correct={1} explanation="flush() forces any buffered data to be written to the file immediately, without waiting for the buffer to fill or the file to close." />
+
+<InlineQuiz id="quiz-write-7" question="How do you write to a JSON file?" options={["f.write(data)", "json.dump(data, f)", "f.writejson(data)", "json.save(data, f)"]} correct={1} explanation="json.dump(data, file) serializes the data and writes it to the file. json.dumps() returns a string instead." />
+
+<InlineQuiz id="quiz-write-8" question="What is the purpose of os.makedirs()?" options={["Creates a single directory", "Creates nested directories (like mkdir -p)", "Deletes directories", "Lists directories"]} correct={1} explanation="os.makedirs() creates all intermediate directories. os.makedirs('a/b/c', exist_ok=True) creates a, a/b, and a/b/c." />
+
+<InlineQuiz id="quiz-write-9" question="What happens if you open a file in 'w' mode but never write to it?" options={["Nothing changes", "The file becomes empty (0 bytes)", "An error occurs", "The file is deleted"]} correct={1} explanation="Opening in 'w' mode immediately truncates (empties) the file. Even if you don't write anything, the file becomes 0 bytes." />
+
+<InlineQuiz id="quiz-write-10" question="How do you safely write to a file (preventing partial writes on crash)?" options={["Use try/finally", "Write to a temp file, then rename", "Use &apos;w&apos; mode", "There is no way"]} correct={1} explanation="Write to a temporary file first, then atomically rename it to the target. This ensures the original file is intact if writing fails." />

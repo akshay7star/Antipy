@@ -1,0 +1,108 @@
+---
+title: "Async & Concurrency"
+description: "Running tasks concurrently with async/await and threading."
+order: 1
+---
+
+# Asynchronous Programming
+
+Modern applications need to handle many tasks at once — downloading files, processing API requests, updating a UI. Python offers several ways to handle concurrency, with `async/await` being the most modern approach.
+
+## Why Async?
+
+Imagine ordering food at a restaurant. **Synchronous** = the waiter takes your order, goes to the kitchen, waits until your food is ready, then serves you before taking the next table's order. **Asynchronous** = the waiter takes your order, sends it to the kitchen, immediately goes to the next table while the kitchen prepares your food.
+
+<MermaidDiagram>
+graph LR
+  SYNC["Sync: Task A then Task B then Task C"] --> SLOW["Total: 3 seconds"]
+  ASYNC["Async: Tasks A + B + C together"] --> FAST["Total: ~1 second"]
+  style SYNC fill:#ef4444,stroke:#dc2626,color:#fff
+  style ASYNC fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## The async/await Syntax
+
+```python
+import asyncio
+
+async def fetch_data(name, delay):
+    print(f"Fetching {name}...")
+    await asyncio.sleep(delay)    # Non-blocking wait
+    print(f"{name} complete!")
+    return f"{name} data"
+```
+
+- **`async def`** — declares this function as a coroutine
+- **`await`** — pauses this coroutine until the operation completes, allowing other coroutines to run
+
+<MethodUnit category="async-concurrency" />
+
+### Practice: Async Simulation
+
+<interactive-code>
+import asyncio
+import time
+
+async def fetch_data(source, delay):
+    print(f"  Starting {source}...")
+    await asyncio.sleep(delay)
+    return f"{source}: done in {delay}s"
+
+async def main():
+    start = time.time()
+    
+    # Run all tasks concurrently with gather
+    results = await asyncio.gather(
+        fetch_data("Database", 0.5),
+        fetch_data("API", 0.3),
+        fetch_data("Cache", 0.1),
+    )
+    
+    elapsed = time.time() - start
+    print(f"\nAll done in {elapsed:.2f}s (not {0.5+0.3+0.1}s)")
+    for r in results:
+        print(f"  {r}")
+
+# In a real script: asyncio.run(main())
+# Simulated output here:
+print("Simulating concurrent tasks:")
+print("  Starting Database...")
+print("  Starting API...")
+print("  Starting Cache...")
+print("  Cache: done in 0.1s")
+print("  API: done in 0.3s")
+print("  Database: done in 0.5s")
+print("\nAll done in ~0.5s (not 0.9s) — that's the power of async!")
+</interactive-code>
+
+## When to Use What
+
+| Approach | Best For | Module |
+|----------|---------|--------|
+| `asyncio` | I/O-bound tasks (network, files) | `asyncio` |
+| `threading` | I/O-bound with simple code | `threading` |
+| `multiprocessing` | CPU-bound tasks (computation) | `multiprocessing` |
+
+> **Pro Tip:** Async is only useful for **I/O-bound** tasks (network calls, file reads, database queries). For **CPU-bound** tasks (number crunching, image processing), use `multiprocessing` instead.
+
+> **Common Mistake:** Calling an `async` function without `await`: `fetch_data()` returns a coroutine object, not the result. You must use `await fetch_data()`.
+
+<InlineQuiz id="quiz-async-1" question="What does the 'async' keyword do?" options={["Makes a function run faster", "Defines a coroutine function", "Creates a new thread", "Imports asyncio"]} correct={1} explanation="'async def' defines a coroutine function. Coroutines can be paused and resumed, enabling concurrent execution." />
+
+<InlineQuiz id="quiz-async-2" question="What does 'await' do?" options={["Blocks the entire program", "Pauses the coroutine until the awaited task completes", "Creates a new thread", "Cancels a task"]} correct={1} explanation="'await' pauses the current coroutine, allowing other coroutines to run. When the awaited operation completes, execution resumes." />
+
+<InlineQuiz id="quiz-async-3" question="Is async code multi-threaded?" options={["Yes, always", "No, it uses a single-threaded event loop", "Only with asyncio", "It depends"]} correct={1} explanation="Async code is single-threaded by default. It achieves concurrency through cooperative multitasking � coroutines voluntarily yield control." />
+
+<InlineQuiz id="quiz-async-4" question="What is asyncio.gather() used for?" options={["Collecting results", "Running multiple coroutines concurrently", "Waiting for one task", "Cancelling tasks"]} correct={1} explanation="gather() runs multiple coroutines concurrently and returns their results: results = await asyncio.gather(task1(), task2(), task3())." />
+
+<InlineQuiz id="quiz-async-5" question="When should you use async programming?" options={["For CPU-intensive work", "For I/O-bound tasks (network, file, database)", "Always", "Never in Python"]} correct={1} explanation="Async shines for I/O-bound tasks where you spend time waiting. For CPU-intensive work, use multiprocessing instead." />
+
+<InlineQuiz id="quiz-async-6" question="What is an event loop?" options={["A for loop that handles events", "The core of asyncio that schedules and runs coroutines", "A GUI component", "A logging utility"]} correct={1} explanation="The event loop manages and schedules coroutines. It runs tasks, handles I/O events, and switches between coroutines." />
+
+<InlineQuiz id="quiz-async-7" question="Can you use 'await' outside an async function?" options={["Yes, anywhere", "No, await can only be used inside async functions", "Only in the main module", "Only with try/except"]} correct={1} explanation="'await' can only be used inside 'async def' functions. Using it outside raises a SyntaxError." />
+
+<InlineQuiz id="quiz-async-8" question="What does asyncio.run() do?" options={["Runs a regular function", "Creates and runs the event loop for a coroutine", "Imports asyncio", "Stops the event loop"]} correct={1} explanation="asyncio.run(main()) creates an event loop, runs the coroutine, and closes the loop. It's the standard entry point for async programs." />
+
+<InlineQuiz id="quiz-async-9" question="What is the difference between concurrency and parallelism?" options={["Same thing", "Concurrency = managing multiple tasks, parallelism = executing simultaneously", "Parallelism is slower", "Concurrency requires multiple CPUs"]} correct={1} explanation="Concurrency is about managing multiple tasks (they may not run at the same time). Parallelism is about executing multiple tasks simultaneously on multiple cores." />
+
+<InlineQuiz id="quiz-async-10" question="What is aiohttp used for?" options={["Synchronous HTTP", "Async HTTP client/server", "File I/O", "Database queries"]} correct={1} explanation="aiohttp is an async HTTP library. Unlike requests (synchronous), aiohttp can make HTTP calls without blocking the event loop." />

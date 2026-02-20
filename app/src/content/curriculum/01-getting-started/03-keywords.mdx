@@ -1,0 +1,173 @@
+---
+title: "Python Keywords & Naming"
+description: "Reserved words, naming rules, and how Python reads your code."
+order: 3
+---
+
+# The Rules of the Language
+
+Every language has words with special meaning. In English, words like "if", "and", "not" have fixed meanings. Python has **35 reserved keywords** that work the same way — they have special meaning to the interpreter, and you **cannot** use them as variable names.
+
+## Why Keywords Matter
+
+When the interpreter sees the word `if`, it knows you're about to write a condition. When it sees `for`, it knows a loop is coming. If you tried to name a variable `if`, Python would get confused — is this a condition or a variable?
+
+```python
+# This CRASHES — 'class' is a keyword
+# class = "Biology"   # SyntaxError: invalid syntax
+
+# This works — 'clazz' is not a keyword
+clazz = "Biology"
+```
+
+## Keyword Categories
+
+Python's 35 keywords fall into logical groups. You don't need to memorize them all — you'll learn them naturally as you use them. But here's the map:
+
+<MermaidDiagram>
+graph TD
+  KW["Python Keywords: 35 total"] --> Logic["Logic: if, elif, else, and, or, not"]
+  KW --> Loops["Loops: for, while, break, continue, in"]
+  KW --> Funcs["Functions: def, return, lambda, yield"]
+  KW --> Classes["OOP: class, self, super"]
+  KW --> ErrorH["Errors: try, except, finally, raise"]
+  KW --> Values["Values: True, False, None"]
+  KW --> Other["Other: import, from, as, with, pass, del, global, nonlocal, assert, async, await, is"]
+  style KW fill:#8b5cf6,stroke:#7c3aed,color:#fff
+</MermaidDiagram>
+
+<MethodUnit category="python-keywords" />
+
+## The 6 Keywords You'll Use in Every Program
+
+| Keyword | What it does | Example |
+|---------|-------------|---------|
+| `if` | Make a decision | `if age > 18:` |
+| `for` | Loop over items | `for x in range(10):` |
+| `def` | Create a function | `def greet(name):` |
+| `return` | Send back a value | `return result` |
+| `import` | Load external code | `import math` |
+| `True/False` | Boolean values | `is_valid = True` |
+
+## Naming Your Variables: The Unwritten Rules
+
+Python lets you name variables almost anything, but professionals follow strict conventions:
+
+### The Rules (Will Crash If Broken)
+- Must start with a **letter** or **underscore** (`_`)
+- Can contain letters, numbers, and underscores
+- **Cannot** be a keyword
+- **Case-sensitive**: `name`, `Name`, and `NAME` are three different variables
+
+### The Conventions (Won't Crash, But Will Annoy Your Team)
+
+```python
+# GOOD — snake_case for variables and functions
+user_name = "Akshay"
+total_score = 100
+def calculate_tax(amount):
+    pass
+
+# BAD — but technically works
+UserName = "Akshay"        # This style is for Classes only
+TOTALSCORE = 100           # ALL CAPS is for constants only
+def calculateTax(amount):  # camelCase is JavaScript style, not Python
+    pass
+```
+
+### Practice: Legal vs Illegal Names
+
+<interactive-code>
+# Legal variable names
+name = "Alice"
+_private = "hidden"
+score_2 = 95
+MAX_SIZE = 100
+
+# Check which words are keywords
+import keyword
+print("Python has", len(keyword.kwlist), "keywords:")
+print(keyword.kwlist)
+
+# Test if a word is a keyword
+print()
+print("Is 'for' a keyword?", keyword.iskeyword("for"))
+print("Is 'hello' a keyword?", keyword.iskeyword("hello"))
+print("Is 'class' a keyword?", keyword.iskeyword("class"))
+</interactive-code>
+
+## Comments: Talking to Future You
+
+Comments are notes in your code that Python completely ignores. They exist for **humans only** — your future self, your teammate, your code reviewer.
+
+```python
+# This is a single-line comment. Python ignores this.
+
+"""
+This is a multi-line comment (docstring).
+Use it for longer explanations or function documentation.
+"""
+
+x = 10  # You can also put comments at the end of a line
+```
+
+### When to Comment (And When Not To)
+
+```python
+# BAD COMMENT — states the obvious
+x = x + 1  # increment x by 1
+
+# GOOD COMMENT — explains WHY
+x = x + 1  # compensate for zero-based indexing in the report output
+```
+
+### Practice: Putting It All Together
+
+<interactive-code>
+# Let's combine everything from this module!
+
+# Variables with good names
+player_name = "Alex"
+player_score = 0
+is_game_over = False
+
+# Type checking
+print(f"Name: {player_name} (type: {type(player_name).__name__})")
+print(f"Score: {player_score} (type: {type(player_score).__name__})")
+print(f"Game Over: {is_game_over} (type: {type(is_game_over).__name__})")
+
+# Simple score update
+player_score = player_score + 10
+print(f"\nAfter scoring: {player_score} points")
+
+# Using built-ins together
+scores = [10, 25, 5, 40, 15]
+print(f"\nAll scores: {scores}")
+print(f"Highest: {max(scores)}")
+print(f"Total: {sum(scores)}")
+print(f"Count: {len(scores)}")
+</interactive-code>
+
+> **Pro Tip:** Python uses **snake_case** for everything except classes (PascalCase) and constants (UPPER_SNAKE_CASE). Following this convention makes your code instantly recognizable as "Pythonic."
+
+> **Common Mistake:** Using Python built-in names as variables: `list = [1,2,3]` shadows the `list()` function. Avoid naming variables `list`, `dict`, `str`, `type`, `input`, `print`, `id`, or `set`.
+
+<InlineQuiz id="quiz-keywords-1" question="Which keyword is used to define a function in Python?" options={["function", "func", "def", "define"]} correct={2} explanation="Python uses the 'def' keyword to define functions: def my_function():. Unlike JavaScript which uses 'function'." />
+
+<InlineQuiz id="quiz-keywords-2" question="What does the 'None' keyword represent?" options={["Zero", "An empty string", "The absence of a value", "False"]} correct={2} explanation="None represents the absence of a value in Python. It's Python's equivalent of null in other languages. Functions without a return statement return None." />
+
+<InlineQuiz id="quiz-keywords-3" question="What is the difference between 'is' and '=='?" options={["No difference", "&apos;is&apos; checks value, &apos;==&apos; checks identity", "&apos;is&apos; checks identity (same object), &apos;==&apos; checks value equality", "&apos;is&apos; is faster"]} correct={2} explanation="'is' checks if two variables point to the exact same object in memory. '==' checks if two values are equal. Use '==' for value comparison, 'is' mainly with None." />
+
+<InlineQuiz id="quiz-keywords-4" question="Which keyword exits a loop early?" options={["stop", "exit", "break", "end"]} correct={2} explanation="'break' immediately exits the current loop. 'continue' skips to the next iteration. Neither 'stop' nor 'end' are Python keywords." />
+
+<InlineQuiz id="quiz-keywords-5" question="What does the 'pass' keyword do?" options={["Passes a value to a function", "Skips to the next iteration", "Does nothing � it is a placeholder", "Exits the program"]} correct={2} explanation="'pass' is a no-op statement used as a placeholder where code is syntactically required but you haven't written it yet. Example: def todo(): pass" />
+
+<InlineQuiz id="quiz-keywords-6" question="Which keyword creates a class in Python?" options={["class", "struct", "object", "type"]} correct={0} explanation="The 'class' keyword defines a new class: class MyClass:. Python uses classes for object-oriented programming." />
+
+<InlineQuiz id="quiz-keywords-7" question="What does 'continue' do inside a loop?" options={["Stops the loop entirely", "Skips the rest of this iteration and goes to the next", "Continues to the next function", "Pauses the loop"]} correct={1} explanation="'continue' skips the remaining code in the current loop iteration and jumps to the next iteration. The loop itself keeps running." />
+
+<InlineQuiz id="quiz-keywords-8" question="Which keyword is used to check if a value exists in a collection?" options={["exists", "has", "in", "contains"]} correct={2} explanation="The 'in' operator checks membership: 'if x in my_list:'. It works with lists, sets, dicts (checks keys), strings, and tuples." />
+
+<InlineQuiz id="quiz-keywords-9" question="What does 'elif' stand for?" options={["else if", "element if", "elif is not an abbreviation", "else iterate first"]} correct={0} explanation="'elif' is Python's shorthand for 'else if'. It allows you to chain multiple conditions: if/elif/elif/else." />
+
+<InlineQuiz id="quiz-keywords-10" question="How many reserved keywords does Python 3 have (approximately)?" options={["15", "25", "35", "50"]} correct={2} explanation="Python 3 has about 35 reserved keywords (like def, class, if, else, for, while, return, import, etc.). These cannot be used as variable names." />

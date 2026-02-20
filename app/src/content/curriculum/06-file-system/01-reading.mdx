@@ -1,0 +1,168 @@
+---
+title: "Reading Files"
+description: "Opening, reading, and processing files — the gateway to real-world data."
+order: 1
+---
+
+# Reading Files in Python
+
+Most real programs work with external data — CSV exports, log files, configuration files, user uploads. Python's built-in `open()` function is your gateway to all of them.
+
+## The `with` Statement (Context Manager)
+
+The safest way to work with files is using `with`. It automatically closes the file when you're done, even if an error occurs:
+
+<MermaidDiagram>
+graph LR
+  OPEN["with open file"] --> READ["Read/Process"]
+  READ --> CLOSE["File auto-closes"]
+  style OPEN fill:#3b82f6,stroke:#2563eb,color:#fff
+  style CLOSE fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+```python
+# GOOD — file auto-closes when block ends
+with open("data.txt", "r") as f:
+    content = f.read()
+# File is closed here, even if an error happened
+
+# BAD — file stays open if you forget to close
+f = open("data.txt", "r")
+content = f.read()
+f.close()   # Easy to forget!
+```
+
+**Always use `with`** — it's a Python best practice that prevents resource leaks.
+
+## File Modes
+
+The second argument to `open()` controls what you can do with the file:
+
+| Mode | Meaning | If file doesn't exist |
+|------|---------|----------------------|
+| `"r"` | Read only (default) | Error |
+| `"w"` | Write (overwrites!) | Creates new file |
+| `"a"` | Append (adds to end) | Creates new file |
+| `"x"` | Create (fails if exists) | Creates new file |
+| `"r+"` | Read and write | Error |
+
+## Three Ways to Read
+
+```python
+# 1. read() — entire file as one string
+with open("data.txt") as f:
+    all_text = f.read()
+
+# 2. readline() — one line at a time
+with open("data.txt") as f:
+    first_line = f.readline()
+
+# 3. readlines() — all lines as a list
+with open("data.txt") as f:
+    lines = f.readlines()   # ["line1\n", "line2\n", "line3\n"]
+```
+
+### The Best Way: Loop Over the File
+
+For large files, **don't** load everything into memory. Loop line by line:
+
+```python
+with open("huge_log.txt") as f:
+    for line in f:            # Memory efficient!
+        process(line.strip())  # .strip() removes \n
+```
+
+<MethodUnit category="file-io" />
+
+### Practice: File Operations
+
+<interactive-code>
+# Write a sample file, then read it back
+with open("sample.txt", "w") as f:
+    f.write("Line 1: Hello\n")
+    f.write("Line 2: World\n")
+    f.write("Line 3: Python\n")
+
+# Read entire file
+with open("sample.txt") as f:
+    print("Full file:")
+    print(f.read())
+
+# Read line by line
+with open("sample.txt") as f:
+    print("Line by line:")
+    for i, line in enumerate(f, 1):
+        print(f"  [{i}] {line.strip()}")
+</interactive-code>
+
+## Working with CSV Data
+
+CSV (Comma-Separated Values) is one of the most common data formats. You can process it with `.split()` for simple cases:
+
+### Practice: Parsing Data
+
+<interactive-code>
+# Create a CSV file
+csv_data = """name,age,city
+Alice,30,NYC
+Bob,25,LA
+Charlie,35,Chicago
+Diana,28,Houston"""
+
+with open("people.csv", "w") as f:
+    f.write(csv_data)
+
+# Parse the CSV
+with open("people.csv") as f:
+    header = f.readline().strip().split(",")
+    print(f"Columns: {header}")
+    print("-" * 30)
+    
+    for line in f:
+        name, age, city = line.strip().split(",")
+        print(f"  {name} is {age} years old, lives in {city}")
+</interactive-code>
+
+## Handling File Errors
+
+Files might not exist, might be locked, or you might not have permission. Always handle errors:
+
+```python
+try:
+    with open("missing.txt") as f:
+        data = f.read()
+except FileNotFoundError:
+    print("File doesn't exist!")
+except PermissionError:
+    print("No permission to read this file!")
+```
+
+> **Pro Tip:** For processing large files (100MB+), always loop line by line instead of using `.read()`. Loading a 2GB file with `.read()` will crash your program with `MemoryError`.
+
+> **Common Mistake:** Forgetting to strip newlines. Each line from `readlines()` or iteration ends with `\n`. Always call `.strip()` to remove it.
+
+<InlineQuiz
+  id="quiz-fileio-1"
+  question="Why should you use 'with open()' instead of just 'open()'?"
+  options={["It is faster", "It automatically closes the file when done", "It allows reading binary files", "It prevents encoding errors"]}
+  correct={1}
+  explanation="The 'with' statement (context manager) automatically closes the file when the block ends, even if an error occurs. Without it, you might forget to call .close(), leading to resource leaks."
+/>
+
+<InlineQuiz id="quiz-read-2" question="What mode does open() use by default?" options={["w (write)", "r (read)", "a (append)", "rb (read binary)"]} correct={1} explanation="If you don't specify a mode, open() defaults to 'r' (read mode in text). open('file.txt') is the same as open('file.txt', 'r')." />
+
+<InlineQuiz id="quiz-read-3" question="What does .readlines() return?" options={["A single string", "A list of lines", "A generator", "The first line only"]} correct={1} explanation="readlines() reads the entire file and returns a list where each element is one line (including the newline character)." />
+
+<InlineQuiz id="quiz-read-4" question="What is the difference between .read() and .readline()?" options={["No difference", ".read() returns entire file, .readline() returns one line", ".read() returns one line, .readline() returns entire file", ".read() is faster"]} correct={1} explanation=".read() reads the entire file as a single string. .readline() reads just ONE line at a time, stopping at the newline." />
+
+<InlineQuiz id="quiz-read-5" question="What happens if you try to open a file that doesn't exist in read mode?" options={["An empty file is created", "FileNotFoundError is raised", "It returns None", "It returns an empty string"]} correct={1} explanation="Opening a non-existent file in 'r' mode raises FileNotFoundError. Write mode ('w') would create the file." />
+
+<InlineQuiz id="quiz-read-6" question="How do you read a file line by line efficiently?" options={["f.read().split(newline)", "f.readlines()", "for line in f:", "All work but C is best for large files"]} correct={3} explanation="All approaches work, but 'for line in f:' is most memory-efficient because it reads one line at a time (lazy iteration)." />
+
+<InlineQuiz id="quiz-read-7" question="What does the 'b' in 'rb' mode mean?" options={["Backup", "Binary", "Buffer", "Batch"]} correct={1} explanation="'b' stands for binary mode. Use 'rb' for reading non-text files like images, PDFs, or compressed files." />
+
+<InlineQuiz id="quiz-read-8" question="What does f.seek(0) do?" options={["Goes to the end of file", "Goes back to the beginning", "Goes to line 0", "Closes the file"]} correct={1} explanation="seek(0) moves the file cursor back to the beginning. Useful if you've already read the file and want to read it again." />
+
+<InlineQuiz id="quiz-read-9" question="What encoding should you typically use when reading text files?" options={["ASCII", "UTF-8", "Latin-1", "Binary"]} correct={1} explanation="UTF-8 is the universal standard that supports all characters. Always specify encoding='utf-8' for consistent behavior." />
+
+<InlineQuiz id="quiz-read-10" question="What does the pathlib module provide over os.path?" options={["Nothing, they are identical", "Object-oriented path handling with / operator", "Faster file reading", "Network file access"]} correct={1} explanation="pathlib provides an object-oriented API: Path('dir') / 'file.txt' instead of os.path.join('dir', 'file.txt'). It's more readable." />

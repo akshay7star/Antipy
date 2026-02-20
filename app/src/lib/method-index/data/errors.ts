@@ -1,0 +1,16 @@
+import { Category } from '../types';
+
+export const errorHandling: Category = {
+    id: 'error-handling',
+    name: 'Error Handling',
+    description: 'try/except/else/finally, raising exceptions, custom exceptions, and all built-in exception types',
+    icon: 'ShieldAlert',
+    entries: [
+        { id: 'err-try-except', name: 'try / except', signature: 'try: ... except ExceptionType: ...', description: 'Catches and handles exceptions. The except block runs only if an exception occurs in try.', example: 'try:\n    result = 10 / 0\nexcept ZeroDivisionError:\n    print("Cannot divide by zero!")\n\n# Multiple exceptions\ntry:\n    value = int("abc")\nexcept (ValueError, TypeError) as e:\n    print(f"Error: {e}")', tags: ['try', 'except', 'catch', 'handle'] },
+        { id: 'err-else', name: 'try / except / else', signature: 'try: ... except: ... else: ...', description: 'The else block runs only if NO exception occurred in the try block.', example: 'try:\n    result = 10 / 2\nexcept ZeroDivisionError:\n    print("Error!")\nelse:\n    print(f"Success: {result}")  # Success: 5.0', edgeCases: ['else runs only when try succeeds without exception.', 'Useful for code that should only run on success.'], tags: ['try', 'else', 'success'] },
+        { id: 'err-assert', name: 'assert', signature: 'assert condition, "error message"', description: 'Testing assertion. Raises AssertionError if condition is False. Disabled with python -O flag.', example: 'def calculate_average(nums):\n    assert len(nums) > 0, "Cannot average empty list"\n    return sum(nums) / len(nums)\n\nprint(calculate_average([1,2,3]))  # 2.0\n# calculate_average([])  ← AssertionError: Cannot average empty list', edgeCases: ['Do NOT use assert for input validation in production.', 'Assertions can be disabled with -O flag.'], tags: ['assert', 'debug', 'test'] },
+
+        { id: 'err-exception-chaining', name: 'Exception Chaining', signature: 'raise NewError() from original_error', description: 'Chain exceptions to preserve the original error context using "from".', example: 'class DatabaseError(Exception):\n    pass\n\ndef get_user(user_id):\n    try:\n        # Simulate database lookup\n        data = {}\n        return data[user_id]  # KeyError\n    except KeyError as e:\n        raise DatabaseError(f"User {user_id} not found") from e\n\ntry:\n    get_user(42)\nexcept DatabaseError as e:\n    print(e)            # User 42 not found\n    print(e.__cause__)  # 42 (original KeyError)', tags: ['chaining', 'from', 'cause', 'context'] },
+        { id: 'err-traceback', name: 'Reading Tracebacks', signature: 'N/A', description: 'How to read Python error messages. Read from bottom up: last line is the error, above is the call stack.', example: '# Traceback (most recent call last):\n#   File "main.py", line 10, in <module>\n#     result = process(data)\n#   File "main.py", line 6, in process\n#     return parse(data["key"])\n#   File "main.py", line 3, in parse\n#     return int(value)\n# ValueError: invalid literal for int() with base 10: \'abc\'\n#\n# Reading order:\n# 1. ValueError → What went wrong\n# 2. int(value) → Where it happened (line 3)\n# 3. parse(data["key"]) → Who called it (line 6)\n# 4. process(data) → Top-level call (line 10)', tags: ['traceback', 'debug', 'error-message', 'reading'] },
+    ]
+};

@@ -1,0 +1,134 @@
+---
+title: "Deployment & Cloud"
+description: "Taking your application from localhost to the internet."
+order: 1
+---
+
+# Deployment: Going Live
+
+Building an app is half the battle — deploying it so the world can use it is the other half. This lesson covers the key concepts and tools for getting your Python application from `localhost:5000` to a real URL.
+
+## The Deployment Pipeline
+
+<MermaidDiagram>
+graph LR
+  DEV["Local Development"] --> TEST["Testing"]
+  TEST --> BUILD["Build/Package"]
+  BUILD --> DEPLOY["Deploy to Cloud"]
+  DEPLOY --> LIVE["Live Application"]
+  style DEV fill:#3b82f6,stroke:#2563eb,color:#fff
+  style LIVE fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## Deployment Options
+
+| Platform | Difficulty | Cost | Best For |
+|----------|-----------|------|----------|
+| **Heroku** | Easy | Free tier | Quick prototypes |
+| **Railway** | Easy | Free tier | Side projects |
+| **Render** | Easy | Free tier | Web apps |
+| **AWS/GCP/Azure** | Hard | Pay-as-you-go | Production |
+| **VPS (DigitalOcean)** | Medium | $5+/month | Full control |
+
+## Environment Variables
+
+Never hardcode secrets (API keys, database URLs) in your code:
+
+```python
+import os
+
+# Read from environment
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///local.db")
+API_KEY = os.environ.get("API_KEY")
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+```
+
+Use a `.env` file for local development:
+```
+DATABASE_URL=postgresql://user:pass@localhost/mydb
+API_KEY=sk-12345
+DEBUG=True
+```
+
+<MethodUnit category="serverless-cloud" />
+
+### Practice: Configuration Management
+
+<interactive-code>
+import os
+
+class Config:
+    """Application configuration from environment variables."""
+    
+    def __init__(self):
+        self.APP_NAME = os.environ.get("APP_NAME", "MyApp")
+        self.DEBUG = os.environ.get("DEBUG", "true").lower() == "true"
+        self.PORT = int(os.environ.get("PORT", "8000"))
+        self.DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///app.db")
+        self.SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+    
+    def is_production(self):
+        return not self.DEBUG
+    
+    def display(self):
+        print(f"App: {self.APP_NAME}")
+        print(f"Debug: {self.DEBUG}")
+        print(f"Port: {self.PORT}")
+        print(f"DB: {self.DATABASE_URL}")
+        print(f"Production: {self.is_production()}")
+        
+        if self.SECRET_KEY == "dev-secret-change-me":
+            print("\n⚠️  WARNING: Using default secret key!")
+            print("   Set SECRET_KEY env variable in production!")
+
+config = Config()
+config.display()
+</interactive-code>
+
+## Docker Basics
+
+Docker packages your app and all its dependencies into a **container** — ensuring it runs the same everywhere:
+
+```dockerfile
+# Dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["python", "app.py"]
+```
+
+## Deployment Checklist
+
+1. ✅ Set `DEBUG = False` in production
+2. ✅ Use environment variables for secrets
+3. ✅ Set a strong `SECRET_KEY`
+4. ✅ Use a production WSGI server (Gunicorn, not Flask's dev server)
+5. ✅ Set up HTTPS
+6. ✅ Configure logging
+7. ✅ Set up monitoring and error tracking
+
+> **Pro Tip:** Use `gunicorn` instead of Flask/Django's built-in server for production: `gunicorn app:app -w 4` runs 4 worker processes for better performance.
+
+> **Common Mistake:** Committing `.env` files to Git. Add `.env` to your `.gitignore` immediately. Leaked API keys are a common security incident.
+
+<InlineQuiz id="quiz-cloud-1" question="What is deployment?" options={["Writing code", "Making your application available for users to access", "Testing locally", "Version control"]} correct={1} explanation="Deployment is the process of publishing your application to a server or cloud platform so users can access it." />
+
+<InlineQuiz id="quiz-cloud-2" question="What is serverless computing?" options={["No servers exist", "Cloud provider manages servers � you only write function code", "Running without internet", "P2P computing"]} correct={1} explanation="Serverless doesn't mean no servers � it means the cloud provider manages infrastructure. You write functions, they handle scaling." />
+
+<InlineQuiz id="quiz-cloud-3" question="What is Docker?" options={["A programming language", "A platform for building and running containerized applications", "A database", "A cloud provider"]} correct={1} explanation="Docker packages applications into containers � lightweight, portable units that include everything needed to run the app." />
+
+<InlineQuiz id="quiz-cloud-4" question="What is a Dockerfile?" options={["A Docker database", "Instructions for building a Docker image", "A configuration file", "A log file"]} correct={1} explanation="A Dockerfile contains step-by-step instructions to build a Docker image: FROM python:3.11, COPY, RUN pip install, CMD." />
+
+<InlineQuiz id="quiz-cloud-5" question="What is the difference between a container and a virtual machine?" options={["Same thing", "Containers share the host OS kernel and are lighter than VMs", "VMs are faster", "Containers are more isolated"]} correct={1} explanation="Containers share the host OS kernel and are lightweight (MBs, start in seconds). VMs include a full OS (GBs, slower to start)." />
+
+<InlineQuiz id="quiz-cloud-6" question="What is Gunicorn?" options={["A web framework", "A WSGI HTTP server for Python web apps", "A database", "A testing tool"]} correct={1} explanation="Gunicorn (Green Unicorn) is a production WSGI server. Flask/Django run behind Gunicorn in production, not their built-in dev servers." />
+
+<InlineQuiz id="quiz-cloud-7" question="What is an environment variable?" options={["A Python variable", "A key-value pair set outside the code to configure the app", "A class attribute", "A global constant"]} correct={1} explanation="Environment variables store configuration (API keys, database URLs) outside your code. Access with os.environ['KEY']." />
+
+<InlineQuiz id="quiz-cloud-8" question="What is CI/CD?" options={["Code Integration / Code Deployment", "Continuous Integration / Continuous Deployment", "Cloud Infrastructure / Cloud Delivery", "Container Images / Container Deployment"]} correct={1} explanation="CI automatically tests code on each push. CD automatically deploys passing code. Together they enable fast, reliable releases." />
+
+<InlineQuiz id="quiz-cloud-9" question="What is Heroku?" options={["A programming language", "A cloud platform that simplifies deployment", "A database", "A container runtime"]} correct={1} explanation="Heroku is a PaaS (Platform as a Service) that makes deployment easy: git push heroku main to deploy Python apps." />
+
+<InlineQuiz id="quiz-cloud-10" question="Why should you never commit secrets (API keys, passwords) to Git?" options={["It slows down Git", "Anyone with repo access can see them � use environment variables instead", "Git doesn&apos;t support strings", "It causes merge conflicts"]} correct={1} explanation="Secrets in Git are permanent � even after deletion. Use .env files (gitignored) and environment variables for sensitive data." />

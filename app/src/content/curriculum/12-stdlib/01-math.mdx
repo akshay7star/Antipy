@@ -1,0 +1,125 @@
+---
+title: "Math & Numbers"
+description: "The math module, number operations, and precision."
+order: 1
+---
+
+# The Math Module
+
+Python's `math` module provides mathematical functions beyond basic arithmetic — trigonometry, logarithms, constants, and more. These are essential for any computation-heavy program.
+
+## Key Constants and Functions
+
+```python
+import math
+
+# Constants
+math.pi       # 3.141592653589793
+math.e        # 2.718281828459045
+math.inf      # Positive infinity
+math.nan      # Not a Number
+
+# Rounding
+math.ceil(4.2)     # 5 — always rounds UP
+math.floor(4.8)    # 4 — always rounds DOWN
+round(4.5)         # 4 — built-in, rounds to even (banker's rounding!)
+
+# Powers and roots
+math.sqrt(16)      # 4.0
+math.pow(2, 10)    # 1024.0
+math.log(100, 10)  # 2.0 — log base 10
+math.log2(1024)    # 10.0
+```
+
+<MethodUnit category="number-methods" />
+
+### Practice: Math in Action
+
+<interactive-code>
+import math
+
+# Distance between two points
+def distance(x1, y1, x2, y2):
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+print(f"Distance (0,0) to (3,4): {distance(0, 0, 3, 4)}")
+
+# Circle calculations
+radius = 5
+area = math.pi * radius ** 2
+circumference = 2 * math.pi * radius
+print(f"\nCircle (r={radius}):")
+print(f"  Area: {area:.2f}")
+print(f"  Circumference: {circumference:.2f}")
+
+# Factorial (used in probability/combos)
+print(f"\n5! = {math.factorial(5)}")
+print(f"10! = {math.factorial(10):,}")
+
+# Greatest common divisor
+print(f"\nGCD(12, 8) = {math.gcd(12, 8)}")
+print(f"GCD(100, 75) = {math.gcd(100, 75)}")
+</interactive-code>
+
+## Floating Point Precision
+
+Computers store decimals in binary, which causes tiny precision errors:
+
+```python
+print(0.1 + 0.2)        # 0.30000000000000004 — NOT exactly 0.3!
+print(0.1 + 0.2 == 0.3) # False!
+```
+
+**Fix:** Use `math.isclose()` for comparisons or the `decimal` module for exact math:
+
+```python
+math.isclose(0.1 + 0.2, 0.3)  # True — allows small tolerance
+```
+
+### Practice: Precision
+
+<interactive-code>
+import math
+from decimal import Decimal
+
+# The classic floating point trap
+print(f"0.1 + 0.2 = {0.1 + 0.2}")
+print(f"0.1 + 0.2 == 0.3? {0.1 + 0.2 == 0.3}")
+print(f"math.isclose? {math.isclose(0.1 + 0.2, 0.3)}")
+
+# For money — use Decimal
+price = Decimal("19.99")
+tax = Decimal("0.0875")
+total = price + (price * tax)
+print(f"\nDecimal math: ${total}")
+
+# Never use float for money!
+price_f = 19.99
+tax_f = 0.0875
+total_f = price_f + (price_f * tax_f)
+print(f"Float math:   ${total_f}")
+</interactive-code>
+
+> **Pro Tip:** For financial calculations, always use `decimal.Decimal` instead of `float`. Floating-point errors compound over millions of transactions.
+
+> **Common Mistake:** Using `round(2.5)` and expecting `3`. Python uses **banker's rounding** — it rounds `.5` to the nearest even number. `round(2.5)` → `2`, `round(3.5)` → `4`.
+
+<InlineQuiz id="quiz-math-1" question="What does math.sqrt(16) return?" options={["4", "4.0", "16", "Error"]} correct={1} explanation="math.sqrt() returns a float. sqrt(16) returns 4.0, not the integer 4." />
+
+<InlineQuiz id="quiz-math-2" question="What is math.pi?" options={["3.14", "3.14159", "3.141592653589793", "Exactly pi"]} correct={2} explanation="math.pi is a float constant with the value 3.141592653589793 � the most precise representation of pi in a 64-bit float." />
+
+<InlineQuiz id="quiz-math-3" question="What does math.floor(3.7) return?" options={["3", "4", "3.0", "3.7"]} correct={0} explanation="floor() rounds DOWN to the nearest integer. math.floor(3.7) returns 3. math.ceil(3.7) would return 4." />
+
+<InlineQuiz id="quiz-math-4" question="What does math.ceil(3.2) return?" options={["3", "4", "3.2", "3.0"]} correct={1} explanation="ceil() rounds UP to the nearest integer. math.ceil(3.2) returns 4. Even 3.01 would ceil to 4." />
+
+<InlineQuiz id="quiz-math-5" question="What does abs(-5) return?" options={["-5", "5", "0", "Error"]} correct={1} explanation="abs() returns the absolute value (distance from zero). abs(-5) = 5, abs(5) = 5, abs(-3.14) = 3.14." />
+
+<InlineQuiz id="quiz-math-6" question="What does round(3.456, 2) return?" options={["3.45", "3.46", "3.5", "3"]} correct={1} explanation="round(number, ndigits) rounds to the specified decimal places. 3.456 rounded to 2 places is 3.46." />
+
+<InlineQuiz id="quiz-math-7" question="What does math.log(1) return?" options={["0", "1", "Error", "Infinity"]} correct={0} explanation="math.log(1) returns 0.0 because e^0 = 1. The natural log of 1 is always 0 regardless of base." />
+
+<InlineQuiz id="quiz-math-8" question="What does math.pow(2, 3) return?" options={["6", "8", "8.0", "23"]} correct={2} explanation="math.pow() returns a float: math.pow(2, 3) = 8.0. Use ** for integer result: 2**3 = 8." />
+
+<InlineQuiz id="quiz-math-9" question="What is math.inf?" options={["A very large number", "Positive infinity", "An error value", "Not a number"]} correct={1} explanation="math.inf represents positive infinity. It's greater than any finite number. math.isinf(x) checks if x is infinite." />
+
+<InlineQuiz id="quiz-math-10" question="What does divmod(7, 3) return?" options={["(2, 1)", "(3, 1)", "(7, 3)", "2.333"]} correct={0} explanation="divmod(a, b) returns (quotient, remainder): 7 // 3 = 2 and 7 % 3 = 1, so divmod(7, 3) = (2, 1)." />

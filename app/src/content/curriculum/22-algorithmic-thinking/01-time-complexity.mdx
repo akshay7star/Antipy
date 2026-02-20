@@ -1,0 +1,142 @@
+---
+title: "Time & Space Complexity"
+description: "Big O notation — measuring how fast and efficient your code really is."
+order: 1
+---
+
+# Algorithmic Thinking: Big O Notation
+
+When your code works on 100 items, does it still work on 1 million? **Big O notation** measures how your algorithm's performance scales with input size. It's the language every developer must speak.
+
+## Why It Matters
+
+Two sorting algorithms might both work — but one takes 1 second for 10,000 items while the other takes 3 hours. Big O tells you which to choose before you even run code.
+
+## The Complexity Scale
+
+<MermaidDiagram>
+graph TD
+  O1["O(1) Constant — instant"] --> OLOGN["O(log n) Logarithmic — very fast"]
+  OLOGN --> ON["O(n) Linear — fair"]
+  ON --> ONLOGN["O(n log n) Linearithmic — good sorts"]
+  ONLOGN --> ON2["O(n²) Quadratic — slow"]
+  ON2 --> O2N["O(2ⁿ) Exponential — terrible"]
+  style O1 fill:#22c55e,stroke:#16a34a,color:#fff
+  style OLOGN fill:#84cc16,stroke:#65a30d,color:#000
+  style ON fill:#eab308,stroke:#ca8a04,color:#000
+  style ONLOGN fill:#f97316,stroke:#ea580c,color:#000
+  style ON2 fill:#ef4444,stroke:#dc2626,color:#fff
+  style O2N fill:#7f1d1d,stroke:#991b1b,color:#fff
+</MermaidDiagram>
+
+| Big O | Name | 1,000 items | 1,000,000 items |
+|-------|------|-------------|-----------------|
+| O(1) | Constant | 1 op | 1 op |
+| O(log n) | Logarithmic | 10 ops | 20 ops |
+| O(n) | Linear | 1,000 ops | 1,000,000 ops |
+| O(n log n) | Linearithmic | 10,000 ops | 20,000,000 ops |
+| O(n²) | Quadratic | 1,000,000 ops | 1,000,000,000,000 ops |
+
+## Examples
+
+```python
+# O(1) — Constant: hash table lookup
+def get_first(items):
+    return items[0]         # Always 1 step
+
+# O(n) — Linear: search through list
+def contains(items, target):
+    for item in items:      # Checks every item
+        if item == target:
+            return True
+    return False
+
+# O(n²) — Quadratic: nested loops
+def find_pairs(items):
+    for i in items:         # n times
+        for j in items:     # n times for each i
+            print(i, j)     # n × n = n² total
+```
+
+### Practice: Measuring Complexity
+
+<interactive-code>
+import time
+
+def time_it(func, *args):
+    start = time.time()
+    result = func(*args)
+    return time.time() - start, result
+
+# O(n) — Linear search
+def linear_search(items, target):
+    for item in items:
+        if item == target:
+            return True
+    return False
+
+# O(1) — Set lookup
+def set_search(items_set, target):
+    return target in items_set
+
+# Compare performance
+sizes = [1000, 10000, 100000]
+for size in sizes:
+    data = list(range(size))
+    data_set = set(data)
+    target = size - 1  # Worst case: last element
+    
+    t_linear, _ = time_it(linear_search, data, target)
+    t_set, _ = time_it(set_search, data_set, target)
+    
+    ratio = t_linear / max(t_set, 0.0000001)
+    print(f"n={size:>7,}: Linear={t_linear:.6f}s  Set={t_set:.6f}s  ({ratio:.0f}x faster)")
+</interactive-code>
+
+## Space Complexity
+
+Space complexity measures how much **memory** your algorithm uses:
+
+```python
+# O(1) space — uses constant extra memory
+def find_max(items):
+    maximum = items[0]
+    for item in items:
+        if item > maximum:
+            maximum = item
+    return maximum
+
+# O(n) space — creates a new list
+def double_all(items):
+    return [x * 2 for x in items]  # New list of size n
+```
+
+> **Pro Tip:** When choosing between time and space complexity, usually **optimize for time** — memory is cheap, user patience is not. But be aware of both.
+
+> **Common Mistake:** Ignoring Big O when data is small. It works for 100 items, but an O(n²) algorithm with 1 million items takes 1 trillion operations. Always think about scale.
+
+<InlineQuiz
+  id="quiz-bigo-1"
+  question="What is the time complexity of looking up a key in a Python dictionary?"
+  options={["O(n)", "O(log n)", "O(1) average case", "O(n log n)"]}
+  correct={2}
+  explanation="Python dictionaries use hash tables, which provide O(1) average-case lookup. The key is hashed to find its bucket directly, without searching through all elements."
+/>
+
+<InlineQuiz id="quiz-bigO-2" question="What does O(n) mean?" options={["Constant time", "Linear time � grows proportionally with input size", "Quadratic time", "Logarithmic time"]} correct={1} explanation="O(n) means the time grows linearly with the input size. If input doubles, time roughly doubles." />
+
+<InlineQuiz id="quiz-bigO-3" question="What is O(1)?" options={["One operation", "Constant time � same speed regardless of input size", "One loop", "One millisecond"]} correct={1} explanation="O(1) means the operation takes the same time whether there are 10 or 10 million items. Example: array index access." />
+
+<InlineQuiz id="quiz-bigO-4" question="Which is faster: O(n) or O(n)?" options={["O(n)", "O(n)", "They are the same", "It depends on the constant"]} correct={1} explanation="O(n) is faster than O(n). With 1000 items: O(n) does ~1000 operations, O(n) does ~1,000,000." />
+
+<InlineQuiz id="quiz-bigO-5" question="What is the time complexity of binary search?" options={["O(n)", "O(log n)", "O(n)", "O(1)"]} correct={1} explanation="Binary search halves the search space each step. For n items, it takes at most log(n) comparisons." />
+
+<InlineQuiz id="quiz-bigO-6" question="What is the time complexity of accessing a dictionary key?" options={["O(n)", "O(log n)", "O(1) average", "O(n)"]} correct={2} explanation="Dict lookup uses hashing � O(1) average case. This is why dicts are preferred over lists for frequent lookups." />
+
+<InlineQuiz id="quiz-bigO-7" question="What is O(n log n)?" options={["Very slow", "The time complexity of efficient sorting algorithms", "Slower than O(n)", "Constant time"]} correct={1} explanation="O(n log n) is the best possible time for comparison-based sorting. Merge sort, quicksort (average), and timsort achieve this." />
+
+<InlineQuiz id="quiz-bigO-8" question="What is space complexity?" options={["How fast code runs", "How much memory an algorithm uses relative to input", "Disk space required", "Code file size"]} correct={1} explanation="Space complexity measures extra memory used. An in-place algorithm uses O(1) extra space; creating a copy of the input uses O(n)." />
+
+<InlineQuiz id="quiz-bigO-9" question="What is amortized time complexity?" options={["The worst case", "Average time per operation over many operations", "The best case", "Approximate time"]} correct={1} explanation="Amortized analysis averages cost over sequences. list.append() is O(1) amortized even though occasional resizes are O(n)." />
+
+<InlineQuiz id="quiz-bigO-10" question="Why does Big O ignore constants and lower-order terms?" options={["To make math easier", "Because they become insignificant as input grows very large", "Constants don&apos;t exist", "It is a convention"]} correct={1} explanation="Big O describes growth rate. O(2n + 100) is O(n) because as n  , the constant 2 and +100 become negligible." />

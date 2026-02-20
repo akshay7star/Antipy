@@ -1,0 +1,174 @@
+---
+title: "Dynamic Programming"
+description: "Memoization and tabulation — solving complex problems by breaking them into subproblems."
+order: 1
+---
+
+# Dynamic Programming: Smart Recursion
+
+Dynamic Programming (DP) is an optimization technique that avoids redundant work by storing results of subproblems. It transforms exponential-time solutions into polynomial-time ones.
+
+## The Core Idea
+
+Without DP, computing `fibonacci(5)` computes `fibonacci(3)` multiple times:
+
+<MermaidDiagram>
+graph TD
+  F5["fib 5"] --> F4["fib 4"]
+  F5 --> F3a["fib 3"]
+  F4 --> F3b["fib 3 — duplicate!"]
+  F4 --> F2a["fib 2"]
+  F3a --> F2b["fib 2 — duplicate!"]
+  F3a --> F1a["fib 1"]
+  style F3b fill:#ef4444,stroke:#dc2626,color:#fff
+  style F2b fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+**With memoization**, we store each result and look it up instead of recomputing:
+
+## Two Approaches
+
+| Approach | Direction | Strategy |
+|----------|-----------|----------|
+| **Memoization** (top-down) | Recursion + cache | Store results as you go |
+| **Tabulation** (bottom-up) | Iterative | Build up from base cases |
+
+### Practice: Fibonacci Both Ways
+
+<interactive-code>
+import time
+
+# 1. Naive recursion — O(2^n) 🐌
+def fib_naive(n):
+    if n <= 1:
+        return n
+    return fib_naive(n-1) + fib_naive(n-2)
+
+# 2. Memoization (top-down) — O(n) 🚀
+def fib_memo(n, cache={}):
+    if n in cache:
+        return cache[n]
+    if n <= 1:
+        return n
+    cache[n] = fib_memo(n-1, cache) + fib_memo(n-2, cache)
+    return cache[n]
+
+# 3. Tabulation (bottom-up) — O(n) 🚀
+def fib_tab(n):
+    if n <= 1:
+        return n
+    dp = [0] * (n + 1)
+    dp[1] = 1
+    for i in range(2, n + 1):
+        dp[i] = dp[i-1] + dp[i-2]
+    return dp[n]
+
+# Compare
+n = 30
+start = time.time()
+r1 = fib_naive(n)
+t1 = time.time() - start
+
+start = time.time()
+r2 = fib_memo(n)
+t2 = time.time() - start
+
+start = time.time()
+r3 = fib_tab(n)
+t3 = time.time() - start
+
+print(f"fib({n}) = {r1}")
+print(f"  Naive:       {t1:.4f}s")
+print(f"  Memoization: {t2:.6f}s")
+print(f"  Tabulation:  {t3:.6f}s")
+print(f"  Speedup: {t1/max(t2, 0.000001):.0f}x faster with DP!")
+</interactive-code>
+
+## Classic DP Problem: Climbing Stairs
+
+You can climb 1 or 2 steps at a time. How many distinct ways to reach step `n`?
+
+### Practice: Climbing Stairs
+
+<interactive-code>
+# How many ways to climb n stairs (1 or 2 steps at a time)?
+def climb_stairs(n):
+    if n <= 2:
+        return n
+    dp = [0] * (n + 1)
+    dp[1] = 1
+    dp[2] = 2
+    for i in range(3, n + 1):
+        dp[i] = dp[i-1] + dp[i-2]
+    return dp[n]
+
+for i in range(1, 11):
+    print(f"  {i} stairs: {climb_stairs(i)} ways")
+
+# Space-optimized version — only need last 2 values
+def climb_optimized(n):
+    if n <= 2:
+        return n
+    prev, curr = 1, 2
+    for _ in range(3, n + 1):
+        prev, curr = curr, prev + curr
+    return curr
+
+print(f"\n100 stairs: {climb_optimized(100)} ways")
+</interactive-code>
+
+## DP Problem-Solving Framework
+
+1. **Identify** if the problem has overlapping subproblems
+2. **Define** the state — what changes between subproblems?
+3. **Write** the recurrence relation (how subproblems relate)
+4. **Choose** top-down (memoization) or bottom-up (tabulation)
+5. **Optimize** space if possible
+
+### Practice: Coin Change
+
+<interactive-code>
+# Minimum coins to make a target amount
+def coin_change(coins, amount):
+    dp = [float('inf')] * (amount + 1)
+    dp[0] = 0  # Base case: 0 coins needed for amount 0
+    
+    for i in range(1, amount + 1):
+        for coin in coins:
+            if coin <= i and dp[i - coin] + 1 < dp[i]:
+                dp[i] = dp[i - coin] + 1
+    
+    return dp[amount] if dp[amount] != float('inf') else -1
+
+coins = [1, 5, 10, 25]
+amounts = [11, 15, 30, 41, 63]
+
+print(f"Coins: {coins}")
+for amt in amounts:
+    result = coin_change(coins, amt)
+    print(f"  {amt}¢ → {result} coins")
+</interactive-code>
+
+> **Pro Tip:** Use Python's `@functools.lru_cache` decorator for automatic memoization: `@lru_cache(maxsize=None)` turns any recursive function into a memoized one with zero extra code.
+
+> **Common Mistake:** Thinking DP is only about Fibonacci. The pattern applies to string problems, grid paths, knapsack, and many more. Look for **optimal substructure** and **overlapping subproblems**.
+
+<InlineQuiz id="quiz-dp-1" question="What is dynamic programming?" options={["A programming paradigm", "Solving problems by breaking them into overlapping subproblems", "A type of recursion", "Writing dynamic code"]} correct={1} explanation="DP breaks problems into overlapping subproblems and stores results to avoid redundant computation. It's optimization through caching." />
+
+<InlineQuiz id="quiz-dp-2" question="What are the two key properties for DP to work?" options={["Speed and memory", "Optimal substructure and overlapping subproblems", "Sorting and searching", "Input and output"]} correct={1} explanation="Optimal substructure: solution builds from sub-solutions. Overlapping subproblems: same subproblems are solved repeatedly." />
+
+<InlineQuiz id="quiz-dp-3" question="What is memoization?" options={["Memorizing code", "Caching results of function calls to avoid recomputation", "A type of loop", "Memory allocation"]} correct={1} explanation="Memoization caches results keyed by input. When called with the same input again, return the cached result instead of recomputing." />
+
+<InlineQuiz id="quiz-dp-4" question="What is the difference between top-down and bottom-up DP?" options={["Same thing", "Top-down uses recursion with memoization, bottom-up uses iteration with a table", "Top-down is faster", "Bottom-up is recursive"]} correct={1} explanation="Top-down: recursive + cache (memoization). Bottom-up: iterative, fills a table from smallest subproblems to the answer (tabulation)." />
+
+<InlineQuiz id="quiz-dp-5" question="Why is naive recursive Fibonacci slow?" options={["Recursion is always slow", "It recomputes the same values exponentially many times", "It uses too much memory", "The formula is wrong"]} correct={1} explanation="fib(5) computes fib(3) twice, fib(2) three times, etc. Without memoization, it's O(2^n). With memoization: O(n)." />
+
+<InlineQuiz id="quiz-dp-6" question="What is the Fibonacci DP time complexity with memoization?" options={["O(2^n)", "O(n)", "O(n)", "O(log n)"]} correct={1} explanation="With memoization, each fib(k) is computed only once and cached. N subproblems  O(1) each = O(n) total." />
+
+<InlineQuiz id="quiz-dp-7" question="What is tabulation?" options={["Using tables in databases", "Bottom-up DP using an iterative table", "A sorting technique", "Table formatting"]} correct={1} explanation="Tabulation builds a table iteratively, solving smallest subproblems first: dp[0]=0, dp[1]=1, dp[i]=dp[i-1]+dp[i-2]." />
+
+<InlineQuiz id="quiz-dp-8" question="What is the knapsack problem?" options={["A packing algorithm", "Maximizing value of items within a weight capacity", "A sorting problem", "A graph problem"]} correct={1} explanation="Given items with weights and values, maximize total value without exceeding capacity. Classic DP problem with O(n*W) solution." />
+
+<InlineQuiz id="quiz-dp-9" question="What is the coin change problem?" options={["Making change at a store", "Finding minimum coins to make a target amount", "Counting coins", "Sorting coins"]} correct={1} explanation="Given coin denominations, find the minimum number of coins to make a target amount. DP solution: dp[amount] = min(dp[amount-coin]+1)." />
+
+<InlineQuiz id="quiz-dp-10" question="When should you NOT use DP?" options={["When the problem is simple", "When subproblems don&apos;t overlap or lack optimal substructure", "When input is small", "When recursion is available"]} correct={1} explanation="DP only helps when subproblems overlap (same computations repeated) and the problem has optimal substructure. Greedy may be better for some problems." />

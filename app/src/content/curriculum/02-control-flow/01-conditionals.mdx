@@ -1,0 +1,195 @@
+---
+title: "If Statements & Decisions"
+description: "Making your code choose different paths based on conditions."
+order: 1
+---
+
+# Making Decisions in Code
+
+Programs aren't just straight lines. In the real world, every app makes thousands of decisions: *Is the user logged in? Is the password correct? Is the cart empty?* In Python, you make decisions using **`if`**, **`elif`** (else if), and **`else`**.
+
+## The Decision Flow
+
+Think of `if` statements like a fork in the road. Python checks a condition, and if it's `True`, it takes one path. If it's `False`, it takes the other.
+
+<MermaidDiagram>
+graph TD
+  Start["Check Condition"] --> IsTrue{"Is it True?"}
+  IsTrue -- Yes --> DoThis["Run the if block"]
+  IsTrue -- No --> CheckElif{"Any elif?"}
+  CheckElif -- Yes --> ElifTrue{"elif True?"}
+  ElifTrue -- Yes --> DoElif["Run elif block"]
+  ElifTrue -- No --> CheckElif
+  CheckElif -- No more --> DoElse["Run else block"]
+  style DoThis fill:#22c55e,stroke:#16a34a,color:#fff
+  style DoElif fill:#3b82f6,stroke:#2563eb,color:#fff
+  style DoElse fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+## The Basic Structure
+
+```python
+age = 18
+
+if age >= 18:
+    print("You can vote!")     # Runs if condition is True
+else:
+    print("Too young to vote") # Runs if condition is False
+```
+
+**Critical detail: Indentation.** Python uses **4 spaces** of indentation to show which code belongs inside the `if` block. This is not optional — it's how Python knows what's inside vs. outside the condition.
+
+```python
+if True:
+    print("This is inside the if")    # 4 spaces = inside
+    print("This too")                  # still inside
+print("This is OUTSIDE the if")       # no indent = always runs
+```
+
+## elif: Multiple Conditions
+
+When you have more than two options, `elif` lets you check additional conditions. Python checks them **in order** — the first one that's `True` wins, and the rest are skipped.
+
+```python
+score = 85
+
+if score >= 90:
+    grade = "A"
+elif score >= 80:
+    grade = "B"      # This one matches — score is 85
+elif score >= 70:
+    grade = "C"
+else:
+    grade = "F"
+
+print(grade)  # "B"
+```
+
+### Practice: Grade Calculator
+
+<interactive-code>
+score = 73
+
+# Build a grade calculator
+if score >= 90:
+    grade = "A - Excellent!"
+elif score >= 80:
+    grade = "B - Good job"
+elif score >= 70:
+    grade = "C - Passing"
+elif score >= 60:
+    grade = "D - Needs improvement"
+else:
+    grade = "F - Failed"
+
+print(f"Score: {score} => Grade: {grade}")
+
+# Try changing the score above and run again!
+</interactive-code>
+
+## Comparison Operators
+
+These operators return `True` or `False` — they're the building blocks of all conditions:
+
+| Operator | Meaning | Example | Result |
+|----------|---------|---------|--------|
+| `==` | Equal to | `5 == 5` | `True` |
+| `!=` | Not equal | `5 != 3` | `True` |
+| `>` | Greater than | `5 > 3` | `True` |
+| `<` | Less than | `5 < 3` | `False` |
+| `>=` | Greater or equal | `5 >= 5` | `True` |
+| `<=` | Less or equal | `5 <= 3` | `False` |
+
+## Combining Conditions: `and`, `or`, `not`
+
+You can combine multiple conditions using logical operators:
+
+- **`and`** — both conditions must be `True`
+- **`or`** — at least one condition must be `True`
+- **`not`** — flips `True` to `False` and vice versa
+
+```python
+age = 25
+has_license = True
+
+# Both must be true
+if age >= 18 and has_license:
+    print("You can drive!")
+
+# At least one must be true
+if age < 13 or age > 65:
+    print("Discount ticket!")
+
+# Flip the condition
+if not has_license:
+    print("Get a license first!")
+```
+
+### Practice: Access Control
+
+<interactive-code>
+username = "admin"
+password = "secret123"
+is_banned = False
+
+# Check multiple conditions
+if is_banned:
+    print("Account suspended!")
+elif username == "admin" and password == "secret123":
+    print("Welcome, Admin!")
+elif username == "admin" and password != "secret123":
+    print("Wrong password!")
+else:
+    print("User not found.")
+
+# Ternary — one-liner if/else (use sparingly!)
+status = "Active" if not is_banned else "Banned"
+print(f"Account status: {status}")
+</interactive-code>
+
+## The Ternary Operator (One-Line If)
+
+Python has a compact way to write simple if/else in one line. It's called a **ternary expression**:
+
+```python
+# Instead of:
+if age >= 18:
+    status = "adult"
+else:
+    status = "minor"
+
+# You can write:
+status = "adult" if age >= 18 else "minor"
+```
+
+Use this only for **simple** conditions. For anything complex, stick with the full if/elif/else.
+
+> **Pro Tip:** `==` compares values, `is` compares identity (same object in memory). Use `==` for almost everything. Use `is` only for `None`: `if x is None:`.
+
+> **Common Mistake:** Writing `if x = 5:` (single equals). This is assignment, not comparison. Use `if x == 5:` (double equals) for comparison.
+
+<InlineQuiz
+  id="quiz-conditionals-1"
+  question="What is the output of: x = 5; print('big' if x > 10 else 'small')"
+  options={["big", "small", "5", "Error"]}
+  correct={1}
+  explanation="Since x is 5, which is NOT greater than 10, the else branch executes and prints 'small'."
+/>
+
+<InlineQuiz id="quiz-cond-2" question="What is the correct syntax for an if statement?" options={["if x > 5 {}", "if (x > 5):", "if x > 5:", "if x > 5 then:"]} correct={2} explanation="Python uses 'if condition:' with a colon and indentation. No parentheses or curly braces required (though parentheses are optional)." />
+
+<InlineQuiz id="quiz-cond-3" question="What is a 'truthy' value in Python?" options={["Only True", "Any value that evaluates to True in a boolean context", "Any non-zero integer", "Only strings"]} correct={1} explanation="Truthy values include non-zero numbers, non-empty strings, non-empty lists, and most objects. Falsy values: 0, ', [], {}, None, False." />
+
+<InlineQuiz id="quiz-cond-4" question="What is the output of: print(True and False)?" options={["True", "False", "None", "Error"]} correct={1} explanation="The 'and' operator returns True only if BOTH operands are True. Since one is False, the result is False." />
+
+<InlineQuiz id="quiz-cond-5" question="Can you have an if without an else?" options={["No, else is required", "Yes, else is always optional", "Only if you use elif", "Only in functions"]} correct={1} explanation="The else block is completely optional. You can have a standalone 'if' statement that only executes when the condition is True." />
+
+<InlineQuiz id="quiz-cond-6" question="What does 'not True' evaluate to?" options={["True", "False", "None", "Error"]} correct={1} explanation="The 'not' operator inverts a boolean value. 'not True' becomes False, and 'not False' becomes True." />
+
+<InlineQuiz id="quiz-cond-7" question="What is the output of: x = 10; print('even' if x % 2 == 0 else 'odd')?" options={["even", "odd", "10", "Error"]} correct={0} explanation="10 % 2 equals 0, so the condition is True, and the ternary expression returns 'even'." />
+
+<InlineQuiz id="quiz-cond-8" question="How many elif blocks can you have?" options={["Only one", "Maximum of 5", "As many as you need", "Only two"]} correct={2} explanation="You can chain as many elif blocks as needed. Python evaluates them top-to-bottom and executes the first one that's True." />
+
+<InlineQuiz id="quiz-cond-9" question="What is short-circuit evaluation?" options={["Stopping a loop early", "Python skipping evaluation of the second operand when the result is already determined", "A type of error", "Compiling code faster"]} correct={1} explanation="In 'x and y', if x is False, Python doesn't evaluate y (result is already False). In 'x or y', if x is True, Python skips y." />
+
+<InlineQuiz id="quiz-cond-10" question="What does 'x = 5 if True else 10' assign to x?" options={["True", "5", "10", "Error"]} correct={1} explanation="This is Python's ternary/conditional expression. Since the condition is True, x gets the value 5." />

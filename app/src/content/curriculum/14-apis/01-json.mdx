@@ -1,0 +1,147 @@
+---
+title: "JSON & APIs"
+description: "Working with JSON data and understanding API communication."
+order: 1
+---
+
+# JSON: The Language of APIs
+
+JSON (JavaScript Object Notation) is the standard format for sending and receiving data between applications. Every web API, configuration file, and data exchange you'll encounter uses JSON. Python's `json` module makes it seamless to work with.
+
+## JSON ↔ Python Mapping
+
+<MermaidDiagram>
+graph LR
+  PY["Python dict/list"] -- json.dumps --> JSON["JSON string"]
+  JSON -- json.loads --> PY2["Python dict/list"]
+  style PY fill:#3b82f6,stroke:#2563eb,color:#fff
+  style JSON fill:#f59e0b,stroke:#d97706,color:#000
+</MermaidDiagram>
+
+| JSON Type | Python Type |
+|-----------|-------------|
+| `object {}` | `dict` |
+| `array []` | `list` |
+| `string` | `str` |
+| `number (int)` | `int` |
+| `number (float)` | `float` |
+| `true/false` | `True/False` |
+| `null` | `None` |
+
+## Core Operations
+
+```python
+import json
+
+# Python → JSON string (serialization)
+data = {"name": "Alice", "scores": [95, 88]}
+json_str = json.dumps(data, indent=2)
+
+# JSON string → Python (deserialization)
+parsed = json.loads(json_str)
+
+# Python → JSON file
+with open("data.json", "w") as f:
+    json.dump(data, f, indent=2)
+
+# JSON file → Python
+with open("data.json") as f:
+    loaded = json.load(f)
+```
+
+<MethodUnit category="data-serialization" />
+
+### Practice: JSON Operations
+
+<interactive-code>
+import json
+
+# API-like response data
+api_response = {
+    "status": "success",
+    "data": {
+        "users": [
+            {"id": 1, "name": "Alice", "role": "admin", "active": True},
+            {"id": 2, "name": "Bob", "role": "user", "active": False},
+            {"id": 3, "name": "Charlie", "role": "moderator", "active": True},
+        ],
+        "total": 3
+    },
+    "metadata": {"page": 1, "per_page": 10}
+}
+
+# Serialize with pretty printing
+json_text = json.dumps(api_response, indent=2)
+print("JSON output:")
+print(json_text[:200] + "...")
+
+# Parse and extract data
+parsed = json.loads(json_text)
+active_users = [u["name"] for u in parsed["data"]["users"] if u["active"]]
+print(f"\nActive users: {active_users}")
+
+# Save and reload
+with open("api_data.json", "w") as f:
+    json.dump(api_response, f, indent=2)
+
+with open("api_data.json") as f:
+    reloaded = json.load(f)
+print(f"Reloaded {reloaded['data']['total']} users")
+</interactive-code>
+
+## HTTP Requests (Concepts)
+
+APIs communicate over HTTP. Here's how a typical request-response cycle works:
+
+<MermaidDiagram>
+graph LR
+  CLIENT["Your Python Code"] -- HTTP Request --> SERVER["API Server"]
+  SERVER -- JSON Response --> CLIENT
+  style CLIENT fill:#3b82f6,stroke:#2563eb,color:#fff
+  style SERVER fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+| Method | Purpose | Example |
+|--------|---------|---------|
+| `GET` | Retrieve data | Get user profile |
+| `POST` | Create new data | Create new user |
+| `PUT` | Update existing data | Update user email |
+| `DELETE` | Remove data | Delete a user |
+
+```python
+# With the requests library (pip install requests):
+import requests
+
+response = requests.get("https://api.example.com/users")
+data = response.json()    # Auto-parses JSON response
+```
+
+> **Pro Tip:** Use `json.dumps(data, default=str)` to handle non-serializable types like `datetime` objects — it converts them to strings automatically.
+
+> **Common Mistake:** Confusing `json.dump` (writes to file) with `json.dumps` (returns string). The `s` stands for "string."
+
+<InlineQuiz
+  id="quiz-json-1"
+  question="What Python type does a JSON 'null' value become when parsed?"
+  options={["0", "False", "None", "An empty string"]}
+  correct={2}
+  explanation="JSON null maps to Python's None. Similarly: JSON true/false  Python True/False, JSON arrays  lists, JSON objects  dicts."
+/>
+
+<InlineQuiz id="quiz-json-2" question="What does json.dumps() do?" options={["Reads a JSON file", "Converts a Python object to a JSON string", "Converts JSON to Python", "Writes to a file"]} correct={1} explanation="json.dumps() serializes a Python object to a JSON string. json.dump() writes directly to a file." />
+
+<InlineQuiz id="quiz-json-3" question="What does json.loads() do?" options={["Loads a JSON file", "Parses a JSON string into a Python object", "Loads a module", "Logs JSON data"]} correct={1} explanation="json.loads() parses a JSON string into Python objects. json.load() reads from a file and parses." />
+
+<InlineQuiz id="quiz-json-4" question="Which Python types can be serialized to JSON?" options={["Only strings", "dict, list, str, int, float, bool, None", "Any Python object", "Only primitives"]} correct={1} explanation="JSON natively supports: dict, list, str, int, float, bool, and None. Custom objects need a custom encoder." />
+
+<InlineQuiz id="quiz-json-5" question="What does the 'indent' parameter do in json.dumps()?" options={["Indents Python code", "Pretty-prints the JSON with specified indentation", "Limits the output length", "Adds comments"]} correct={1} explanation="indent=4 produces nicely formatted JSON with 4 spaces of indentation, making it human-readable." />
+
+<InlineQuiz id="quiz-json-6" question="Can JSON keys be integers?" options={["Yes", "No, JSON keys must be strings", "Only in Python", "Only positive integers"]} correct={1} explanation="JSON specification requires all keys to be strings. Python dicts with integer keys get converted to string keys when serialized." />
+
+<InlineQuiz id="quiz-json-7" question="What happens if you try to serialize a set to JSON?" options={["It becomes a list", "TypeError is raised", "It becomes a string", "It is ignored"]} correct={1} explanation="Sets are not JSON-serializable. You must convert to a list first: json.dumps(list(my_set))." />
+
+<InlineQuiz id="quiz-json-8" question="What is an API?" options={["A programming language", "Application Programming Interface � a way for programs to communicate", "A file format", "A database"]} correct={1} explanation="An API is a set of rules and protocols that allow different software applications to communicate with each other." />
+
+<InlineQuiz id="quiz-json-9" question="What does 'sort_keys=True' do in json.dumps()?" options={["Sorts the values", "Sorts the dictionary keys alphabetically in the output", "Sorts by value type", "Removes duplicate keys"]} correct={1} explanation="sort_keys=True outputs JSON with keys in alphabetical order. Useful for consistent, deterministic output." />
+
+<InlineQuiz id="quiz-json-10" question="What is the difference between json.dump() and json.dumps()?" options={["Same thing", "dump() writes to a file, dumps() returns a string", "dumps() writes to a file, dump() returns a string", "dump() is Python 2 only"]} correct={1} explanation="json.dump(obj, file) writes directly to a file. json.dumps(obj) returns a JSON string (the 's' stands for 'string')." />

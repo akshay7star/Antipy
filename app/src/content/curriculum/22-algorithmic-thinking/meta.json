@@ -1,0 +1,7 @@
+{
+    "id": "algorithmic-thinking",
+    "title": "Algorithmic Thinking",
+    "description": "Master Big O notation, time complexity, and how to analyze algorithm efficiency.",
+    "icon": "Cpu",
+    "order": 22
+}

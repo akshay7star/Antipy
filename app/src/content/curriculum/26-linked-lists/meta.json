@@ -1,0 +1,7 @@
+{
+    "id": "linked-lists",
+    "title": "Linked Lists",
+    "description": "Visualize pointers, node manipulation, and cycle detection.",
+    "icon": "Link",
+    "order": 26
+}

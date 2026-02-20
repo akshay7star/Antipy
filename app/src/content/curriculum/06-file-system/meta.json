@@ -1,0 +1,6 @@
+{
+    "id": "file-system",
+    "title": "File I/O & Serialization",
+    "description": "Reading/writing files, JSON, CSV, and data persistence.",
+    "order": 6
+}

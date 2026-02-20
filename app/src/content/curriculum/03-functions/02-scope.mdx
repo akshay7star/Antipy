@@ -1,0 +1,196 @@
+---
+title: "Scope, *args & **kwargs"
+description: "Variable visibility, flexible arguments, and lambda functions."
+order: 2
+---
+
+# Scope: Where Variables Live
+
+When you create a variable inside a function, it only exists inside that function. When the function ends, the variable is destroyed. This is called **scope** — it controls where a variable can be seen and used.
+
+## Local vs Global Scope
+
+<MermaidDiagram>
+graph TD
+  GLOBAL["Global Scope: variables created outside functions"] --> FN1["Function A: has its own local scope"]
+  GLOBAL --> FN2["Function B: has its own local scope"]
+  FN1 --> L1["Local var 'x' only visible here"]
+  FN2 --> L2["Local var 'x' only visible here"]
+  GLOBAL --> G1["Global var 'name' visible everywhere"]
+  style GLOBAL fill:#3b82f6,stroke:#2563eb,color:#fff
+  style FN1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style FN2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+</MermaidDiagram>
+
+```python
+name = "Global"         # Global variable — visible everywhere
+
+def my_function():
+    name = "Local"      # Local variable — only inside this function
+    print(name)         # Prints "Local"
+
+my_function()
+print(name)             # Prints "Global" — the local one is gone!
+```
+
+**The rule:** Python looks for variables in this order:
+1. **Local** — inside the current function
+2. **Enclosing** — in any outer function (for nested functions)
+3. **Global** — at the module level
+4. **Built-in** — Python's built-in names (`print`, `len`, etc.)
+
+This is called the **LEGB Rule**.
+
+### Practice: Scope in Action
+
+<interactive-code>
+x = "global"
+
+def outer():
+    x = "outer"
+    
+    def inner():
+        x = "inner"
+        print(f"Inside inner: {x}")
+    
+    inner()
+    print(f"Inside outer: {x}")
+
+outer()
+print(f"At global level: {x}")
+
+# Each function has its own 'x' — they don't interfere!
+</interactive-code>
+
+## `*args` — Variable Positional Arguments
+
+Sometimes you don't know how many arguments a function will receive. `*args` collects any number of positional arguments into a **tuple**:
+
+```python
+def add_all(*args):
+    print(type(args))    # <class 'tuple'>
+    return sum(args)
+
+add_all(1, 2)            # args = (1, 2)
+add_all(1, 2, 3, 4, 5)   # args = (1, 2, 3, 4, 5)
+```
+
+**Real-world use:** `print()` itself uses `*args` — that's why you can pass any number of values: `print("a", "b", "c")`.
+
+## `**kwargs` — Variable Keyword Arguments
+
+`**kwargs` collects any number of **named** arguments into a **dictionary**:
+
+```python
+def create_user(**kwargs):
+    print(type(kwargs))    # <class 'dict'>
+    for key, value in kwargs.items():
+        print(f"  {key}: {value}")
+
+create_user(name="Alice", age=30, role="admin")
+# kwargs = {'name': 'Alice', 'age': 30, 'role': 'admin'}
+```
+
+### The Full Argument Order
+
+When combining all types, they MUST appear in this order:
+
+```python
+def function(regular, default="value", *args, **kwargs):
+    pass
+```
+
+### Practice: Flexible Functions
+
+<interactive-code>
+# *args — accepts any number of values
+def average(*numbers):
+    if not numbers:
+        return 0
+    return sum(numbers) / len(numbers)
+
+print(f"Average of 10, 20: {average(10, 20)}")
+print(f"Average of 1-5: {average(1, 2, 3, 4, 5)}")
+
+# **kwargs — accepts any named arguments
+def build_profile(name, **details):
+    profile = {"name": name}
+    profile.update(details)
+    return profile
+
+user = build_profile("Alice", age=30, city="NYC", role="developer")
+for key, value in user.items():
+    print(f"  {key}: {value}")
+</interactive-code>
+
+## Lambda Functions
+
+A `lambda` is a tiny, anonymous function written in one line. It's useful when you need a quick function for a single use, like in `sorted()`, `filter()`, or `map()`.
+
+```python
+# Regular function
+def double(x):
+    return x * 2
+
+# Same thing as a lambda
+double = lambda x: x * 2
+
+# Both work the same way
+print(double(5))  # 10
+```
+
+### Where Lambdas Shine
+
+```python
+# Sorting by custom key
+students = [("Alice", 88), ("Bob", 95), ("Charlie", 72)]
+sorted_students = sorted(students, key=lambda s: s[1], reverse=True)
+# Sorted by score: [("Bob", 95), ("Alice", 88), ("Charlie", 72)]
+```
+
+### Practice: Lambda in Action
+
+<interactive-code>
+# Lambda for quick operations
+square = lambda x: x ** 2
+add = lambda a, b: a + b
+
+print(f"Square of 7: {square(7)}")
+print(f"3 + 4: {add(3, 4)}")
+
+# Real use — sorting with a key
+words = ["banana", "apple", "cherry", "date"]
+by_length = sorted(words, key=lambda w: len(w))
+print(f"\nBy length: {by_length}")
+
+# Filter with lambda
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+evens = list(filter(lambda n: n % 2 == 0, numbers))
+print(f"Evens: {evens}")
+</interactive-code>
+
+<MethodUnit category="functions-scope" />
+
+> **Pro Tip:** Use `*args` and `**kwargs` when building **wrapper** functions or **decorators** — they let you forward any arguments to the wrapped function without knowing its signature.
+
+> **Common Mistake:** Using lambdas for complex logic. If your lambda needs `if/else` or is hard to read in one line, write a regular `def` function instead. Lambdas should be simple.
+
+<InlineQuiz id="quiz-scope-1" question="What is variable scope?" options={["The size of a variable", "The region of code where a variable is accessible", "The type of a variable", "How long a variable exists in memory"]} correct={1} explanation="Scope determines WHERE in your code a variable can be accessed. A variable defined inside a function has local scope � it can't be accessed outside." />
+
+<InlineQuiz id="quiz-scope-2" question="What happens if you try to access a local variable outside its function?" options={["It returns None", "It returns 0", "NameError is raised", "It works fine"]} correct={2} explanation="Local variables only exist inside their function. Trying to access them outside raises a NameError: name 'x' is not defined." />
+
+<InlineQuiz id="quiz-scope-3" question="What does the 'global' keyword do?" options={["Creates a new global variable", "Allows a function to modify a variable from the global scope", "Makes all variables global", "Deletes a global variable"]} correct={1} explanation="The 'global' keyword inside a function tells Python that this variable refers to the one in the global scope, allowing modification." />
+
+<InlineQuiz id="quiz-scope-4" question="In Python's LEGB rule, what does LEGB stand for?" options={["Local, Enclosed, Global, Built-in", "List, Element, Group, Block", "Loop, Exception, Global, Base", "Local, External, General, Basic"]} correct={0} explanation="LEGB is Python's scope resolution order: Local (function)  Enclosed (outer function)  Global (module)  Built-in (Python builtins)." />
+
+<InlineQuiz id="quiz-scope-5" question="What is a closure?" options={["A function that closes files", "A function that remembers variables from its enclosing scope", "A way to end a program", "A type of error handling"]} correct={1} explanation="A closure is a nested function that 'remembers' and has access to variables from the enclosing function's scope, even after the outer function has finished." />
+
+<InlineQuiz id="quiz-scope-6" question="Can you read a global variable inside a function without the 'global' keyword?" options={["No, you always need global", "Yes, you can READ it but not MODIFY it", "Yes, you can both read and modify", "Only if it is a constant"]} correct={1} explanation="You can read global variables inside a function freely. You only need 'global' when you want to MODIFY (reassign) the global variable." />
+
+<InlineQuiz id="quiz-scope-7" question="What does the 'nonlocal' keyword do?" options={["Same as global", "Allows modifying a variable from an enclosing (but not global) scope", "Creates a new variable", "Prevents variable access"]} correct={1} explanation="'nonlocal' is used in nested functions to modify a variable from the enclosing function's scope (not global, but one level up)." />
+
+<InlineQuiz id="quiz-scope-8" question="What is variable shadowing?" options={["A security feature", "When a local variable has the same name as a variable in an outer scope", "When a variable is deleted", "When a variable is encrypted"]} correct={1} explanation="Shadowing occurs when a local variable has the same name as one in an outer scope. The local variable 'shadows' (hides) the outer one within the function." />
+
+<InlineQuiz id="quiz-scope-9" question="Are function parameters local or global?" options={["Global", "Local to the function", "Neither", "It depends on the type"]} correct={1} explanation="Function parameters are local variables. They exist only within the function and are destroyed when the function returns." />
+
+<InlineQuiz id="quiz-scope-10" question="What happens with: x = 10; def f(): x = 20; f(); print(x)?" options={["20", "10", "Error", "None"]} correct={1} explanation="Inside f(), x = 20 creates a LOCAL variable x (shadowing the global x). The global x remains 10. Without 'global', the local change doesn't affect the global." />

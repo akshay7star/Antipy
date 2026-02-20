@@ -1,0 +1,166 @@
+---
+title: "Generators & Iterators"
+description: "Lazy sequences, yield, and the iterator protocol — processing data efficiently."
+order: 2
+---
+
+# Generators: Memory-Efficient Sequences
+
+When you have a million items, loading them all into a list wastes memory. Generators produce items **one at a time**, on demand. They're like a vending machine — it doesn't store all the drinks in front of you, it delivers one when you press the button.
+
+## The Problem Generators Solve
+
+```python
+# BAD — stores 10 million items in memory (~80MB)
+big_list = [x ** 2 for x in range(10_000_000)]
+
+# GOOD — generates items one at a time (~0MB)
+big_gen = (x ** 2 for x in range(10_000_000))
+```
+
+The only difference is `[]` vs `()` — but the memory difference is massive.
+
+## Generator Functions with `yield`
+
+A function with `yield` instead of `return` becomes a generator. Each time you call `next()`, it runs until the next `yield`, returns that value, and then **pauses**:
+
+<MermaidDiagram>
+graph LR
+  CALL["Call generator"] --> RUN1["Runs to first yield"]
+  RUN1 --> PAUSE1["Pauses, returns value"]
+  PAUSE1 --> RUN2["Resumes to next yield"]
+  RUN2 --> PAUSE2["Pauses, returns value"]
+  PAUSE2 --> DONE["StopIteration"]
+  style CALL fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style DONE fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+```python
+def countdown(n):
+    while n > 0:
+        yield n          # Pauses here, returns n
+        n -= 1           # Resumes here on next call
+
+for num in countdown(5):
+    print(num)           # 5, 4, 3, 2, 1
+```
+
+### Practice: Generators
+
+<interactive-code>
+# Generator function
+def fibonacci(limit):
+    a, b = 0, 1
+    while a < limit:
+        yield a
+        a, b = b, a + b
+
+# Use it in a loop
+print("Fibonacci under 100:")
+for num in fibonacci(100):
+    print(num, end=" ")
+
+# Generator expression (one-liner)
+print("\n\nSum of squares 1-100:")
+total = sum(x**2 for x in range(1, 101))
+print(total)
+</interactive-code>
+
+## The Iterator Protocol: `__iter__` and `__next__`
+
+Under the hood, every `for` loop uses the **iterator protocol**. When you write `for x in something`, Python calls:
+
+1. `iter(something)` → gets an iterator object
+2. `next(iterator)` → gets the next value
+3. Repeat until `StopIteration` is raised
+
+```python
+nums = [10, 20, 30]
+it = iter(nums)         # Get an iterator
+
+print(next(it))         # 10
+print(next(it))         # 20
+print(next(it))         # 30
+# print(next(it))       # StopIteration!
+```
+
+### Practice: Custom Iterator
+
+<interactive-code>
+class CountDown:
+    """An iterator that counts down from n to 1."""
+    def __init__(self, start):
+        self.current = start
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.current <= 0:
+            raise StopIteration
+        value = self.current
+        self.current -= 1
+        return value
+
+# Use it in a for loop
+for num in CountDown(5):
+    print(f"T-{num}...")
+print("Liftoff!")
+
+# Generators are usually easier than custom iterators
+# But understanding the protocol helps when reading library code
+</interactive-code>
+
+## `itertools` — Advanced Iteration
+
+The `itertools` module provides powerful generators for common patterns:
+
+### Practice: itertools Essentials
+
+<interactive-code>
+from itertools import chain, islice, cycle, zip_longest
+
+# chain — combine multiple iterables
+letters = chain("ABC", "DEF", "GHI")
+print(f"Chained: {list(letters)}")
+
+# islice — slice any iterable (even generators!)
+def infinite_counter():
+    n = 0
+    while True:
+        yield n
+        n += 1
+
+first_five = list(islice(infinite_counter(), 5))
+print(f"First 5: {first_five}")
+
+# zip_longest — zip with fill value for uneven lists
+names = ["Alice", "Bob", "Charlie"]
+scores = [95, 88]
+paired = list(zip_longest(names, scores, fillvalue="N/A"))
+print(f"Paired: {paired}")
+</interactive-code>
+
+> **Pro Tip:** Use generator expressions `(x for x in items)` instead of list comprehensions `[x for x in items]` when you only need to iterate once. This saves memory for large datasets.
+
+> **Common Mistake:** Trying to iterate a generator twice. Generators are **exhausted** after one pass. If you need to iterate multiple times, convert to a list first or recreate the generator.
+
+<InlineQuiz id="quiz-iter-1" question="What is an iterator in Python?" options={["A list", "An object that implements __iter__ and __next__", "A for loop", "A function that returns a list"]} correct={1} explanation="An iterator is any object that implements the __iter__() and __next__() methods. It produces one value at a time." />
+
+<InlineQuiz id="quiz-iter-2" question="What does iter() do?" options={["Creates a list", "Returns an iterator from an iterable", "Counts items", "Reverses a sequence"]} correct={1} explanation="iter(iterable) returns an iterator object. For example, iter([1,2,3]) returns a list_iterator." />
+
+<InlineQuiz id="quiz-iter-3" question="What does next() do?" options={["Goes to the next loop", "Gets the next value from an iterator", "Skips an element", "Starts the iteration over"]} correct={1} explanation="next(iterator) retrieves the next value. Raises StopIteration when there are no more values." />
+
+<InlineQuiz id="quiz-iter-4" question="What exception signals the end of an iterator?" options={["EndOfIteration", "StopIteration", "IteratorError", "IndexError"]} correct={1} explanation="StopIteration is raised by __next__() when there are no more items. for loops automatically catch this to know when to stop." />
+
+<InlineQuiz id="quiz-iter-5" question="What is the yield keyword used for?" options={["Returning from a function", "Creating a generator function", "Stopping a loop", "Importing modules"]} correct={1} explanation="yield turns a function into a generator. Instead of returning once, it yields values one at a time, pausing between each." />
+
+<InlineQuiz id="quiz-iter-6" question="What is the difference between an iterable and an iterator?" options={["Same thing", "An iterable can create an iterator via iter(), an iterator produces values via next()", "An iterator is faster", "An iterable is a generator"]} correct={1} explanation="An iterable (list, string, etc.) can create an iterator via iter(). An iterator tracks state and produces values one by one via next()." />
+
+<InlineQuiz id="quiz-iter-7" question="Can you iterate over an iterator more than once?" options={["Yes, always", "No, iterators are exhausted after one pass", "Only with reset()", "Only generators"]} correct={1} explanation="Iterators are one-shot � once exhausted, they're done. Iterables (like lists) can create new iterators each time." />
+
+<InlineQuiz id="quiz-iter-8" question="What does the zip() function return?" options={["A list", "A zip object (iterator of tuples)", "A dictionary", "A string"]} correct={1} explanation="zip() returns a lazy iterator of tuples, pairing elements from multiple iterables. Use list(zip(...)) to see all pairs." />
+
+<InlineQuiz id="quiz-iter-9" question="What is lazy evaluation?" options={["Slow code execution", "Computing values only when they are needed", "Skipping some values", "Running code in background"]} correct={1} explanation="Lazy evaluation defers computation until the value is actually needed. Generators and iterators use lazy evaluation for memory efficiency." />
+
+<InlineQuiz id="quiz-iter-10" question="How does a for loop work internally?" options={["Magic", "It calls iter() to get an iterator, then calls next() repeatedly until StopIteration", "It uses indexing", "It copies the entire collection"]} correct={1} explanation="for x in iterable: internally does: it = iter(iterable), then repeatedly calls next(it), catching StopIteration to end the loop." />

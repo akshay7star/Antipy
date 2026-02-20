@@ -1,0 +1,140 @@
+---
+title: "Modern APIs with FastAPI"
+description: "Type-safe, auto-documenting APIs with Python's fastest framework."
+order: 1
+---
+
+# FastAPI: The Modern Standard
+
+FastAPI is Python's newest and fastest web framework. It uses **type hints** to automatically validate requests, generate documentation, and provide editor auto-completion. It's 2-3x faster than Flask and Django.
+
+## Why FastAPI?
+
+<MermaidDiagram>
+graph LR
+  TYPES["Type Hints"] --> VALID["Auto Validation"]
+  TYPES --> DOCS["Auto Documentation"]
+  TYPES --> AUTOCOMPLETE["Editor Autocomplete"]
+  ASYNC["Async Support"] --> SPEED["High Performance"]
+  style TYPES fill:#3b82f6,stroke:#2563eb,color:#fff
+  style ASYNC fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+| Feature | Flask | Django | FastAPI |
+|---------|-------|--------|---------|
+| Auto-docs | No | No | Yes (Swagger UI) |
+| Validation | Manual | Forms | Automatic (Pydantic) |
+| Async | Plugin | Limited | Native |
+| Speed | ~800 req/s | ~400 req/s | ~2000 req/s |
+
+## Basic FastAPI App
+
+```python
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class User(BaseModel):           # Pydantic model for validation
+    name: str
+    age: int
+    email: str | None = None     # Optional field
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+
+@app.get("/users/{user_id}")
+async def get_user(user_id: int):    # Type hint = auto validation
+    return {"user_id": user_id}
+
+@app.post("/users")
+async def create_user(user: User):   # Pydantic = auto body parsing
+    return {"created": user.dict()}
+```
+
+<MethodUnit category="fastapi" />
+
+### Practice: Pydantic Models
+
+<interactive-code>
+# Pydantic-style validation (simulated)
+class BaseModel:
+    def __init__(self, **kwargs):
+        for field, field_type in self.__annotations__.items():
+            if field in kwargs:
+                value = kwargs[field]
+                # Basic type checking
+                origin = getattr(field_type, '__origin__', None)
+                if origin is None and not isinstance(value, field_type):
+                    raise ValueError(f"{field} must be {field_type.__name__}")
+                setattr(self, field, value)
+            elif hasattr(self, field):
+                pass  # Has default
+            else:
+                raise ValueError(f"{field} is required")
+    
+    def dict(self):
+        return {k: getattr(self, k) for k in self.__annotations__}
+
+class Product(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True
+    category: str = "general"
+
+# Valid product
+laptop = Product(name="Laptop", price=999.99, category="electronics")
+print(f"Created: {laptop.dict()}")
+
+# With defaults
+widget = Product(name="Widget", price=4.99)
+print(f"With defaults: {widget.dict()}")
+
+# Invalid - missing required field
+try:
+    bad = Product(price=10.0)  # Missing 'name'
+except ValueError as e:
+    print(f"\nValidation error: {e}")
+
+# FastAPI would auto-generate Swagger docs at /docs
+print("\nAPI docs would be auto-generated at http://localhost:8000/docs")
+</interactive-code>
+
+## Key Differences from Flask
+
+```python
+# Flask style
+@app.route("/items/<int:item_id>", methods=["GET"])
+def get_item(item_id):
+    return jsonify({"id": item_id})
+
+# FastAPI style — type hints do the work
+@app.get("/items/{item_id}")
+async def get_item(item_id: int, q: str | None = None):
+    return {"id": item_id, "query": q}
+```
+
+> **Pro Tip:** Visit `/docs` on any FastAPI app for interactive Swagger UI — you can test endpoints directly in the browser without Postman or curl.
+
+> **Common Mistake:** Forgetting to use `async def` for async operations. FastAPI handles both sync and async, but mixing them incorrectly can hurt performance.
+
+<InlineQuiz id="quiz-fapi-1" question="What makes FastAPI 'fast'?" options={["It uses C extensions", "Async support + high performance (one of the fastest Python frameworks)", "It skips validation", "It uses very little code"]} correct={1} explanation="FastAPI is built on Starlette (ASGI) and uses async/await. It's among the fastest Python frameworks, comparable to NodeJS/Go." />
+
+<InlineQuiz id="quiz-fapi-2" question="What does FastAPI use for request validation?" options={["Manual checks", "Pydantic models with type hints", "JSON Schema", "Decorators only"]} correct={1} explanation="FastAPI uses Pydantic for automatic request validation. Define a model with type hints and FastAPI validates incoming data." />
+
+<InlineQuiz id="quiz-fapi-3" question="What does FastAPI auto-generate?" options={["Database schemas", "Interactive API documentation (Swagger UI & ReDoc)", "Frontend code", "Test files"]} correct={1} explanation="FastAPI automatically generates interactive API docs at /docs (Swagger UI) and /redoc from your code and type hints." />
+
+<InlineQuiz id="quiz-fapi-4" question="What is a path parameter in FastAPI?" options={["A query string", "@app.get(&apos;/items/{item_id}&apos;) � a variable in the URL path", "A form field", "A header"]} correct={1} explanation="Path parameters are variables in the URL: @app.get('/items/{item_id}'). FastAPI auto-extracts and validates them." />
+
+<InlineQuiz id="quiz-fapi-5" question="What is a Pydantic model?" options={["A database model", "A data validation class using Python type hints", "A template model", "A test fixture"]} correct={1} explanation="Pydantic models define data shapes: class Item(BaseModel): name: str; price: float. They validate data automatically." />
+
+<InlineQuiz id="quiz-fapi-6" question="What ASGI server runs FastAPI?" options={["Gunicorn", "Uvicorn", "Nginx", "Apache"]} correct={1} explanation="Uvicorn is the standard ASGI server for FastAPI: uvicorn main:app --reload. It supports async and is very fast." />
+
+<InlineQuiz id="quiz-fapi-7" question="What is dependency injection in FastAPI?" options={["Installing packages", "Declaring reusable dependencies that FastAPI resolves automatically", "Importing modules", "A testing pattern"]} correct={1} explanation="FastAPI's Depends() system injects dependencies (database sessions, auth, etc.) into route functions automatically." />
+
+<InlineQuiz id="quiz-fapi-8" question="What is the difference between ASGI and WSGI?" options={["Same thing", "ASGI supports async, WSGI is synchronous only", "WSGI is newer", "ASGI is slower"]} correct={1} explanation="ASGI (Asynchronous Server Gateway Interface) supports async/await. WSGI is synchronous only. FastAPI needs ASGI, Flask uses WSGI." />
+
+<InlineQuiz id="quiz-fapi-9" question="How do you define a response model in FastAPI?" options={["return type hint", "@app.get(&apos;/items&apos;, response_model=Item)", "In the docstring", "With a decorator"]} correct={1} explanation="response_model specifies the output shape: @app.get('/items', response_model=list[Item]). FastAPI filters and validates the response." />
+
+<InlineQuiz id="quiz-fapi-10" question="What status code does FastAPI return for validation errors?" options={["400 Bad Request", "422 Unprocessable Entity", "500 Server Error", "404 Not Found"]} correct={1} explanation="FastAPI returns 422 Unprocessable Entity with detailed error info when request validation fails (Pydantic model mismatch)." />

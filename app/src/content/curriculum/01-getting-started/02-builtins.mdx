@@ -1,0 +1,188 @@
+---
+title: "Built-in Functions"
+description: "Essential functions available everywhere in Python — no imports needed."
+order: 2
+---
+
+# Python's Built-in Toolbox
+
+Imagine moving into a new apartment. Some places come empty — you have to buy and install everything yourself. Python is like an apartment that comes **fully furnished**. It has a set of ~70 built-in functions that are always available, no `import` needed. These are your essential tools.
+
+## The Big 5: Functions You'll Use Every Day
+
+Out of the ~70 built-ins, there are 5 you'll use in almost every program:
+
+| Function | Purpose | Example |
+|----------|---------|---------|
+| `print()` | Display output | `print("Hello")` |
+| `len()` | Count items | `len([1,2,3])` → `3` |
+| `type()` | Check data type | `type(42)` → `<class 'int'>` |
+| `input()` | Get user input | `name = input("Name: ")` |
+| `range()` | Generate number sequences | `range(5)` → `0,1,2,3,4` |
+
+<MethodUnit category="built-in-functions" />
+
+## How `len()` Works
+
+`len()` counts things. It works on **any** container — strings, lists, dictionaries, sets. It always returns a single integer.
+
+```python
+len("Python")       # 6 — counts characters in a string
+len([10, 20, 30])   # 3 — counts items in a list
+len({"a": 1})       # 1 — counts key-value pairs in a dict
+```
+
+**Why it matters:** You'll use `len()` constantly — to check if a list is empty, to loop a specific number of times, to validate user input length, and more.
+
+## Type Conversion: Transforming Data
+
+One of the most common tasks in Python is converting between data types. For example, when you read user input with `input()`, it **always** returns a string — even if the user types a number.
+
+<MermaidDiagram>
+graph LR
+  STR["str: '42'"] -- int--> INT["int: 42"]
+  INT -- str --> STR2["str: '42'"]
+  INT -- float --> FLT["float: 42.0"]
+  FLT -- int --> INT2["int: 42"]
+  style STR fill:#f59e0b,stroke:#d97706,color:#000
+  style INT fill:#3b82f6,stroke:#2563eb,color:#fff
+  style FLT fill:#8b5cf6,stroke:#7c3aed,color:#fff
+</MermaidDiagram>
+
+```python
+# input() always returns a string
+user_age = input("Enter your age: ")   # user types "25"
+print(type(user_age))                   # <class 'str'>  — it's text, not a number!
+
+# Convert string to integer
+user_age = int(user_age)                # Now it's the number 25
+print(type(user_age))                   # <class 'int'>
+```
+
+### The Conversion Functions
+
+| Function | Converts to | Example | Result |
+|----------|-------------|---------|--------|
+| `int()` | Integer | `int("42")` | `42` |
+| `float()` | Decimal | `float("3.14")` | `3.14` |
+| `str()` | Text | `str(42)` | `"42"` |
+| `bool()` | Boolean | `bool(0)` | `False` |
+| `list()` | List | `list("abc")` | `["a","b","c"]` |
+
+### Practice: Type Conversions
+
+<interactive-code>
+# String to number
+price_text = "19.99"
+price = float(price_text)
+tax = price * 0.1
+print(f"Price: ${price}, Tax: ${tax:.2f}, Total: ${price + tax:.2f}")
+
+# Number to string (for concatenation)
+age = 25
+message = "I am " + str(age) + " years old"
+print(message)
+
+# What is 'truthy' and 'falsy'?
+print(bool(0))       # False — zero is "falsy"
+print(bool(42))      # True — any non-zero number is "truthy"
+print(bool(""))      # False — empty string is "falsy"
+print(bool("hello")) # True — non-empty string is "truthy"
+</interactive-code>
+
+## Sorting and Ordering
+
+Python gives you two ways to sort data:
+
+- **`sorted()`** — creates a **new** sorted list (original unchanged)
+- **`list.sort()`** — sorts the list **in place** (modifies original)
+
+```python
+nums = [3, 1, 4, 1, 5]
+result = sorted(nums)     # result = [1, 1, 3, 4, 5], nums is still [3, 1, 4, 1, 5]
+nums.sort()               # Now nums itself is [1, 1, 3, 4, 5]
+```
+
+### Practice: Sorting
+
+<interactive-code>
+scores = [88, 45, 92, 67, 100, 73]
+
+# sorted() returns a NEW list — original is safe
+ranked = sorted(scores, reverse=True)
+print("Top scores:", ranked)
+print("Original:", scores)
+
+# min() and max() — quick extremes
+print("Highest:", max(scores))
+print("Lowest:", min(scores))
+print("Total:", sum(scores))
+print("Average:", sum(scores) / len(scores))
+</interactive-code>
+
+## `enumerate()` and `zip()` — The Power Duo
+
+These two functions will instantly level up your loops.
+
+**`enumerate()`** — gives you both the index AND the value while looping:
+```python
+fruits = ["apple", "banana", "cherry"]
+for i, fruit in enumerate(fruits):
+    print(f"{i}: {fruit}")
+# 0: apple, 1: banana, 2: cherry
+```
+
+**`zip()`** — loops through two lists at the same time:
+```python
+names = ["Alice", "Bob"]
+scores = [95, 87]
+for name, score in zip(names, scores):
+    print(f"{name}: {score}")
+```
+
+### Practice: enumerate and zip
+
+<interactive-code>
+# enumerate — never use range(len(...)) again!
+languages = ["Python", "JavaScript", "Rust", "Go"]
+for index, lang in enumerate(languages, start=1):
+    print(f"#{index}: {lang}")
+
+print()
+
+# zip — pair up related data
+students = ["Alice", "Bob", "Charlie"]
+grades = ["A", "B+", "A-"]
+for student, grade in zip(students, grades):
+    print(f"{student} got {grade}")
+</interactive-code>
+
+> **Pro Tip:** If you ever write `for i in range(len(my_list))`, stop. Use `enumerate(my_list)` instead — it's cleaner, faster, and more Pythonic.
+
+> **Common Mistake:** Forgetting that `int("hello")` will crash with a `ValueError`. Always validate or use try/except when converting user input.
+
+<InlineQuiz
+  id="quiz-builtins-1"
+  question="What does len([1, 2, 3]) return?"
+  options={["1", "2", "3", "Error"]}
+  correct={2}
+  explanation="len() counts the number of items in a collection. The list [1, 2, 3] has 3 items, so len() returns 3."
+/>
+
+<InlineQuiz id="quiz-builtins-2" question="What does type(3.14) return?" options={["<class &apos;int&apos;>", "<class &apos;float&apos;>", "<class &apos;str&apos;>", "<class &apos;number&apos;>"]} correct={1} explanation="3.14 is a decimal number, which Python represents as a float (floating-point number). type() reveals this as <class 'float'>." />
+
+<InlineQuiz id="quiz-builtins-3" question="What does int('42') return?" options={["The string &apos;42&apos;", "The integer 42", "Error", "4.2"]} correct={1} explanation="int() converts a string containing a valid integer to the actual integer type. '42' becomes 42." />
+
+<InlineQuiz id="quiz-builtins-4" question="What does bool(0) return?" options={["True", "False", "0", "Error"]} correct={1} explanation="In Python, 0 is 'falsy' � bool(0) returns False. Other falsy values include empty string ', empty list [], None, and 0.0." />
+
+<InlineQuiz id="quiz-builtins-5" question="What is the output of: sorted([3, 1, 4, 1, 5])?" options={["[5, 4, 3, 1, 1]", "[1, 1, 3, 4, 5]", "[3, 1, 4, 1, 5]", "Error"]} correct={1} explanation="sorted() returns a new list with elements in ascending order by default. The original list is not modified." />
+
+<InlineQuiz id="quiz-builtins-6" question="What does enumerate() provide when iterating?" options={["Only the value", "Only the index", "Both the index AND the value", "The length of the iterable"]} correct={2} explanation="enumerate() yields (index, value) pairs. Example: for i, val in enumerate(['a','b','c']) gives (0,'a'), (1,'b'), (2,'c')." />
+
+<InlineQuiz id="quiz-builtins-7" question="What does max([10, 5, 20, 8]) return?" options={["5", "8", "10", "20"]} correct={3} explanation="max() returns the largest item in an iterable. Among [10, 5, 20, 8], the maximum value is 20." />
+
+<InlineQuiz id="quiz-builtins-8" question="What does zip(['a','b'], [1,2]) produce?" options={["[&apos;a1&apos;, &apos;b2&apos;]", "[(&apos;a&apos;,1), (&apos;b&apos;,2)]", "[&apos;a&apos;, &apos;b&apos;, 1, 2]", "Error"]} correct={1} explanation="zip() pairs up elements from two iterables. zip(['a','b'], [1,2]) produces [('a',1), ('b',2)] � matching by position." />
+
+<InlineQuiz id="quiz-builtins-9" question="What happens when you call int('hello')?" options={["Returns 0", "Returns None", "Raises a ValueError", "Returns the ASCII codes"]} correct={2} explanation="int() can only convert strings that contain valid integer representations. 'hello' is not a number, so Python raises a ValueError." />
+
+<InlineQuiz id="quiz-builtins-10" question="What is the difference between sorted() and .sort()?" options={["No difference", "sorted() modifies in place, .sort() returns new list", "sorted() returns new list, .sort() modifies in place", ".sort() is faster"]} correct={2} explanation="sorted() creates and returns a NEW sorted list (original unchanged). .sort() modifies the list IN PLACE and returns None." />

@@ -1,0 +1,162 @@
+---
+title: "Stacks & Queues"
+description: "LIFO and FIFO — two fundamental patterns for organizing data flow."
+order: 1
+---
+
+# Stacks & Queues: Order Matters
+
+Stacks and queues are about **controlling the order** in which you process data. They appear everywhere — browser history, undo/redo, print queues, BFS/DFS algorithms.
+
+## Stack: Last In, First Out (LIFO)
+
+Like a stack of plates — you add and remove from the **top**:
+
+<MermaidDiagram>
+graph TD
+  PUSH["push: add to top"] --> TOP["Top → 3"]
+  TOP --> MID["2"]
+  MID --> BOT["1"]
+  POP["pop: remove from top"] --> TOP
+  style PUSH fill:#22c55e,stroke:#16a34a,color:#fff
+  style POP fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+## Queue: First In, First Out (FIFO)
+
+Like a line at a store — first person in line gets served first:
+
+<MermaidDiagram>
+graph LR
+  ENQ["enqueue"] --> BACK["Back: 3"]
+  BACK --> MID2["2"]
+  MID2 --> FRONT["Front: 1"]
+  FRONT --> DEQ["dequeue"]
+  style ENQ fill:#22c55e,stroke:#16a34a,color:#fff
+  style DEQ fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+| | Stack (LIFO) | Queue (FIFO) |
+|---|---|---|
+| **Add** | `push` (top) | `enqueue` (back) |
+| **Remove** | `pop` (top) | `dequeue` (front) |
+| **Use cases** | Undo, DFS, brackets | BFS, scheduling, buffers |
+| **Python** | `list` | `collections.deque` |
+
+### Practice: Stack and Queue
+
+<interactive-code>
+from collections import deque
+
+# Stack using a list
+class Stack:
+    def __init__(self):
+        self.items = []
+    
+    def push(self, item):
+        self.items.append(item)
+    
+    def pop(self):
+        return self.items.pop() if self.items else None
+    
+    def peek(self):
+        return self.items[-1] if self.items else None
+    
+    def size(self):
+        return len(self.items)
+
+# Queue using deque
+class Queue:
+    def __init__(self):
+        self.items = deque()
+    
+    def enqueue(self, item):
+        self.items.append(item)
+    
+    def dequeue(self):
+        return self.items.popleft() if self.items else None
+    
+    def size(self):
+        return len(self.items)
+
+# Demo: Browser history (Stack)
+print("== Browser History (Stack) ==")
+history = Stack()
+for page in ["google.com", "github.com", "python.org", "docs.python.org"]:
+    history.push(page)
+    print(f"  Visited: {page}")
+
+print(f"\n  Current page: {history.peek()}")
+print(f"  Go back: {history.pop()}")
+print(f"  Current page: {history.peek()}")
+
+# Demo: Print queue
+print("\n== Print Queue ==")
+printer = Queue()
+for doc in ["report.pdf", "photo.jpg", "essay.doc"]:
+    printer.enqueue(doc)
+    print(f"  Added: {doc}")
+
+while printer.size() > 0:
+    print(f"  Printing: {printer.dequeue()}")
+</interactive-code>
+
+## Classic: Valid Brackets
+
+The #1 stack interview problem — check if brackets are properly matched:
+
+### Practice: Bracket Matching
+
+<interactive-code>
+def is_valid_brackets(s):
+    stack = []
+    matching = {')': '(', ']': '[', '}': '{'}
+    
+    for char in s:
+        if char in '([{':
+            stack.append(char)
+        elif char in ')]}':
+            if not stack or stack[-1] != matching[char]:
+                return False
+            stack.pop()
+    
+    return len(stack) == 0
+
+tests = [
+    ("()", True),
+    ("()[]{}", True),
+    ("(]", False),
+    ("([{}])", True),
+    ("((())", False),
+    ("{[()]}", True),
+]
+
+for brackets, expected in tests:
+    result = is_valid_brackets(brackets)
+    status = "PASS" if result == expected else "FAIL"
+    print(f"  [{status}] '{brackets}' → {result}")
+</interactive-code>
+
+> **Pro Tip:** Use `collections.deque` for queues, not `list`. `list.pop(0)` is O(n) because it shifts all elements, but `deque.popleft()` is O(1).
+
+> **Common Mistake:** Using a regular list as a queue. `list.pop(0)` is slow for large lists. Always use `deque` for queue operations.
+
+<InlineQuiz id="quiz-sq-1" question="What does LIFO stand for?" options={["Last In First Out", "Last Index First Output", "Linear In Forward Out", "Linked In FIFO Out"]} correct={0} explanation="LIFO = Last In, First Out. Stacks work like a stack of plates: the last plate placed on top is the first one removed." />
+
+<InlineQuiz id="quiz-sq-2" question="What does FIFO stand for?" options={["First In First Out", "Fast In Fast Out", "File Input File Output", "Forward In Forward Out"]} correct={0} explanation="FIFO = First In, First Out. Queues work like a real-world line: the first person in line is served first." />
+
+<InlineQuiz id="quiz-sq-3" question="What are the main operations of a stack?" options={["insert and delete", "push (add to top) and pop (remove from top)", "enqueue and dequeue", "add and remove"]} correct={1} explanation="push() adds to the top, pop() removes from the top, peek() looks at the top without removing." />
+
+<InlineQuiz id="quiz-sq-4" question="What Python data structure can be used as a stack?" options={["Only collections.deque", "A list (append and pop)", "A dictionary", "A set"]} correct={1} explanation="Python lists work as stacks: list.append() is push, list.pop() is pop. Both are O(1) operations." />
+
+<InlineQuiz id="quiz-sq-5" question="What is a common use case for stacks?" options={["Sorting data", "Matching parentheses, undo operations, function call tracking", "Database queries", "File reading"]} correct={1} explanation="Stacks are used for: bracket matching, undo/redo, call stacks, expression evaluation, DFS traversal." />
+
+<InlineQuiz id="quiz-sq-6" question="What Python module provides an efficient queue?" options={["queue", "collections.deque", "Both A and B", "list"]} correct={2} explanation="collections.deque is the most common choice (fast append/popleft). queue.Queue is thread-safe for producer-consumer patterns." />
+
+<InlineQuiz id="quiz-sq-7" question="Why is list.pop(0) slow for implementing a queue?" options={["It is not slow", "It is O(n) because all elements must shift left", "It raises an error", "It only works on strings"]} correct={1} explanation="pop(0) removes the first element, requiring all remaining elements to shift left: O(n). Use deque.popleft() which is O(1)." />
+
+<InlineQuiz id="quiz-sq-8" question="What is a priority queue?" options={["A faster queue", "A queue where elements are dequeued by priority, not insertion order", "A sorted list", "A stack variant"]} correct={1} explanation="Priority queues serve the highest-priority element first. Implemented with heaps: heapq module in Python." />
+
+<InlineQuiz id="quiz-sq-9" question="What is BFS and which data structure does it use?" options={["Breadth-First Search � uses a queue", "Best-First Search � uses a stack", "Binary File Search � uses an array", "Backward Forward Search � uses a deque"]} correct={0} explanation="BFS explores level by level using a queue. It visits all neighbors before going deeper. DFS uses a stack." />
+
+<InlineQuiz id="quiz-sq-10" question="What is a monotonic stack?" options={["A stack with one type", "A stack where elements are always in increasing or decreasing order", "A stack that doesn&apos;t change", "A constant-size stack"]} correct={1} explanation="A monotonic stack maintains elements in sorted order. Elements that break the monotonic property are popped. Used for 'next greater element' problems." />

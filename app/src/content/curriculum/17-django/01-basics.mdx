@@ -1,0 +1,156 @@
+---
+title: "Django Fundamentals"
+description: "Full-stack web development with Django's batteries-included framework."
+order: 1
+---
+
+# Django: The Full-Stack Framework
+
+Django is Python's most popular web framework. It follows the **"batteries included"** philosophy — authentication, database ORM, admin panel, and more come built-in. Instagram, Pinterest, and Mozilla all use Django.
+
+## The MVT Pattern
+
+Django uses **Model-View-Template** (similar to MVC in other frameworks):
+
+<MermaidDiagram>
+graph TD
+  URL["URL Request"] --> VIEW["View: Business logic"]
+  VIEW --> MODEL["Model: Database query"]
+  VIEW --> TEMPLATE["Template: HTML rendering"]
+  MODEL --> VIEW
+  TEMPLATE --> RESP["HTML Response"]
+  style URL fill:#3b82f6,stroke:#2563eb,color:#fff
+  style VIEW fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style MODEL fill:#22c55e,stroke:#16a34a,color:#fff  
+  style TEMPLATE fill:#f59e0b,stroke:#d97706,color:#000
+</MermaidDiagram>
+
+| Component | Purpose | File |
+|-----------|---------|------|
+| **Model** | Database structure | `models.py` |
+| **View** | Business logic, request handling | `views.py` |
+| **Template** | HTML with dynamic data | `templates/*.html` |
+| **URL** | Route mapping | `urls.py` |
+
+## Django Model (ORM)
+
+```python
+from django.db import models
+
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    published = models.DateTimeField(auto_now_add=True)
+    author = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.title
+```
+
+The ORM lets you interact with databases using Python instead of SQL:
+
+```python
+# Create
+Article.objects.create(title="Hello", content="World", author="Alice")
+
+# Read
+articles = Article.objects.all()
+recent = Article.objects.filter(author="Alice").order_by("-published")
+
+# Update
+Article.objects.filter(id=1).update(title="New Title")
+
+# Delete
+Article.objects.filter(id=1).delete()
+```
+
+<MethodUnit category="django" />
+
+### Practice: ORM Simulation
+
+<interactive-code>
+# Simulating Django's ORM pattern
+class QuerySet:
+    def __init__(self, data):
+        self._data = data
+    
+    def filter(self, **kwargs):
+        result = self._data
+        for key, value in kwargs.items():
+            result = [item for item in result if item.get(key) == value]
+        return QuerySet(result)
+    
+    def all(self):
+        return self._data
+    
+    def count(self):
+        return len(self._data)
+    
+    def first(self):
+        return self._data[0] if self._data else None
+    
+    def order_by(self, field):
+        reverse = field.startswith("-")
+        key = field.lstrip("-")
+        return QuerySet(sorted(self._data, key=lambda x: x[key], reverse=reverse))
+
+# Simulated database
+articles = QuerySet([
+    {"id": 1, "title": "Python Basics", "author": "Alice", "views": 1200},
+    {"id": 2, "title": "Django Guide", "author": "Bob", "views": 800},
+    {"id": 3, "title": "Flask Tutorial", "author": "Alice", "views": 950},
+    {"id": 4, "title": "API Design", "author": "Charlie", "views": 2100},
+])
+
+# Query like Django
+print("All articles:", len(articles.all()))
+
+alice_articles = articles.filter(author="Alice")
+print(f"\nAlice's articles: {alice_articles.count()}")
+for a in alice_articles.all():
+    print(f"  - {a['title']} ({a['views']} views)")
+
+top = articles.order_by("-views").first()
+print(f"\nMost viewed: {top['title']} ({top['views']} views)")
+</interactive-code>
+
+## Project Structure
+
+```
+myproject/
+├── manage.py            # CLI tool
+├── myproject/
+│   ├── settings.py      # Configuration
+│   ├── urls.py          # Root URL routing
+│   └── wsgi.py          # Deployment entry
+└── blog/                # An "app"
+    ├── models.py        # Database models
+    ├── views.py         # Request handlers
+    ├── urls.py          # App URLs
+    ├── admin.py         # Admin panel registration
+    └── templates/       # HTML templates
+```
+
+> **Pro Tip:** Django's admin panel (`/admin`) gives you a free CRUD interface for your models. Register a model with `admin.site.register(Article)` and you get a full management UI.
+
+> **Common Mistake:** Forgetting to run `python manage.py makemigrations` and `python manage.py migrate` after changing models. Without migrations, your database schema won't update.
+
+<InlineQuiz id="quiz-django-1" question="What is Django?" options={["A database", "A batteries-included Python web framework", "A front-end library", "A testing tool"]} correct={1} explanation="Django is a high-level Python web framework with built-in ORM, admin panel, authentication, and more � 'batteries included'." />
+
+<InlineQuiz id="quiz-django-2" question="What does Django's ORM do?" options={["Optimizes runtime memory", "Maps Python classes to database tables", "Organizes route mappings", "Obfuscates response messages"]} correct={1} explanation="Object-Relational Mapping lets you interact with databases using Python classes instead of SQL: User.objects.filter(age__gte=18)." />
+
+<InlineQuiz id="quiz-django-3" question="What is Django's MTV pattern?" options={["Model-Template-View", "Model-Test-Validate", "Manage-Transform-Verify", "Map-Track-Visualize"]} correct={0} explanation="Django uses Model (data), Template (presentation), View (logic). Similar to MVC but with different naming." />
+
+<InlineQuiz id="quiz-django-4" question="What is Django Admin?" options={["A CLI tool", "An auto-generated web interface for managing database records", "A deployment tool", "A testing dashboard"]} correct={1} explanation="Django Admin gives you a full web UI for CRUD operations on your models with minimal configuration." />
+
+<InlineQuiz id="quiz-django-5" question="What are Django migrations?" options={["Moving to a new server", "Version-controlled database schema changes", "Data backups", "File transfers"]} correct={1} explanation="Migrations track changes to your models and apply them to the database: python manage.py makemigrations && migrate." />
+
+<InlineQuiz id="quiz-django-6" question="What is manage.py?" options={["A configuration file", "Django&apos;s command-line utility for administrative tasks", "A migration file", "A test runner"]} correct={1} explanation="manage.py is the entry point for Django commands: runserver, makemigrations, migrate, createsuperuser, test, etc." />
+
+<InlineQuiz id="quiz-django-7" question="What is middleware in Django?" options={["Database queries", "Hooks that process requests/responses globally", "Frontend components", "Template tags"]} correct={1} explanation="Middleware processes every request/response. Django includes built-in middleware for security, sessions, CSRF protection, etc." />
+
+<InlineQuiz id="quiz-django-8" question="What is Django REST Framework (DRF)?" options={["Django&apos;s core", "A toolkit for building APIs with Django", "A testing framework", "A database driver"]} correct={1} explanation="DRF adds serializers, viewsets, and routers for building RESTful APIs. It includes browsable API docs and authentication." />
+
+<InlineQuiz id="quiz-django-9" question="What does CSRF protection prevent?" options={["SQL injection", "Cross-Site Request Forgery attacks", "XSS attacks", "Password theft"]} correct={1} explanation="CSRF protection prevents attackers from tricking authenticated users into making unwanted requests. Django includes it by default." />
+
+<InlineQuiz id="quiz-django-10" question="When should you use Django vs Flask?" options={["Django for everything", "Django for large apps with many features, Flask for small or API-only projects", "Flask for everything", "It doesn&apos;t matter"]} correct={1} explanation="Django shines for full-featured web apps (admin, auth, ORM). Flask is better for microservices, APIs, or when you want full control." />

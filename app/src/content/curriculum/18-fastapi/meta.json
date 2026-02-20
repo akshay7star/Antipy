@@ -1,0 +1,6 @@
+{
+    "id": "fastapi",
+    "title": "Modern APIs with FastAPI",
+    "description": "High performance, easy to learn, fast to code, ready for production.",
+    "order": 18
+}

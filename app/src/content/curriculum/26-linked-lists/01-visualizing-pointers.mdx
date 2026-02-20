@@ -1,0 +1,149 @@
+---
+title: "Linked Lists"
+description: "Pointer-based data structures — nodes, traversal, and manipulation."
+order: 1
+---
+
+# Linked Lists: Chain of Nodes
+
+Unlike arrays (which store elements contiguously in memory), linked lists store elements in separate **nodes** connected by **pointers**. Each node knows about the next node, forming a chain.
+
+## Visualization
+
+<MermaidDiagram>
+graph LR
+  HEAD["Head"] --> N1["1 | next"]
+  N1 --> N2["2 | next"]
+  N2 --> N3["3 | next"]
+  N3 --> NULL["None"]
+  style HEAD fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style NULL fill:#6b7280,stroke:#4b5563,color:#fff
+</MermaidDiagram>
+
+## Array vs Linked List
+
+| Operation | Array | Linked List |
+|-----------|-------|-------------|
+| Access by index | O(1) | O(n) |
+| Insert at beginning | O(n) | O(1) |
+| Insert at end | O(1)* | O(n) |
+| Delete by value | O(n) | O(n) |
+| Memory | Contiguous | Scattered |
+
+## Building a Linked List
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+```
+
+### Practice: Linked List Operations
+
+<interactive-code>
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+    
+    def append(self, val):
+        if not self.head:
+            self.head = ListNode(val)
+            return
+        current = self.head
+        while current.next:
+            current = current.next
+        current.next = ListNode(val)
+    
+    def prepend(self, val):
+        self.head = ListNode(val, self.head)
+    
+    def delete(self, val):
+        if self.head and self.head.val == val:
+            self.head = self.head.next
+            return
+        current = self.head
+        while current and current.next:
+            if current.next.val == val:
+                current.next = current.next.next
+                return
+            current = current.next
+    
+    def display(self):
+        parts = []
+        current = self.head
+        while current:
+            parts.append(str(current.val))
+            current = current.next
+        return " → ".join(parts) + " → None"
+    
+    def reverse(self):
+        prev = None
+        current = self.head
+        while current:
+            next_node = current.next
+            current.next = prev
+            prev = current
+            current = next_node
+        self.head = prev
+
+# Build and manipulate
+ll = LinkedList()
+for val in [1, 2, 3, 4, 5]:
+    ll.append(val)
+print(f"Original:  {ll.display()}")
+
+ll.prepend(0)
+print(f"Prepended: {ll.display()}")
+
+ll.delete(3)
+print(f"Deleted 3: {ll.display()}")
+
+ll.reverse()
+print(f"Reversed:  {ll.display()}")
+</interactive-code>
+
+## Common Interview Pattern: Reverse a Linked List
+
+This is the #1 linked list interview question:
+
+```python
+def reverse(head):
+    prev = None
+    current = head
+    while current:
+        next_node = current.next   # Save next
+        current.next = prev        # Reverse pointer
+        prev = current             # Move prev forward
+        current = next_node        # Move current forward
+    return prev                    # New head
+```
+
+> **Pro Tip:** Use a **dummy node** at the head when your operation might change the head. It simplifies edge cases: `dummy = ListNode(0); dummy.next = head`.
+
+> **Common Mistake:** Losing the `next` pointer. Always save `current.next` before overwriting it: `next_node = current.next` then `current.next = prev`.
+
+<InlineQuiz id="quiz-ll-1" question="What is a linked list?" options={["An array of links", "A sequence of nodes where each node points to the next", "A sorted list", "A list with indices"]} correct={1} explanation="A linked list is a chain of nodes. Each node contains data and a reference (pointer) to the next node. The last node points to None." />
+
+<InlineQuiz id="quiz-ll-2" question="What is the main advantage of linked lists over arrays?" options={["Faster access", "O(1) insertion and deletion at any position (given the node)", "Less memory", "Better sorting"]} correct={1} explanation="Inserting/deleting in a linked list is O(1) if you have a reference to the node � just update pointers. Arrays need to shift elements." />
+
+<InlineQuiz id="quiz-ll-3" question="What is the main disadvantage of linked lists?" options={["Can&apos;t store data", "No O(1) random access (must traverse from head)", "Can&apos;t be sorted", "Limited size"]} correct={1} explanation="Accessing the kth element requires traversing from the head: O(k). Arrays provide O(1) access by index." />
+
+<InlineQuiz id="quiz-ll-4" question="What is the 'head' of a linked list?" options={["The last node", "The first node (entry point to the list)", "The middle node", "The largest element"]} correct={1} explanation="The head is the first node � your entry point. To access any element, you start at the head and traverse." />
+
+<InlineQuiz id="quiz-ll-5" question="What is a doubly linked list?" options={["Two linked lists", "Each node has pointers to both next AND previous nodes", "A list with double the size", "A circular list"]} correct={1} explanation="Doubly linked lists have prev and next pointers, allowing traversal in both directions. More memory per node, but more flexible." />
+
+<InlineQuiz id="quiz-ll-6" question="How do you detect a cycle in a linked list?" options={["Check if the last node is None", "Use Floyd&apos;s algorithm (fast and slow pointers)", "Sort the list", "Count the nodes"]} correct={1} explanation="Floyd's cycle detection: move slow pointer 1 step, fast pointer 2 steps. If they meet, there's a cycle. O(n) time, O(1) space." />
+
+<InlineQuiz id="quiz-ll-7" question="How do you reverse a linked list?" options={["Swap data values", "Reverse the pointers: each node points to its previous node", "Create a new list", "Sort in reverse"]} correct={1} explanation="Iterate through the list, reversing each node's next pointer to point to the previous node. Use prev, current, next variables." />
+
+<InlineQuiz id="quiz-ll-8" question="What is a sentinel/dummy node?" options={["A guard node", "A fake head node that simplifies edge cases", "A deleted node", "The tail node"]} correct={1} explanation="A dummy node before the real head simplifies operations � you don't need special logic for inserting/deleting the head node." />
+
+<InlineQuiz id="quiz-ll-9" question="What is the time complexity of searching in an unsorted linked list?" options={["O(1)", "O(log n)", "O(n)", "O(n)"]} correct={2} explanation="You must traverse from head to find an element: O(n) in the worst case. No random access or binary search possible." />
+
+<InlineQuiz id="quiz-ll-10" question="When should you use a linked list over an array?" options={["Always", "When you need frequent insertions/deletions and don&apos;t need random access", "When you need fast lookup", "For sorted data"]} correct={1} explanation="Linked lists excel at frequent insert/delete operations (no shifting needed). Use arrays when you need index-based access." />

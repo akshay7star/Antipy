@@ -1,0 +1,148 @@
+---
+title: "Two Pointers & Sliding Window"
+description: "Efficient array traversal patterns used in 80% of coding interviews."
+order: 1
+---
+
+# Arrays & Strings: Core Patterns
+
+Arrays and strings are the most tested data structures in interviews. Two patterns dominate: **Two Pointers** (work from both ends) and **Sliding Window** (track a range). Master these and you'll solve most array problems.
+
+## Two Pointers
+
+Use two indices that move toward each other or in the same direction:
+
+<MermaidDiagram>
+graph LR
+  A["left pointer"] --> MID["... elements ..."]
+  MID --> B["right pointer"]
+  style A fill:#3b82f6,stroke:#2563eb,color:#fff
+  style B fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+### Classic: Is it a Palindrome?
+
+```python
+def is_palindrome(s):
+    left, right = 0, len(s) - 1
+    while left < right:
+        if s[left] != s[right]:
+            return False
+        left += 1
+        right -= 1
+    return True
+```
+
+### Practice: Two Pointer Problems
+
+<interactive-code>
+# 1. Palindrome checker
+def is_palindrome(s):
+    s = s.lower().replace(" ", "")
+    left, right = 0, len(s) - 1
+    while left < right:
+        if s[left] != s[right]:
+            return False
+        left += 1
+        right -= 1
+    return True
+
+tests = ["racecar", "hello", "A man a plan a canal Panama", "level"]
+for t in tests:
+    print(f"  '{t}' → {'palindrome' if is_palindrome(t) else 'not palindrome'}")
+
+# 2. Two Sum (sorted array) — O(n) with two pointers
+def two_sum_sorted(nums, target):
+    left, right = 0, len(nums) - 1
+    while left < right:
+        current = nums[left] + nums[right]
+        if current == target:
+            return (left, right)
+        elif current < target:
+            left += 1
+        else:
+            right -= 1
+    return None
+
+print(f"\nTwo Sum [1,3,5,7,9] target 12: {two_sum_sorted([1,3,5,7,9], 12)}")
+print(f"Two Sum [2,4,6,8,10] target 10: {two_sum_sorted([2,4,6,8,10], 10)}")
+</interactive-code>
+
+## Sliding Window
+
+Track a "window" of elements as it slides across the array:
+
+<MermaidDiagram>
+graph LR
+  PRE["..."] --> WIN["window start ... window end"]
+  WIN --> POST["..."]
+  style WIN fill:#f59e0b,stroke:#d97706,color:#000
+</MermaidDiagram>
+
+### Practice: Sliding Window
+
+<interactive-code>
+# Maximum sum of k consecutive elements
+def max_subarray_sum(nums, k):
+    if len(nums) < k:
+        return None
+    
+    # Initialize window
+    window_sum = sum(nums[:k])
+    max_sum = window_sum
+    
+    # Slide the window
+    for i in range(k, len(nums)):
+        window_sum += nums[i] - nums[i - k]  # Add new, remove old
+        max_sum = max(max_sum, window_sum)
+    
+    return max_sum
+
+nums = [2, 1, 5, 1, 3, 2, 8, 4, 3]
+for k in [2, 3, 4]:
+    result = max_subarray_sum(nums, k)
+    print(f"Max sum of {k} consecutive: {result}")
+
+# Longest substring without repeating characters
+def longest_unique_substring(s):
+    seen = {}
+    start = 0
+    max_len = 0
+    
+    for end, char in enumerate(s):
+        if char in seen and seen[char] >= start:
+            start = seen[char] + 1
+        seen[char] = end
+        max_len = max(max_len, end - start + 1)
+    
+    return max_len
+
+tests = ["abcabcbb", "bbbbb", "pwwkew", "abcdef"]
+print("\nLongest unique substring:")
+for s in tests:
+    print(f"  '{s}' → {longest_unique_substring(s)}")
+</interactive-code>
+
+> **Pro Tip:** Two Pointers works on **sorted** arrays. If the array isn't sorted, sort it first (O(n log n)) or use a hash map instead.
+
+> **Common Mistake:** Off-by-one errors with window boundaries. Always clarify: is the window `[start, end]` inclusive or `[start, end)` exclusive?
+
+<InlineQuiz id="quiz-2ptr-1" question="What is the two-pointer technique?" options={["Using two mice", "Using two indices to traverse a data structure, often from opposite ends", "Having two arrays", "A sorting algorithm"]} correct={1} explanation="Two pointers use two indices (often left and right) that move toward each other or in the same direction to solve problems efficiently." />
+
+<InlineQuiz id="quiz-2ptr-2" question="What problems is two-pointer commonly used for?" options={["File I/O", "Pair sum, palindrome checking, removing duplicates", "Database queries", "Binary trees"]} correct={1} explanation="Classic two-pointer problems: two-sum in sorted array, checking palindromes, container with most water, removing duplicates." />
+
+<InlineQuiz id="quiz-2ptr-3" question="What is the time complexity of two-pointer on a sorted array?" options={["O(n)", "O(n)", "O(log n)", "O(n log n)"]} correct={1} explanation="Two pointers typically achieve O(n) by processing each element at most once, avoiding the O(n) brute force approach." />
+
+<InlineQuiz id="quiz-2ptr-4" question="How do you check if a string is a palindrome with two pointers?" options={["Compare first and last chars, move inward", "Sort the string", "Reverse and compare", "Use a stack"]} correct={0} explanation="Start with left=0, right=len-1. Compare s[left]==s[right], then left++, right--. If all match, it's a palindrome. O(n) time." />
+
+<InlineQuiz id="quiz-2ptr-5" question="What is the sliding window technique?" options={["A GUI technique", "A two-pointer variant where both pointers move in the same direction", "A sorting algorithm", "A database optimization"]} correct={1} explanation="Sliding window maintains a window [left, right] that expands/contracts. Used for subarray problems: max sum, longest substring, etc." />
+
+<InlineQuiz id="quiz-2ptr-6" question="In the two-sum problem with a sorted array, when do you move the left pointer right?" options={["When the sum is too large", "When the sum is too small", "Always", "When left < right"]} correct={1} explanation="If sum < target, we need a larger sum, so move left pointer right (to a larger number). If sum > target, move right pointer left." />
+
+<InlineQuiz id="quiz-2ptr-7" question="What is the fast and slow pointer technique?" options={["One pointer moves faster", "Two pointers that move at different speeds to detect cycles", "A race condition", "A parallel algorithm"]} correct={1} explanation="Fast pointer moves 2 steps, slow moves 1. If there's a cycle, they'll meet. Used for linked list cycle detection (Floyd's algorithm)." />
+
+<InlineQuiz id="quiz-2ptr-8" question="What is the space complexity of two-pointer?" options={["O(n)", "O(1) � it uses only two variables", "O(log n)", "O(n)"]} correct={1} explanation="Two pointers use constant extra space � just two index variables. This makes it very space-efficient." />
+
+<InlineQuiz id="quiz-2ptr-9" question="Can two-pointer be used on unsorted arrays?" options={["Never", "Sometimes, but often the array needs to be sorted first", "Always", "Only with linked lists"]} correct={1} explanation="Classic two-pointer (converging) usually requires a sorted array. Sliding window doesn't always need sorting. Sort first if needed." />
+
+<InlineQuiz id="quiz-2ptr-10" question="What does the 'Container With Most Water' problem demonstrate?" options={["Stack usage", "Two pointers starting from both ends, moving the shorter side inward", "Binary search", "Dynamic programming"]} correct={1} explanation="Start with pointers at both ends. Area = min(height[l], height[r]) * (r-l). Move the shorter pointer inward to potentially find a taller line." />

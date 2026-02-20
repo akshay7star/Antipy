@@ -1,0 +1,6 @@
+{
+    "id": "collections",
+    "title": "Collections Deep Dive",
+    "description": "Lists, Dictionaries, Sets, and Tuples.",
+    "order": 4
+}

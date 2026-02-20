@@ -1,0 +1,182 @@
+---
+title: "Dictionaries"
+description: "The most important data structure in Python — key-value mapping."
+order: 2
+---
+
+# Dictionaries: Data with Labels
+
+If a list is a numbered row of boxes, a dictionary is a **filing cabinet** — every drawer has a label (key) and contents (value). Dictionaries are the backbone of Python. JSON data, API responses, configuration files, database rows — they're all dictionaries under the hood.
+
+## Creating Dictionaries
+
+```python
+# Empty dict
+data = {}
+
+# Dict with initial data
+person = {
+    "name": "Alice",
+    "age": 30,
+    "city": "NYC"
+}
+
+# From pairs
+pairs = dict(name="Alice", age=30)
+```
+
+## How Dictionaries Work
+
+<MermaidDiagram>
+graph LR
+  K1["Key: 'name'"] --> V1["Value: 'Alice'"]
+  K2["Key: 'age'"] --> V2["Value: 30"]
+  K3["Key: 'city'"] --> V3["Value: 'NYC'"]
+  style K1 fill:#3b82f6,stroke:#2563eb,color:#fff
+  style K2 fill:#3b82f6,stroke:#2563eb,color:#fff
+  style K3 fill:#3b82f6,stroke:#2563eb,color:#fff
+</MermaidDiagram>
+
+**Keys** must be unique and immutable (strings, numbers, tuples). **Values** can be anything — even other dictionaries.
+
+```python
+person = {"name": "Alice", "age": 30}
+
+# Access by key
+print(person["name"])        # "Alice"
+
+# Add/update
+person["email"] = "alice@example.com"    # Add new key
+person["age"] = 31                       # Update existing key
+
+# Delete
+del person["email"]                      # Remove a key
+```
+
+## The `.get()` Lifesaver
+
+Accessing a key that doesn't exist with `[]` raises a `KeyError`. Use `.get()` to avoid crashes:
+
+```python
+person = {"name": "Alice"}
+
+# This crashes:
+# print(person["phone"])   # KeyError!
+
+# This is safe:
+print(person.get("phone"))            # None — no crash
+print(person.get("phone", "N/A"))     # "N/A" — custom default
+```
+
+<MethodUnit category="dict-methods" />
+
+## Essential Dict Methods
+
+| Method | What it does | Example |
+|--------|-------------|---------|
+| `.get(k, default)` | Safe access | `d.get("key", 0)` |
+| `.keys()` | All keys | `list(d.keys())` |
+| `.values()` | All values | `list(d.values())` |
+| `.items()` | Key-value pairs | `for k, v in d.items()` |
+| `.update(other)` | Merge another dict | `d.update({"a": 1})` |
+| `.pop(k)` | Remove and return | `d.pop("key")` |
+| `.setdefault(k, v)` | Get or set if missing | `d.setdefault("count", 0)` |
+
+## Looping Through Dictionaries
+
+```python
+person = {"name": "Alice", "age": 30, "city": "NYC"}
+
+# Loop over keys (default)
+for key in person:
+    print(key)
+
+# Loop over values
+for value in person.values():
+    print(value)
+
+# Loop over both — most common
+for key, value in person.items():
+    print(f"{key}: {value}")
+```
+
+### Practice: Word Counter
+
+<interactive-code>
+# Count word frequency — a classic dict use case
+text = "the cat sat on the mat the cat liked the mat"
+words = text.split()
+
+word_count = {}
+for word in words:
+    word_count[word] = word_count.get(word, 0) + 1
+
+print("Word frequencies:")
+for word, count in sorted(word_count.items(), key=lambda x: x[1], reverse=True):
+    print(f"  '{word}': {count}")
+</interactive-code>
+
+## Nested Dictionaries
+
+Dictionaries can contain other dictionaries — this is how real-world data is structured:
+
+### Practice: Nested Data
+
+<interactive-code>
+# A database of users
+users = {
+    "alice": {"age": 30, "role": "admin", "active": True},
+    "bob": {"age": 25, "role": "user", "active": False},
+    "charlie": {"age": 35, "role": "moderator", "active": True},
+}
+
+# Access nested data
+print(f"Alice's role: {users['alice']['role']}")
+
+# Loop and filter
+print("\nActive users:")
+for name, info in users.items():
+    if info["active"]:
+        print(f"  {name} ({info['role']})")
+</interactive-code>
+
+## Dict Comprehensions
+
+Just like list comprehensions, but for dictionaries:
+
+```python
+# Create a dict from a list
+names = ["Alice", "Bob", "Charlie"]
+name_lengths = {name: len(name) for name in names}
+# {'Alice': 5, 'Bob': 3, 'Charlie': 7}
+```
+
+> **Pro Tip:** Dict lookups are O(1) — instant regardless of size. If you're checking `if x in my_list` repeatedly, convert to a set or dict first for massive speedups.
+
+> **Common Mistake:** Using `dict[key]` on a key that might not exist. Always use `.get(key, default)` unless you're 100% certain the key exists.
+
+<InlineQuiz
+  id="quiz-dicts-1"
+  question="What is the difference between dict[key] and dict.get(key)?"
+  options={["No difference", "dict[key] returns None for missing keys", "dict.get(key) raises KeyError for missing keys", "dict[key] raises KeyError, dict.get(key) returns None"]}
+  correct={3}
+  explanation="dict[key] raises a KeyError if the key doesn't exist. dict.get(key) returns None (or a default value you specify) instead of crashing. Use .get() when you're not sure the key exists."
+/>
+
+<InlineQuiz id="quiz-dicts-2" question="What are dictionary keys required to be?" options={["Strings only", "Integers only", "Any immutable type (hashable)", "Any type at all"]} correct={2} explanation="Dictionary keys must be hashable (immutable): strings, numbers, tuples, frozensets. Lists and dicts CANNOT be keys because they are mutable." />
+
+<InlineQuiz id="quiz-dicts-3" question="How do you add a new key-value pair to a dictionary?" options={["dict.add(key, value)", "dict.append(key, value)", "dict[key] = value", "dict.insert(key, value)"]} correct={2} explanation="Simply assign: dict[key] = value. If the key already exists, the value is updated. If it's new, the pair is added." />
+
+<InlineQuiz id="quiz-dicts-4" question="What does dict.keys() return?" options={["A list of keys", "A view object of all keys", "A tuple of keys", "A set of keys"]} correct={1} explanation="dict.keys() returns a view object (not a list). It dynamically reflects changes to the dictionary. Convert with list(dict.keys()) if needed." />
+
+<InlineQuiz id="quiz-dicts-5" question="What happens when you iterate over a dictionary with 'for x in dict'?" options={["You get the values", "You get the keys", "You get (key, value) tuples", "Error"]} correct={1} explanation="Iterating over a dict directly gives you the KEYS. Use dict.values() for values, or dict.items() for (key, value) pairs." />
+
+<InlineQuiz id="quiz-dicts-6" question="What does dict.items() return?" options={["A list of keys", "A list of values", "Key-value pairs as tuples", "The dict itself"]} correct={2} explanation="dict.items() returns a view of (key, value) tuples: for key, value in dict.items(). This is the most common way to iterate with both key and value." />
+
+<InlineQuiz id="quiz-dicts-7" question="How do you merge two dictionaries in Python 3.9+?" options={["dict1.merge(dict2)", "dict1 + dict2", "dict1 | dict2", "dict1.extend(dict2)"]} correct={2} explanation="Python 3.9+ supports the | (merge) operator: merged = dict1 | dict2. For older versions, use {**dict1, **dict2}." />
+
+<InlineQuiz id="quiz-dicts-8" question="What is a dictionary comprehension?" options={["A way to read dicts from files", "A one-line syntax to create dicts: {k: v for k, v in items}", "A way to compress dict data", "A sorting algorithm for dicts"]} correct={1} explanation="Dict comprehensions create dicts in one line: {x: x**2 for x in range(5)} creates {0:0, 1:1, 2:4, 3:9, 4:16}." />
+
+<InlineQuiz id="quiz-dicts-9" question="What does dict.pop(key) do?" options={["Returns the value without removing", "Removes the key and returns its value", "Removes the last item", "Raises an error always"]} correct={1} explanation="pop(key) removes the specified key and returns its value. You can provide a default: dict.pop(key, default) to avoid KeyError." />
+
+<InlineQuiz id="quiz-dicts-10" question="Are dictionaries ordered in Python 3.7+?" options={["No, they are always unordered", "Yes, they maintain insertion order", "Only if you sort them", "Only with OrderedDict"]} correct={1} explanation="Since Python 3.7, regular dicts officially maintain insertion order. Before 3.7, you needed collections.OrderedDict for ordering." />

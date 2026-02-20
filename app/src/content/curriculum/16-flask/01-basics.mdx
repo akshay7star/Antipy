@@ -1,0 +1,141 @@
+---
+title: "Building APIs with Flask"
+description: "Lightweight web development — routes, templates, and API endpoints."
+order: 1
+---
+
+# Flask: Web Development Made Simple
+
+Flask is a lightweight web framework. It's the easiest way to build web applications and APIs in Python. Unlike Django (which comes with everything), Flask is minimal — you add only what you need.
+
+## How Web Apps Work
+
+<MermaidDiagram>
+graph LR
+  BROWSER["Browser: GET /hello"] --> FLASK["Flask Server"]
+  FLASK --> ROUTE["Route: @app.route '/hello'"]
+  ROUTE --> FUNC["Function: hello()"]
+  FUNC --> RESP["Response: 'Hello World'"]
+  RESP --> BROWSER
+  style BROWSER fill:#3b82f6,stroke:#2563eb,color:#fff
+  style FLASK fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## Basic Flask App
+
+```python
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Hello, World!"
+
+@app.route("/api/users")
+def get_users():
+    users = [
+        {"id": 1, "name": "Alice"},
+        {"id": 2, "name": "Bob"}
+    ]
+    return jsonify(users)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+## Key Concepts
+
+| Concept | What It Does |
+|---------|-------------|
+| `@app.route("/path")` | Maps a URL to a function |
+| `request.args` | Query parameters (`?key=value`) |
+| `request.json` | JSON body from POST requests |
+| `jsonify()` | Convert dict/list to JSON response |
+| `request.method` | HTTP method (GET, POST, etc.) |
+
+<MethodUnit category="flask" />
+
+### Practice: Flask API Simulation
+
+<interactive-code>
+# Simulating Flask without running a server
+class MockFlask:
+    def __init__(self):
+        self.routes = {}
+    
+    def route(self, path, methods=None):
+        def decorator(func):
+            self.routes[path] = func
+            return func
+        return decorator
+    
+    def handle(self, path):
+        if path in self.routes:
+            return self.routes[path]()
+        return "404 Not Found"
+
+app = MockFlask()
+users_db = [
+    {"id": 1, "name": "Alice", "role": "admin"},
+    {"id": 2, "name": "Bob", "role": "user"},
+    {"id": 3, "name": "Charlie", "role": "user"},
+]
+
+@app.route("/")
+def home():
+    return "Welcome to the API!"
+
+@app.route("/api/users")
+def get_users():
+    return {"users": users_db, "total": len(users_db)}
+
+@app.route("/api/stats")
+def get_stats():
+    roles = {}
+    for u in users_db:
+        roles[u["role"]] = roles.get(u["role"], 0) + 1
+    return {"total_users": len(users_db), "by_role": roles}
+
+# Test the routes
+for path in ["/", "/api/users", "/api/stats", "/unknown"]:
+    result = app.handle(path)
+    print(f"GET {path}")
+    print(f"  Response: {result}\n")
+</interactive-code>
+
+## Project Structure
+
+```
+my_flask_app/
+├── app.py           # Main application
+├── routes/          # Route definitions
+├── templates/       # HTML templates
+├── static/          # CSS, JS, images
+├── models.py        # Database models
+└── requirements.txt # Dependencies
+```
+
+> **Pro Tip:** Use `debug=True` during development — it auto-reloads when you change code and shows detailed error pages. Never use it in production.
+
+> **Common Mistake:** Returning Python dicts directly. Flask needs `jsonify()` to set the correct Content-Type header: `return jsonify(data)` not `return data`.
+
+<InlineQuiz id="quiz-flask-1" question="What is Flask?" options={["A database", "A lightweight Python web framework", "A testing tool", "A templating engine"]} correct={1} explanation="Flask is a micro web framework for Python. It's lightweight, flexible, and great for building APIs and small-to-medium web apps." />
+
+<InlineQuiz id="quiz-flask-2" question="What decorator makes a function handle HTTP requests?" options={["@app.get()", "@app.route()", "@app.handle()", "@route()"]} correct={1} explanation="@app.route('/path') maps a URL path to a function. The function is called when someone visits that URL." />
+
+<InlineQuiz id="quiz-flask-3" question="What does Flask's development server provide?" options={["Production hosting", "Auto-reload on code changes and a debugger", "Database management", "Authentication"]} correct={1} explanation="Flask's dev server auto-reloads when you change code and shows an interactive debugger on errors. Never use in production!" />
+
+<InlineQuiz id="quiz-flask-4" question="What is Jinja2?" options={["A database", "Flask&apos;s templating engine for HTML", "A CSS framework", "A testing library"]} correct={1} explanation="Jinja2 is Flask's template engine. It lets you embed Python expressions in HTML: {{ variable }}, {% for %}, {% if %}." />
+
+<InlineQuiz id="quiz-flask-5" question="How do you return JSON from a Flask route?" options={["return json_string", "return jsonify(data)", "return Response(data)", "return json.dumps(data)"]} correct={1} explanation="jsonify() creates a proper JSON response with the correct Content-Type header. It's the standard way to return JSON in Flask." />
+
+<InlineQuiz id="quiz-flask-6" question="What are Flask Blueprints?" options={["HTML templates", "Modular components for organizing routes into separate files", "Database schemas", "Test fixtures"]} correct={1} explanation="Blueprints let you organize your app into modules. Each blueprint can have its own routes, templates, and static files." />
+
+<InlineQuiz id="quiz-flask-7" question="What does request.args contain?" options={["POST data", "Query string parameters (URL ?key=value)", "Headers", "Cookies"]} correct={1} explanation="request.args is a dict of query parameters: for /search?q=python, request.args.get('q') returns 'python'." />
+
+<InlineQuiz id="quiz-flask-8" question="How do you handle POST data in Flask?" options={["request.args", "request.form or request.json", "request.data only", "request.post"]} correct={1} explanation="request.form for form data, request.json for JSON body, request.data for raw bytes." />
+
+<InlineQuiz id="quiz-flask-9" question="What is WSGI?" options={["A framework", "Web Server Gateway Interface � the standard for Python web apps", "A database protocol", "A file format"]} correct={1} explanation="WSGI is the protocol between Python web apps and web servers. Flask, Django, and most frameworks implement WSGI." />
+
+<InlineQuiz id="quiz-flask-10" question="What is the difference between Flask and FastAPI?" options={["No difference", "Flask is synchronous and mature, FastAPI is async with automatic docs", "Flask is faster", "FastAPI doesn&apos;t support Python"]} correct={1} explanation="FastAPI is async-first, auto-generates API docs (Swagger), and uses type hints for validation. Flask is more mature and flexible." />

@@ -1,0 +1,7 @@
+{
+    "id": "arrays-strings",
+    "title": "Arrays & Strings",
+    "description": "Learn crucial patterns like Two Pointers and Sliding Window to manipulate sequences.",
+    "icon": "ListFilter",
+    "order": 23
+}

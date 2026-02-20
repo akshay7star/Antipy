@@ -1,0 +1,148 @@
+---
+title: "SQL & ORM"
+description: "Database fundamentals — SQL queries, Python ORMs, and data persistence."
+order: 1
+---
+
+# Databases: Persistent Data Storage
+
+Applications need to store data permanently — user accounts, products, orders, settings. Databases are purpose-built for this. Python can talk to databases through raw **SQL** or through an **ORM** (Object-Relational Mapper) that lets you use Python objects instead of SQL strings.
+
+## SQL vs ORM
+
+<MermaidDiagram>
+graph LR
+  PY["Python Code"] -- "SQL strings" --> DB1["Database"]
+  PY2["Python Code"] -- "ORM objects" --> ORM["SQLAlchemy ORM"]
+  ORM -- "Generated SQL" --> DB2["Database"]
+  style ORM fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style DB1 fill:#22c55e,stroke:#16a34a,color:#fff
+  style DB2 fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## SQLite with Python
+
+Python comes with SQLite built-in — no installation needed:
+
+```python
+import sqlite3
+
+conn = sqlite3.connect("myapp.db")
+cursor = conn.cursor()
+
+# Create table
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE,
+        age INTEGER
+    )
+""")
+```
+
+## CRUD Operations
+
+| Operation | SQL | Python sqlite3 |
+|-----------|-----|-----------------|
+| **C**reate | `INSERT INTO` | `cursor.execute("INSERT INTO...")` |
+| **R**ead | `SELECT FROM` | `cursor.execute("SELECT...")` |
+| **U**pdate | `UPDATE SET` | `cursor.execute("UPDATE...")` |
+| **D**elete | `DELETE FROM` | `cursor.execute("DELETE...")` |
+
+<MethodUnit category="databases" />
+
+### Practice: Database Operations
+
+<interactive-code>
+import sqlite3
+
+# Create in-memory database
+conn = sqlite3.connect(":memory:")
+cursor = conn.cursor()
+
+# Create table
+cursor.execute("""
+    CREATE TABLE products (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        price REAL,
+        category TEXT,
+        in_stock INTEGER DEFAULT 1
+    )
+""")
+
+# Insert data
+products = [
+    ("Laptop", 999.99, "electronics"),
+    ("Mouse", 29.99, "electronics"),
+    ("Python Book", 39.99, "books"),
+    ("Desk Lamp", 45.00, "home"),
+    ("Keyboard", 79.99, "electronics"),
+]
+
+cursor.executemany(
+    "INSERT INTO products (name, price, category) VALUES (?, ?, ?)",
+    products
+)
+conn.commit()
+
+# Query all
+print("All products:")
+for row in cursor.execute("SELECT * FROM products"):
+    print(f"  {row}")
+
+# Filter
+print("\nElectronics under $100:")
+cursor.execute("SELECT name, price FROM products WHERE category=? AND price < ?", 
+               ("electronics", 100))
+for name, price in cursor.fetchall():
+    print(f"  {name}: ${price}")
+
+# Aggregate
+cursor.execute("SELECT category, COUNT(*), AVG(price) FROM products GROUP BY category")
+print("\nBy category:")
+for cat, count, avg_price in cursor.fetchall():
+    print(f"  {cat}: {count} items, avg ${avg_price:.2f}")
+
+conn.close()
+</interactive-code>
+
+## ORM Pattern (SQLAlchemy-style)
+
+```python
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import Session, declarative_base
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True)
+```
+
+> **Pro Tip:** Always use parameterized queries (`?` placeholders) instead of string formatting. `cursor.execute("SELECT * FROM users WHERE id=?", (user_id,))` prevents SQL injection attacks.
+
+> **Common Mistake:** Forgetting `conn.commit()` after INSERT/UPDATE/DELETE. Without it, your changes are lost when the connection closes.
+
+<InlineQuiz id="quiz-db-1" question="What does SQL stand for?" options={["Simple Query Logic", "Structured Query Language", "Standard Question Language", "System Query Layer"]} correct={1} explanation="SQL (Structured Query Language) is the standard language for managing relational databases � querying, inserting, updating, deleting data." />
+
+<InlineQuiz id="quiz-db-2" question="What is an ORM?" options={["Object Relation Module", "Object-Relational Mapping � Python classes represent database tables", "Online Resource Manager", "Output Render Method"]} correct={1} explanation="ORM maps Python classes to database tables and Python objects to rows. SQLAlchemy is the most popular Python ORM." />
+
+<InlineQuiz id="quiz-db-3" question="What is SQLite?" options={["A cloud database", "A lightweight file-based database built into Python", "A SQL dialect", "A database server"]} correct={1} explanation="SQLite is a serverless, file-based database that comes with Python's standard library. Perfect for development and small apps." />
+
+<InlineQuiz id="quiz-db-4" question="What does SELECT * FROM users WHERE age > 18; do?" options={["Creates a table", "Returns all columns for users older than 18", "Updates ages", "Deletes users"]} correct={1} explanation="SELECT retrieves data, * means all columns, FROM specifies the table, WHERE filters rows. This gets all adult users." />
+
+<InlineQuiz id="quiz-db-5" question="What is a primary key?" options={["The most important column", "A unique identifier for each row in a table", "A password", "A foreign key"]} correct={1} explanation="A primary key uniquely identifies each row. It must be unique and not null. Usually an auto-incrementing integer (id)." />
+
+<InlineQuiz id="quiz-db-6" question="What is a foreign key?" options={["A key from another database", "A column that references a primary key in another table", "An encrypted key", "A temporary key"]} correct={1} explanation="Foreign keys create relationships between tables: orders.user_id references users.id, linking each order to a user." />
+
+<InlineQuiz id="quiz-db-7" question="What is SQL injection?" options={["Inserting data into a database", "A security attack where malicious SQL is injected through user input", "A database optimization", "A type of query"]} correct={1} explanation="SQL injection happens when user input is directly embedded in SQL queries. Always use parameterized queries to prevent it." />
+
+<InlineQuiz id="quiz-db-8" question="How do you prevent SQL injection?" options={["Sanitize strings manually", "Use parameterized queries or ORM", "Validate input length", "Use stored procedures only"]} correct={1} explanation="Parameterized queries: cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,)). Or use an ORM like SQLAlchemy." />
+
+<InlineQuiz id="quiz-db-9" question="What is a JOIN in SQL?" options={["Concatenating strings", "Combining rows from two tables based on a related column", "Merging databases", "Adding columns"]} correct={1} explanation="JOINs combine data from multiple tables: INNER JOIN returns matching rows, LEFT JOIN returns all from left + matches from right." />
+
+<InlineQuiz id="quiz-db-10" question="What is PostgreSQL?" options={["A Python library", "A powerful open-source SQL database server", "A NoSQL database", "A file format"]} correct={1} explanation="PostgreSQL is a robust, enterprise-grade relational database. It supports JSON, full-text search, and advanced features." />

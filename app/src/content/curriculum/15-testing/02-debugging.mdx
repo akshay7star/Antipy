@@ -1,0 +1,159 @@
+---
+title: "Debugging Techniques"
+description: "Finding and fixing bugs systematically — print, pdb, and strategies."
+order: 2
+---
+
+# Debugging: The Art of Finding Bugs
+
+Every developer spends significant time debugging. The difference between a junior and senior developer isn't that seniors write bug-free code — it's that they find bugs faster. Here are the tools and techniques.
+
+## The Debugging Toolkit
+
+| Tool | When to Use | Effort |
+|------|------------|--------|
+| `print()` | Quick checks, simple values | Low |
+| f-string debug `f"{x=}"` | Variable inspection | Low |
+| `breakpoint()` / `pdb` | Step through execution | Medium |
+| `logging` module | Production debugging | Medium |
+| IDE debugger | Complex flows | High |
+
+## Strategy 1: Print Debugging
+
+The simplest and most common approach. Python 3.8+ has a shortcut:
+
+```python
+x = 42
+name = "Alice"
+print(f"{x=}, {name=}")    # Output: x=42, name='Alice'
+```
+
+## Strategy 2: Binary Search Debugging
+
+When you have a bug but don't know where, use binary search:
+
+1. Add a print halfway through the code
+2. Is the output correct? Bug is in the second half
+3. Is it wrong? Bug is in the first half
+4. Repeat until found
+
+### Practice: Debugging
+
+<interactive-code>
+# This function has a bug — can you find it?
+def find_average(numbers):
+    if not numbers:
+        return 0
+    
+    total = 0
+    count = 0
+    
+    for num in numbers:
+        total += num
+        count += 1
+    
+    # Debug prints to trace the issue
+    print(f"  {total=}, {count=}")
+    
+    average = total / count
+    return round(average, 2)
+
+# Test cases
+test_cases = [
+    ([10, 20, 30], 20.0),
+    ([1, 2, 3, 4, 5], 3.0),
+    ([], 0),
+    ([100], 100.0),
+]
+
+for nums, expected in test_cases:
+    result = find_average(nums)
+    status = "PASS" if result == expected else "FAIL"
+    print(f"[{status}] average({nums}) = {result} (expected {expected})")
+</interactive-code>
+
+## Strategy 3: Logging (Production-Ready)
+
+`print()` is fine for development, but `logging` is the professional choice:
+
+```python
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+logger.debug("Detailed info for debugging")
+logger.info("General information")
+logger.warning("Something unexpected")
+logger.error("Something failed")
+logger.critical("Application is crashing")
+```
+
+### Practice: Logging
+
+<interactive-code>
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(levelname)-8s %(message)s'
+)
+logger = logging.getLogger("app")
+
+def process_order(order_id, items):
+    logger.info(f"Processing order #{order_id}")
+    
+    total = 0
+    for item in items:
+        price = item.get("price", 0)
+        qty = item.get("qty", 1)
+        
+        if price <= 0:
+            logger.warning(f"Invalid price for {item['name']}: {price}")
+            continue
+        
+        subtotal = price * qty
+        logger.debug(f"  {item['name']}: ${price} x {qty} = ${subtotal}")
+        total += subtotal
+    
+    if total == 0:
+        logger.error(f"Order #{order_id} has zero total!")
+    else:
+        logger.info(f"Order #{order_id} total: ${total:.2f}")
+    
+    return total
+
+# Test
+items = [
+    {"name": "Widget", "price": 9.99, "qty": 2},
+    {"name": "Gadget", "price": 24.50, "qty": 1},
+    {"name": "Freebie", "price": 0, "qty": 1},
+]
+
+process_order(1001, items)
+</interactive-code>
+
+> **Pro Tip:** Use `breakpoint()` (Python 3.7+) to drop into the interactive debugger. It's equivalent to `import pdb; pdb.set_trace()` but much shorter.
+
+> **Common Mistake:** Leaving `print()` debugging statements in production code. Use `logging` instead — you can control verbosity with log levels without removing code.
+
+<InlineQuiz id="quiz-debug-1" question="What is Python's built-in debugger called?" options={["debug", "pdb", "debugpy", "pydb"]} correct={1} explanation="pdb (Python DeBugger) is the built-in interactive debugger. Use import pdb; pdb.set_trace() or python -m pdb script.py." />
+
+<InlineQuiz id="quiz-debug-2" question="What does a breakpoint() call do?" options={["Stops the program permanently", "Pauses execution and opens the debugger", "Breaks the code", "Logs an error"]} correct={1} explanation="breakpoint() (Python 3.7+) pauses execution and drops into pdb. It's equivalent to import pdb; pdb.set_trace()." />
+
+<InlineQuiz id="quiz-debug-3" question="What does the 'n' command do in pdb?" options={["Go to the next file", "Execute the next line (step over)", "Print a variable named n", "Exit the debugger"]} correct={1} explanation="'n' (next) executes the current line and moves to the next one. It steps OVER function calls (doesn't go inside them)." />
+
+<InlineQuiz id="quiz-debug-4" question="What does the 's' command do in pdb?" options={["Skip the current line", "Step INTO a function call", "Show the stack", "Set a breakpoint"]} correct={1} explanation="'s' (step) steps INTO a function call, letting you debug inside it. Use 'n' to step over instead." />
+
+<InlineQuiz id="quiz-debug-5" question="What is a stack trace (traceback)?" options={["A performance log", "The sequence of function calls that led to an error", "A variable dump", "A memory map"]} correct={1} explanation="A traceback shows the chain of function calls leading to an error, from the entry point to where the exception occurred." />
+
+<InlineQuiz id="quiz-debug-6" question="What is print debugging?" options={["A formal debugging method", "Adding print() statements to inspect values during execution", "Printing documentation", "Using a printer"]} correct={1} explanation="Print debugging is the simplest approach: add print(variable) to inspect values. Simple but effective for quick checks." />
+
+<InlineQuiz id="quiz-debug-7" question="What does the logging module provide over print()?" options={["Nothing extra", "Log levels, timestamps, file output, and formatting", "Faster output", "Colored text"]} correct={1} explanation="logging provides severity levels (DEBUG/INFO/WARNING/ERROR/CRITICAL), timestamps, file output, and configurable formatting." />
+
+<InlineQuiz id="quiz-debug-8" question="What is a rubber duck debugging?" options={["Using a special tool", "Explaining your code out loud to find the bug", "A Python library", "A type of test"]} correct={1} explanation="Rubber duck debugging means explaining your code line by line (to a rubber duck or anyone). The process of explaining often reveals the bug!" />
+
+<InlineQuiz id="quiz-debug-9" question="What command in pdb prints a variable?" options={["print(x)", "p x", "show x", "display x"]} correct={1} explanation="'p expression' prints the value of an expression in pdb. 'pp' pretty-prints for complex objects." />
+
+<InlineQuiz id="quiz-debug-10" question="What is the most common cause of bugs?" options={["Bad computer hardware", "Off-by-one errors, wrong assumptions, and unhandled edge cases", "Using Python", "Not enough tests"]} correct={1} explanation="Most bugs come from incorrect assumptions, off-by-one errors, not handling edge cases (empty input, None), and logic errors." />

@@ -1,0 +1,7 @@
+{
+    "id": "dynamic-programming",
+    "title": "Dynamic Programming",
+    "description": "Optimize recursive solutions with memoization and tabulation.",
+    "icon": "TrendingUp",
+    "order": 29
+}

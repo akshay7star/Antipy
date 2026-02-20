@@ -1,0 +1,172 @@
+---
+title: "Recursion & Sorting Algorithms"
+description: "Understanding recursive thinking and how sorting algorithms actually work."
+order: 1
+---
+
+# Recursion: Functions That Call Themselves
+
+Recursion is when a function calls itself to break a big problem into smaller identical problems. It's the foundation of many algorithms — tree traversal, divide-and-conquer, dynamic programming.
+
+## The Two Rules of Recursion
+
+1. **Base case** — when to STOP (prevents infinite loop)
+2. **Recursive case** — break the problem into a smaller version
+
+<MermaidDiagram>
+graph TD
+  F5["factorial 5"] --> F4["factorial 4"]
+  F4 --> F3["factorial 3"]
+  F3 --> F2["factorial 2"]
+  F2 --> F1["factorial 1"]
+  F1 --> BASE["Base case: return 1"]
+  style F5 fill:#3b82f6,stroke:#2563eb,color:#fff
+  style BASE fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+```python
+def factorial(n):
+    if n <= 1:         # Base case
+        return 1
+    return n * factorial(n - 1)  # Recursive case
+```
+
+### Practice: Recursive Problems
+
+<interactive-code>
+# 1. Factorial
+def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+
+print(f"5! = {factorial(5)}")
+
+# 2. Fibonacci
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+fib_nums = [fibonacci(i) for i in range(10)]
+print(f"Fibonacci: {fib_nums}")
+
+# 3. Sum of nested list (recursive flatten)
+def deep_sum(lst):
+    total = 0
+    for item in lst:
+        if isinstance(item, list):
+            total += deep_sum(item)  # Recurse into sublists
+        else:
+            total += item
+    return total
+
+nested = [1, [2, 3], [4, [5, 6]], 7]
+print(f"Deep sum of {nested}: {deep_sum(nested)}")
+
+# 4. Binary search (recursive)
+def binary_search(arr, target, low=0, high=None):
+    if high is None:
+        high = len(arr) - 1
+    if low > high:
+        return -1
+    
+    mid = (low + high) // 2
+    if arr[mid] == target:
+        return mid
+    elif arr[mid] < target:
+        return binary_search(arr, target, mid + 1, high)
+    else:
+        return binary_search(arr, target, low, mid - 1)
+
+arr = [1, 3, 5, 7, 9, 11, 13, 15]
+print(f"\nBinary search for 7 in {arr}: index {binary_search(arr, 7)}")
+print(f"Binary search for 10: index {binary_search(arr, 10)}")
+</interactive-code>
+
+## Sorting Algorithms
+
+### Quick Sort — O(n log n) average
+
+```python
+def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)
+```
+
+### Practice: Sorting
+
+<interactive-code>
+# Quicksort implementation
+def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)
+
+# Merge sort implementation
+def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+    return merge(left, right)
+
+def merge(left, right):
+    result = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i]); i += 1
+        else:
+            result.append(right[j]); j += 1
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+import random
+data = random.sample(range(100), 10)
+print(f"Original:   {data}")
+print(f"Quicksort:  {quicksort(data)}")
+print(f"Merge sort: {merge_sort(data)}")
+print(f"Built-in:   {sorted(data)}")
+</interactive-code>
+
+> **Pro Tip:** Python's `sys.setrecursionlimit()` is 1000 by default. For deep recursion, convert to an iterative approach with an explicit stack.
+
+> **Common Mistake:** Forgetting the base case — this creates infinite recursion and a `RecursionError`. Always define when the function should stop calling itself.
+
+<InlineQuiz
+  id="quiz-recursion-1"
+  question="What happens if a recursive function has no base case?"
+  options={["It returns 0", "It runs forever until a RecursionError", "It automatically stops after 10 calls", "It returns None"]}
+  correct={1}
+  explanation="Without a base case, the function calls itself infinitely. Python has a default recursion limit of 1000, and will raise a RecursionError when that limit is hit."
+/>
+
+<InlineQuiz id="quiz-rec-2" question="What are the two essential parts of recursion?" options={["Input and output", "Base case and recursive case", "Function and class", "Loop and condition"]} correct={1} explanation="Every recursive function needs: a BASE CASE (when to stop) and a RECURSIVE CASE (calling itself with a smaller problem)." />
+
+<InlineQuiz id="quiz-rec-3" question="What happens without a base case?" options={["The function returns None", "Infinite recursion  RecursionError (stack overflow)", "It works fine", "It uses more memory"]} correct={1} explanation="Without a base case, the function calls itself forever until Python's recursion limit is hit, raising RecursionError." />
+
+<InlineQuiz id="quiz-rec-4" question="What is the call stack?" options={["A list of function names", "A memory structure that tracks function calls and their local variables", "CPU cache", "A debug tool"]} correct={1} explanation="Each function call creates a 'frame' on the call stack with its local variables. Recursion adds many frames, which is why deep recursion can overflow." />
+
+<InlineQuiz id="quiz-rec-5" question="What is Python's default recursion limit?" options={["100", "1000", "10000", "No limit"]} correct={1} explanation="Python's default recursion limit is 1000 calls deep. You can change it with sys.setrecursionlimit(), but deep recursion usually means you should use iteration." />
+
+<InlineQuiz id="quiz-rec-6" question="What is the factorial of 5 (5!)?" options={["25", "120", "60", "720"]} correct={1} explanation="5! = 5  4  3  2  1 = 120. Factorial is a classic recursion example: factorial(n) = n * factorial(n-1)." />
+
+<InlineQuiz id="quiz-rec-7" question="What is memoization?" options={["Writing memos", "Caching recursive results to avoid redundant computation", "Memory management", "A sorting technique"]} correct={1} explanation="Memoization stores results of expensive function calls: if fibonacci(5) was computed before, return the cached result instead of recomputing." />
+
+<InlineQuiz id="quiz-rec-8" question="What is merge sort's approach?" options={["Swap adjacent elements", "Divide the array in half, recursively sort each half, merge them", "Pick a pivot and partition", "Build a heap"]} correct={1} explanation="Merge sort is a divide-and-conquer algorithm: split in half  sort each half  merge sorted halves. Always O(n log n)." />
+
+<InlineQuiz id="quiz-rec-9" question="What is the time complexity of quicksort on average?" options={["O(n)", "O(n log n)", "O(n)", "O(log n)"]} correct={1} explanation="Quicksort averages O(n log n). Worst case is O(n) for already-sorted arrays (with poor pivot selection), but it's fast in practice." />
+
+<InlineQuiz id="quiz-rec-10" question="Can every recursive solution be converted to an iterative one?" options={["No, some problems require recursion", "Yes, using an explicit stack data structure", "Only simple recursion", "Only with tail call optimization"]} correct={1} explanation="Every recursive algorithm can be rewritten iteratively using an explicit stack. However, some problems (like tree traversal) are more natural with recursion." />

@@ -1,0 +1,169 @@
+---
+title: "String Formatting"
+description: "Building dynamic strings with f-strings, format(), and templates."
+order: 2
+---
+
+# String Formatting: Building Dynamic Text
+
+Almost every program needs to build strings dynamically — inserting variables, formatting numbers, aligning output. Python has evolved its string formatting over the years, and **f-strings** (introduced in Python 3.6) are the modern, fastest, most readable way.
+
+## f-strings: The Modern Way
+
+Prefix a string with `f` and put expressions inside `{curly braces}`:
+
+```python
+name = "Alice"
+age = 30
+print(f"Hello, {name}! You are {age} years old.")
+# "Hello, Alice! You are 30 years old."
+```
+
+You can put **any Python expression** inside the braces:
+
+```python
+print(f"2 + 3 = {2 + 3}")           # "2 + 3 = 5"
+print(f"Name length: {len(name)}")    # "Name length: 5"
+print(f"{'hello'.upper()}")           # "HELLO"
+```
+
+## Formatting Numbers
+
+f-strings have a mini-language for number formatting after a colon:
+
+| Format | Code | Input | Output |
+|--------|------|-------|--------|
+| 2 decimal places | `{x:.2f}` | `3.14159` | `3.14` |
+| Percentage | `{x:.1%}` | `0.856` | `85.6%` |
+| Thousands separator | `{x:,}` | `1000000` | `1,000,000` |
+| Padding with zeros | `{x:05d}` | `42` | `00042` |
+| Right-align | `{x:>10}` | `"hi"` | `"        hi"` |
+| Center | `{x:^10}` | `"hi"` | `"    hi    "` |
+
+### Practice: Number Formatting
+
+<interactive-code>
+# Price formatting
+price = 1299.5
+discount = 0.15
+final = price * (1 - discount)
+
+print(f"Original:  ${price:,.2f}")
+print(f"Discount:  {discount:.0%}")
+print(f"Final:     ${final:,.2f}")
+print(f"You save:  ${price - final:,.2f}")
+
+# Padding and alignment
+print("\n--- Formatted Table ---")
+items = [("Widget", 9.99), ("Gadget", 24.50), ("Thingamajig", 149.99)]
+for name, cost in items:
+    print(f"  {name:<15} ${cost:>8.2f}")
+</interactive-code>
+
+## Multi-line Strings
+
+Use triple quotes for strings that span multiple lines:
+
+```python
+# Triple quotes preserve line breaks
+message = """Dear User,
+
+Thank you for signing up.
+Your account is now active.
+
+Best regards,
+The Team"""
+```
+
+Triple-quoted strings are also used for **docstrings** — documentation inside functions and classes:
+
+```python
+def calculate_tax(amount, rate=0.1):
+    """Calculate tax on a given amount.
+    
+    Args:
+        amount: The base amount
+        rate: Tax rate (default 10%)
+    
+    Returns:
+        The tax amount as a float
+    """
+    return amount * rate
+```
+
+## Escape Characters
+
+Special characters that start with `\`:
+
+| Escape | Meaning | Example |
+|--------|---------|---------|
+| `\n` | New line | `"Line 1\nLine 2"` |
+| `\t` | Tab | `"Col1\tCol2"` |
+| `\\` | Literal backslash | `"C:\\Users"` |
+| `\"` | Quote inside string | `"He said \"hi\""` |
+
+### Practice: Building Reports
+
+<interactive-code>
+# Build a formatted report
+students = [
+    {"name": "Alice", "score": 92, "grade": "A"},
+    {"name": "Bob", "score": 78, "grade": "B+"},
+    {"name": "Charlie", "score": 95, "grade": "A+"},
+    {"name": "Diana", "score": 64, "grade": "C"},
+]
+
+print("=" * 40)
+print(f"{'STUDENT REPORT':^40}")
+print("=" * 40)
+print(f"{'Name':<12} {'Score':>6} {'Grade':>8}")
+print("-" * 40)
+
+for s in students:
+    # Color-code based on score
+    status = "PASS" if s["score"] >= 70 else "FAIL"
+    print(f"{s['name']:<12} {s['score']:>6} {s['grade']:>8}  [{status}]")
+
+avg = sum(s["score"] for s in students) / len(students)
+print("-" * 40)
+print(f"{'Average':<12} {avg:>6.1f}")
+</interactive-code>
+
+## The .format() Method (Older Style)
+
+Before f-strings, Python used `.format()`. You'll see this in older codebases:
+
+```python
+# .format() style
+print("Hello, {}!".format("Alice"))
+print("{name} is {age}".format(name="Alice", age=30))
+print("{0} and {1}".format("Alice", "Bob"))
+```
+
+f-strings are preferred in all new code — they're faster and more readable.
+
+> **Pro Tip:** Use f-strings for debugging: `print(f"{variable=}")` prints both the name and value. `x = 42; print(f"{x=}")` outputs `x=42`.
+
+> **Common Mistake:** Forgetting the `f` prefix. `"{name}"` prints literally `{name}`. You need `f"{name}"` to substitute the variable.
+
+<InlineQuiz id="quiz-fmt-1" question="Which string formatting method is recommended in modern Python?" options={["% formatting", ".format()", "f-strings", "Template strings"]} correct={2} explanation="F-strings (f'...') were introduced in Python 3.6 and are the recommended approach - they are concise, readable, and fast." />
+
+<InlineQuiz id="quiz-fmt-2" question="What does f'{3.14159:.2f}' produce?" options={["3.14159", "3.14", "3.1", "3"]} correct={1} explanation="The :.2f format spec means 'float with 2 decimal places'. So 3.14159 is formatted as '3.14'." />
+
+<InlineQuiz id="quiz-fmt-3" question="What does f'{42:05d}' produce?" options={["42", "00042", "42000", "420"]} correct={1} explanation=":05d means 'integer, padded to 5 digits with leading zeros'. 42 becomes '00042'." />
+
+<InlineQuiz id="quiz-fmt-4" question="What does f'{name!r}' do?" options={["Reverses the string", "Shows the repr() of name (with quotes)", "Removes whitespace", "Rounds the value"]} correct={1} explanation="!r calls repr() on the value, which shows the string with quotes: f'{name!r}' produces it with quotes visible." />
+
+<InlineQuiz id="quiz-fmt-5" question="How do you include a literal curly brace in an f-string?" options={["double it", "{{", "{{}}", "You cannot"]} correct={1} explanation="Double the braces: {{ produces a literal &#123; and }} produces a literal &#125;. f'{{hello}}' outputs '&#123;hello&#125;'." />
+
+<InlineQuiz id="quiz-fmt-6" question="What does f'{1000000:,}' produce?" options={["1000000", "1,000,000", "1.000.000", "1 000 000"]} correct={1} explanation="The :, format spec adds comma separators for thousands. 1000000 becomes '1,000,000'." />
+
+<InlineQuiz id="quiz-fmt-7" question="What does '{} and {}'.format('salt', 'pepper') produce?" options={["salt and pepper", "{} and {}", "salt and {}", "Error"]} correct={0} explanation=".format() replaces &#123;&#125; placeholders with arguments in order. The first &#123;&#125; gets 'salt', the second gets 'pepper'." />
+
+<InlineQuiz id="quiz-fmt-8" question="What does f'{text:>20}' do?" options={["Left-aligns in 20 chars", "Right-aligns in 20 chars", "Centers in 20 chars", "Truncates to 20 chars"]} correct={1} explanation=":>20 right-aligns the value within a field of 20 characters. :< left-aligns, :^ centers." />
+
+<InlineQuiz id="quiz-fmt-9" question="Can you call methods inside f-string expressions?" options={["No, only variables", "Yes, any valid Python expression", "Only built-in functions", "Only string methods"]} correct={1} explanation="F-strings accept ANY valid Python expression: f'{name.upper()}', f'{len(items)}', f'{x + y * 2}' all work." />
+
+<InlineQuiz id="quiz-fmt-10" question="What is the output of: f'{True}'?" options={["1", "true", "True", "Error"]} correct={2} explanation="F-strings convert values using str(). str(True) returns 'True' with a capital T (Python's boolean representation)." />
+
+

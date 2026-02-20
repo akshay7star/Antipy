@@ -1,0 +1,163 @@
+---
+title: "The Python Interpreter"
+description: "How Python runs your code — from text file to execution."
+order: 1
+---
+
+# Welcome to Python
+
+Before you write a single line of code, it helps to understand **what happens when you run Python**. Unlike languages like C or Java, Python doesn't require a separate compilation step. You write code, and it runs immediately. This is what makes Python the go-to language for beginners, data scientists, and rapid prototyping.
+
+## How the Interpreter Works
+
+When you type `python my_script.py` in a terminal, here's what actually happens under the hood:
+
+<MermaidDiagram>
+graph LR
+  A["Your Code: hello.py"] --> B["Python Interpreter"]
+  B --> C["Bytecode: .pyc files"]
+  C --> D["Python Virtual Machine"]
+  D --> E["Output on Screen"]
+  style A fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style E fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+1. **You write code** in a `.py` text file — it's just plain English-like text
+2. **The interpreter reads** your file line by line from top to bottom
+3. **It converts** your code into "bytecode" — an intermediate format the machine can process faster
+4. **The Python Virtual Machine (PVM)** executes that bytecode
+5. **You see the output** on screen
+
+You never see steps 3-4. Python handles them invisibly. That's why it feels like your code "just runs."
+
+> **Why does this matter?** Because Python reads top-to-bottom, the **order** of your code matters. You can't use a variable before you create it. You can't call a function before you define it (in most cases). Understanding this flow prevents 90% of beginner errors.
+
+## Your First Command: `print()`
+
+The `print()` function is how Python talks back to you. It takes whatever you put inside the parentheses and displays it on the screen.
+
+```python
+print("Hello, AntiPy!")
+```
+
+Think of `print()` like a loudspeaker. Your code runs silently behind the scenes — `print()` is the only way to hear what's happening.
+
+### Try it yourself
+
+Modify the code below. Try printing your own name, a number, or even a math calculation like `print(2 + 2)`.
+
+<interactive-code>
+# Change the text inside the quotes to anything you want!
+print("I am learning Python!")
+
+# You can print numbers too — no quotes needed
+print(42)
+
+# Python can do math right inside print()
+print(10 + 5)
+print(100 / 3)
+</interactive-code>
+
+## Variables: Storing Data
+
+Variables are **labels** that point to data stored in your computer's memory. Think of them like sticky notes — you write a name on the note and stick it on a value.
+
+<MermaidDiagram>
+graph LR
+  V1["name"] --> D1["'Akshay'"]
+  V2["age"] --> D2["25"]
+  V3["is_learning"] --> D3["True"]
+  style D1 fill:#f59e0b,stroke:#d97706,color:#000
+  style D2 fill:#3b82f6,stroke:#2563eb,color:#fff
+  style D3 fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+In Python, you don't need to declare the *type* of a variable. Python figures it out automatically. This is called **dynamic typing**.
+
+```python
+name = "Akshay"       # Python knows this is a string (text)
+age = 25              # Python knows this is an integer (whole number)
+is_learning = True    # Python knows this is a boolean (True/False)
+```
+
+### The `=` sign is NOT "equals"
+
+This is a common trap. In math, `=` means "is equal to." In Python, `=` means **"assign the value on the right to the name on the left."**
+
+```python
+x = 10          # "x now points to the value 10"
+x = x + 5       # "take the current value of x (10), add 5, and store the result (15) back in x"
+```
+
+### Practice: Variables in Action
+
+<interactive-code>
+# Create your own variables
+my_name = "Python Learner"
+my_age = 20
+favorite_number = 7.5
+
+# Print them out
+print("Name:", my_name)
+print("Age:", my_age)
+print("Fav Number:", favorite_number)
+
+# Reassign — variables can change!
+my_age = 21
+print("Next year I'll be:", my_age)
+</interactive-code>
+
+## Data Types: The 4 Core Types
+
+Every value in Python has a **type**. The type determines what you can do with that value. Here are the four you'll use constantly:
+
+| Type | Example | What It Is | Use `type()` |
+|------|---------|------------|--------------|
+| `str` | `"hello"` | Text (always in quotes) | `type("hello")` → `<class 'str'>` |
+| `int` | `42` | Whole numbers | `type(42)` → `<class 'int'>` |
+| `float` | `3.14` | Decimal numbers | `type(3.14)` → `<class 'float'>` |
+| `bool` | `True` | True or False | `type(True)` → `<class 'bool'>` |
+
+### Practice: Check the Types
+
+<interactive-code>
+# Use type() to discover what Python thinks each value is
+print(type("Hello"))        # str — text
+print(type(42))             # int — whole number
+print(type(3.14))           # float — decimal
+print(type(True))           # bool — True/False
+
+# Surprise! What type is this?
+print(type(10 / 3))         # Division ALWAYS returns a float in Python
+print(type(10 // 3))        # Floor division returns an int
+</interactive-code>
+
+> **Pro Tip:** Use `type()` whenever you're confused about what a variable contains. It's the fastest debugging tool in Python. Just wrap any value or variable in `type()` and print it.
+
+> **Common Mistake:** Writing `print "hello"` without parentheses. This was valid in Python 2, but Python 3 requires `print("hello")` with parentheses. Always include them.
+
+<InlineQuiz
+  id="quiz-interpreter-1"
+  question="What does Python's interpreter do?"
+  options={["Compiles code to machine language before running", "Reads and executes code line by line", "Only checks for syntax errors", "Converts Python to JavaScript"]}
+  correct={1}
+  explanation="Python is an interpreted language � the interpreter reads your code line by line and executes it immediately, without a separate compilation step."
+/>
+
+<InlineQuiz id="quiz-interp-2" question="Which of the following is the correct file extension for a Python script?" options={[".py", ".python", ".pt", ".pyt"]} correct={0} explanation="Python files use the .py extension. For example: hello.py, calculator.py, etc." />
+
+<InlineQuiz id="quiz-interp-3" question="What does REPL stand for?" options={["Read Execute Print Loop", "Read Evaluate Print Loop", "Run Execute Process Loop", "Read Edit Print Loop"]} correct={1} explanation="REPL stands for Read-Evaluate-Print-Loop. It reads your input, evaluates the expression, prints the result, and loops back for more input." />
+
+<InlineQuiz id="quiz-interp-4" question="What is the output of: print(2 + 3 * 4)?" options={["20", "14", "24", "Error"]} correct={1} explanation="Python follows standard math order of operations (PEMDAS). Multiplication happens first: 3 * 4 = 12, then addition: 2 + 12 = 14." />
+
+<InlineQuiz id="quiz-interp-5" question="Which symbol is used for comments in Python?" options={["//", "/* */", "#", "--"]} correct={2} explanation="Python uses the # symbol for single-line comments. Everything after # on that line is ignored by the interpreter." />
+
+<InlineQuiz id="quiz-interp-6" question="What type of language is Python?" options={["Compiled only", "Interpreted", "Assembly", "Machine language"]} correct={1} explanation="Python is an interpreted language � code is executed line by line by the Python interpreter, without a separate compilation step to machine code." />
+
+<InlineQuiz id="quiz-interp-7" question="What happens if you run a Python file with a syntax error?" options={["The error is automatically fixed", "The program runs partially up to the error", "The program doesn&apos;t run at all", "It depends on the error type"]} correct={2} explanation="Python checks syntax before execution. If there's a syntax error, the entire program fails to run � even lines before the error won't execute." />
+
+<InlineQuiz id="quiz-interp-8" question="What is the output of: print('Hello' + ' ' + 'World')?" options={["HelloWorld", "Hello World", "Hello + World", "Error"]} correct={1} explanation="The + operator concatenates (joins) strings together. 'Hello' + ' ' + 'World' produces 'Hello World' with a space in between." />
+
+<InlineQuiz id="quiz-interp-9" question="Which of these is a valid variable name in Python?" options={["2name", "my-var", "my_var", "class"]} correct={2} explanation="Variable names can contain letters, numbers, and underscores, but cannot start with a number, contain hyphens, or be a reserved keyword like 'class'." />
+
+<InlineQuiz id="quiz-interp-10" question="What does the print() function do?" options={["Saves data to a file", "Displays output to the console", "Creates a new variable", "Reads user input"]} correct={1} explanation="print() displays output to the console/terminal. It's one of the most commonly used functions for debugging and showing results." />

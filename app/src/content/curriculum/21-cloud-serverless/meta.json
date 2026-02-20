@@ -1,0 +1,6 @@
+{
+    "id": "cloud-serverless",
+    "title": "Cloud & Serverless",
+    "description": "Deploy Python apps to the cloud using Docker, AWS Lambda, and Azure Functions.",
+    "order": 21
+}

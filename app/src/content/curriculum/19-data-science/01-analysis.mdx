@@ -1,0 +1,135 @@
+---
+title: "Data Analysis with Python"
+description: "Pandas, NumPy, and data visualization — the data science toolkit."
+order: 1
+---
+
+# Data Science with Python
+
+Python dominates data science because of three libraries: **NumPy** (numbers), **Pandas** (tables), and **Matplotlib** (charts). Together, they form the foundation of data analysis, machine learning, and scientific computing.
+
+## The Data Science Stack
+
+<MermaidDiagram>
+graph TD
+  RAW["Raw Data: CSV, JSON, SQL"] --> PANDAS["Pandas: Clean and Transform"]
+  PANDAS --> NUMPY["NumPy: Compute and Analyze"]
+  NUMPY --> VIZ["Matplotlib: Visualize"]
+  VIZ --> INSIGHT["Insights and Decisions"]
+  style PANDAS fill:#3b82f6,stroke:#2563eb,color:#fff
+  style NUMPY fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style VIZ fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## NumPy: Fast Number Crunching
+
+NumPy arrays are 50x faster than Python lists for numerical operations:
+
+```python
+import numpy as np
+
+arr = np.array([1, 2, 3, 4, 5])
+print(arr * 2)          # [2, 4, 6, 8, 10] — vectorized!
+print(arr.mean())       # 3.0
+print(arr.std())        # 1.414...
+```
+
+## Pandas: Data in Tables
+
+Pandas DataFrames are like spreadsheets in code:
+
+```python
+import pandas as pd
+
+df = pd.read_csv("data.csv")
+print(df.head())             # First 5 rows
+print(df.describe())         # Statistics
+df_filtered = df[df["age"] > 25]
+```
+
+<MethodUnit category="data-science" />
+
+### Practice: Data Analysis Simulation
+
+<interactive-code>
+# Simulating Pandas-style analysis without the library
+class Series:
+    def __init__(self, data, name=""):
+        self.data = data
+        self.name = name
+    
+    def mean(self): return sum(self.data) / len(self.data)
+    def min(self): return min(self.data)
+    def max(self): return max(self.data)
+    def sum(self): return sum(self.data)
+    
+    def describe(self):
+        n = len(self.data)
+        sorted_d = sorted(self.data)
+        return {
+            "count": n,
+            "mean": self.mean(),
+            "min": self.min(),
+            "max": self.max(),
+            "median": sorted_d[n//2] if n % 2 else (sorted_d[n//2-1] + sorted_d[n//2]) / 2,
+        }
+
+# Sales data analysis
+monthly_sales = Series(
+    [12000, 15000, 11000, 18000, 22000, 19000, 
+     25000, 23000, 20000, 17000, 21000, 28000],
+    "Monthly Sales"
+)
+
+stats = monthly_sales.describe()
+print("Sales Statistics:")
+for key, value in stats.items():
+    if isinstance(value, float):
+        print(f"  {key}: ${value:,.0f}")
+    else:
+        print(f"  {key}: {value}")
+
+# Find best and worst months
+months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+best_idx = monthly_sales.data.index(monthly_sales.max())
+worst_idx = monthly_sales.data.index(monthly_sales.min())
+print(f"\nBest month: {months[best_idx]} (${monthly_sales.max():,})")
+print(f"Worst month: {months[worst_idx]} (${monthly_sales.min():,})")
+
+# Growth rate
+growth = [(monthly_sales.data[i] - monthly_sales.data[i-1]) / monthly_sales.data[i-1] * 100 
+          for i in range(1, len(monthly_sales.data))]
+print(f"\nAvg monthly growth: {sum(growth)/len(growth):.1f}%")
+</interactive-code>
+
+## The Workflow
+
+1. **Load** — `pd.read_csv()`, `pd.read_json()`, `pd.read_sql()`
+2. **Explore** — `.head()`, `.info()`, `.describe()`, `.shape`
+3. **Clean** — `.dropna()`, `.fillna()`, `.rename()`, `.astype()`
+4. **Transform** — `.groupby()`, `.merge()`, `.pivot_table()`
+5. **Visualize** — `.plot()`, Matplotlib, Seaborn
+
+> **Pro Tip:** Install Jupyter Notebook (`pip install jupyter`) for interactive data exploration. It's the standard tool for data science work.
+
+> **Common Mistake:** Modifying a DataFrame slice without `.copy()`. Use `df_subset = df[df["age"] > 25].copy()` to avoid the `SettingWithCopyWarning`.
+
+<InlineQuiz id="quiz-ds-1" question="What is pandas?" options={["A database", "A Python library for data manipulation and analysis", "A machine learning framework", "A file format"]} correct={1} explanation="pandas provides DataFrames (tables) and Series (columns) for data manipulation: filtering, grouping, merging, and analysis." />
+
+<InlineQuiz id="quiz-ds-2" question="What is a DataFrame?" options={["A Python dictionary", "A 2D labeled data structure (like a spreadsheet/table)", "A list of lists", "A database table"]} correct={1} explanation="A DataFrame is a 2D table with rows and columns. It's the primary data structure in pandas for tabular data." />
+
+<InlineQuiz id="quiz-ds-3" question="What does df.head() show?" options={["All rows", "The first 5 rows by default", "Column names only", "Summary statistics"]} correct={1} explanation="head() shows the first 5 rows. head(10) shows the first 10. tail() shows the last rows." />
+
+<InlineQuiz id="quiz-ds-4" question="What does df.describe() return?" options={["Column names", "Summary statistics (count, mean, std, min, max, quartiles)", "Data types", "Missing values"]} correct={1} explanation="describe() provides count, mean, std, min, 25%, 50%, 75%, and max for numeric columns � a quick statistical overview." />
+
+<InlineQuiz id="quiz-ds-5" question="What is NumPy?" options={["A database library", "A library for numerical computing with arrays", "A web framework", "A testing tool"]} correct={1} explanation="NumPy provides fast N-dimensional arrays and mathematical operations. It's the foundation for pandas, scikit-learn, and most scientific computing." />
+
+<InlineQuiz id="quiz-ds-6" question="How do you filter rows in pandas?" options={["df.filter(condition)", "df[df[&apos;column&apos;] > value]", "df.where(condition)", "df.select(condition)"]} correct={1} explanation="Boolean indexing: df[df['age'] > 18] returns only rows where age > 18. You can combine conditions with & and |." />
+
+<InlineQuiz id="quiz-ds-7" question="What does df.groupby('column') do?" options={["Sorts by column", "Groups rows by column values for aggregation", "Filters by column", "Removes duplicates"]} correct={1} explanation="groupby splits data into groups: df.groupby('city')['sales'].sum() gives total sales per city." />
+
+<InlineQuiz id="quiz-ds-8" question="What library is used for data visualization?" options={["pandas only", "matplotlib and seaborn", "numpy", "requests"]} correct={1} explanation="matplotlib is the foundational plotting library. seaborn provides beautiful statistical graphics built on matplotlib." />
+
+<InlineQuiz id="quiz-ds-9" question="What does df.isnull().sum() show?" options={["Number of zeros", "Number of missing values per column", "Total rows", "Data types"]} correct={1} explanation="isnull() creates a boolean mask, sum() counts True values � giving you the count of missing (NaN) values in each column." />
+
+<InlineQuiz id="quiz-ds-10" question="What is a Jupyter Notebook?" options={["A text editor", "An interactive environment combining code, output, and markdown", "A database tool", "A version control system"]} correct={1} explanation="Jupyter Notebooks allow you to write and execute code in cells, see output inline, and add documentation � ideal for data exploration." />

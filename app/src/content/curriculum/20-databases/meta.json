@@ -1,0 +1,6 @@
+{
+    "id": "databases",
+    "title": "Databases & Backend",
+    "description": "Connect to SQL and NoSQL databases, manage schemas, and optimize queries.",
+    "order": 20
+}

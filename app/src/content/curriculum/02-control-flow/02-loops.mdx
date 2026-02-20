@@ -1,0 +1,179 @@
+---
+title: "Loops & Iteration"
+description: "Repeating code with for and while loops — the engine of automation."
+order: 2
+---
+
+# Loops: The Power of Repetition
+
+If you had to print "Hello" 1000 times, you wouldn't write 1000 `print()` statements. Loops let you repeat a block of code as many times as you need. They're the core of automation — bulk processing files, analyzing datasets, handling user requests, and everything in between.
+
+## Two Types of Loops
+
+Python has exactly two loop types. The choice between them is simple:
+
+<MermaidDiagram>
+graph TD
+  Q{"Do you know how many times to repeat?"} -- Yes --> FOR["Use for loop"]
+  Q -- No --> WHILE["Use while loop"]
+  FOR --> Ex1["Loop over a list, range, or string"]
+  WHILE --> Ex2["Keep going until a condition changes"]
+  style FOR fill:#3b82f6,stroke:#2563eb,color:#fff
+  style WHILE fill:#f59e0b,stroke:#d97706,color:#000
+</MermaidDiagram>
+
+## The `for` Loop
+
+A `for` loop goes through each item in a **sequence** (list, string, range, etc.) one at a time. It automatically stops when it runs out of items.
+
+```python
+# Loop over a list
+fruits = ["apple", "banana", "cherry"]
+for fruit in fruits:
+    print(fruit)
+# Prints: apple, banana, cherry (one per line)
+```
+
+The variable `fruit` is called the **loop variable**. On each pass (called an "iteration"), it takes on the next value from the list.
+
+### `range()` — Looping a Specific Number of Times
+
+`range()` generates a sequence of numbers. It's the most common way to loop a fixed number of times:
+
+```python
+range(5)         # → 0, 1, 2, 3, 4           (start=0, stop=5)
+range(2, 7)      # → 2, 3, 4, 5, 6           (start=2, stop=7)
+range(0, 10, 2)  # → 0, 2, 4, 6, 8           (start=0, stop=10, step=2)
+range(10, 0, -1) # → 10, 9, 8, ..., 2, 1     (countdown!)
+```
+
+Notice: `range(5)` gives you 0 through 4 — it **never includes the stop value**. This matches how list indexing works (lists start at index 0).
+
+### Practice: For Loops
+
+<interactive-code>
+# Basic counting
+print("Counting to 5:")
+for i in range(1, 6):
+    print(f"  {i}")
+
+# Loop over characters in a string
+word = "Python"
+print(f"\nLetters in '{word}':")
+for letter in word:
+    print(f"  {letter}")
+
+# Use range with step
+print("\nEven numbers under 20:")
+for n in range(0, 20, 2):
+    print(n, end=" ")
+</interactive-code>
+
+## The `while` Loop
+
+A `while` loop keeps repeating **as long as its condition is True**. It checks the condition before each iteration.
+
+```python
+count = 0
+while count < 5:
+    print(count)
+    count += 1     # Without this, the loop runs FOREVER!
+```
+
+**Warning:** If the condition never becomes `False`, you get an **infinite loop** that freezes your program. Always make sure something inside the loop eventually changes the condition.
+
+### Practice: While Loop
+
+<interactive-code>
+# Countdown
+countdown = 5
+while countdown > 0:
+    print(f"T-minus {countdown}...")
+    countdown -= 1
+print("Liftoff!")
+
+# Find the first power of 2 above 1000
+power = 1
+while power <= 1000:
+    power *= 2
+print(f"\nFirst power of 2 above 1000: {power}")
+</interactive-code>
+
+## Loop Control: `break` and `continue`
+
+Sometimes you need to exit a loop early or skip certain iterations:
+
+- **`break`** — immediately exits the entire loop
+- **`continue`** — skips the rest of the current iteration and jumps to the next one
+
+<MermaidDiagram>
+graph LR
+  LOOP["Loop iteration"] --> CHECK{"Check condition"}
+  CHECK -- continue --> SKIP["Skip rest, next iteration"]
+  CHECK -- break --> EXIT["Exit loop entirely"]
+  CHECK -- normal --> BODY["Run loop body"]
+  BODY --> LOOP
+  SKIP --> LOOP
+  style EXIT fill:#ef4444,stroke:#dc2626,color:#fff
+  style SKIP fill:#f59e0b,stroke:#d97706,color:#000
+</MermaidDiagram>
+
+### Practice: Break and Continue
+
+<interactive-code>
+# break — stop searching once found
+numbers = [4, 7, 2, 9, 1, 8, 3]
+target = 9
+
+for num in numbers:
+    if num == target:
+        print(f"Found {target}!")
+        break
+    print(f"  Checking {num}... not it")
+
+# continue — skip odd numbers
+print("\nEven numbers only:")
+for i in range(10):
+    if i % 2 != 0:
+        continue  # Skip odd numbers
+    print(i, end=" ")
+</interactive-code>
+
+## Nested Loops
+
+A loop inside another loop. The inner loop runs completely for **each** iteration of the outer loop.
+
+### Practice: Multiplication Table
+
+<interactive-code>
+# Build a multiplication table
+size = 5
+for row in range(1, size + 1):
+    for col in range(1, size + 1):
+        print(f"{row * col:4}", end="")
+    print()  # New line after each row
+</interactive-code>
+
+> **Pro Tip:** If you need both the index AND the value, use `enumerate()` instead of `range(len(...))`: `for i, val in enumerate(my_list):`.
+
+> **Common Mistake:** Modifying a list while looping over it. This causes skipped items or crashes. Instead, loop over a copy: `for item in my_list.copy():`.
+
+<InlineQuiz id="quiz-loops-1" question="How many times does 'for i in range(5):' loop?" options={["4 times", "5 times", "6 times", "It depends"]} correct={1} explanation="range(5) produces [0, 1, 2, 3, 4] � exactly 5 values, so the loop runs 5 times." />
+
+<InlineQuiz id="quiz-loops-2" question="What does range(2, 8) produce?" options={["[2, 3, 4, 5, 6, 7, 8]", "[2, 3, 4, 5, 6, 7]", "[3, 4, 5, 6, 7]", "[2, 8]"]} correct={1} explanation="range(start, stop) includes the start value but EXCLUDES the stop value. So range(2, 8) gives [2, 3, 4, 5, 6, 7]." />
+
+<InlineQuiz id="quiz-loops-3" question="When does a while loop stop?" options={["After a fixed number of iterations", "When the condition becomes False", "When break is called", "Both B and C"]} correct={3} explanation="A while loop stops when its condition becomes False OR when a break statement is executed inside the loop." />
+
+<InlineQuiz id="quiz-loops-4" question="What does 'continue' do in a loop?" options={["Stops the loop", "Skips to the next iteration", "Continues to the next function", "Restarts the loop from the beginning"]} correct={1} explanation="'continue' skips the rest of the current iteration and goes to the next one. The loop continues running." />
+
+<InlineQuiz id="quiz-loops-5" question="What is an infinite loop?" options={["A loop that runs exactly 1000 times", "A loop whose condition never becomes False", "A loop without a body", "A nested loop"]} correct={1} explanation="An infinite loop runs forever because its condition never becomes False. Example: while True: ... You must use 'break' to exit." />
+
+<InlineQuiz id="quiz-loops-6" question="What does range(0, 10, 2) produce?" options={["[0, 2, 4, 6, 8]", "[0, 2, 4, 6, 8, 10]", "[2, 4, 6, 8, 10]", "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"]} correct={0} explanation="range(start, stop, step) generates values from 0 to 9 in steps of 2: [0, 2, 4, 6, 8]. The stop value (10) is excluded." />
+
+<InlineQuiz id="quiz-loops-7" question="Can you nest a for loop inside a while loop?" options={["No, they are different types", "Yes, you can nest any loop inside any other loop", "Only if they use different variables", "Only for loops can be nested"]} correct={1} explanation="Python allows any combination of nested loops: for inside for, while inside while, for inside while, or while inside for." />
+
+<InlineQuiz id="quiz-loops-8" question="What is the 'else' clause on a for loop?" options={["Runs if the loop body has an error", "Runs if the loop completes without hitting break", "Runs on each iteration", "It does not exist in Python"]} correct={1} explanation="A for/else clause runs the else block only if the loop completes normally (without break). If break is called, the else block is skipped." />
+
+<InlineQuiz id="quiz-loops-9" question="How do you iterate over both index and value in a list?" options={["for i, v in list:", "for i in range(len(list)): v = list[i]", "for i, v in enumerate(list):", "Both B and C work, but C is preferred"]} correct={3} explanation="Both approaches work, but enumerate() is the Pythonic way. It gives you (index, value) tuples directly." />
+
+<InlineQuiz id="quiz-loops-10" question="What is the output of: for i in range(3): print(i, end=' ')?" options={["1 2 3", "0 1 2", "0 1 2 3", "1 2"]} correct={1} explanation="range(3) gives [0, 1, 2]. The end=' ' makes print use a space instead of newline. Output: '0 1 2 '." />

@@ -1,0 +1,137 @@
+---
+title: "CSV & Data Processing"
+description: "Reading, writing, and transforming CSV data — the most common data format."
+order: 2
+---
+
+# CSV: Tabular Data Made Simple
+
+CSV (Comma-Separated Values) is the simplest tabular data format. Spreadsheets, databases, and data exports all use CSV. Python's `csv` module provides robust tools for reading and writing CSV files.
+
+## Reading CSV Files
+
+```python
+import csv
+
+with open("data.csv") as f:
+    reader = csv.reader(f)
+    header = next(reader)          # First row is usually headers
+    for row in reader:
+        print(row)                 # Each row is a list of strings
+```
+
+### DictReader — More Readable
+
+`DictReader` converts each row into a dictionary using the header row as keys:
+
+```python
+with open("data.csv") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        print(row["name"], row["age"])    # Access by column name
+```
+
+### Practice: CSV Processing
+
+<interactive-code>
+import csv
+import io
+
+# Create sample CSV data
+csv_data = """name,department,salary,years
+Alice,Engineering,95000,5
+Bob,Marketing,65000,3
+Charlie,Engineering,110000,8
+Diana,Marketing,72000,4
+Eve,Engineering,88000,2
+Frank,HR,58000,6"""
+
+# Read with DictReader
+reader = csv.DictReader(io.StringIO(csv_data))
+employees = list(reader)
+
+# Analysis
+print(f"Total employees: {len(employees)}")
+
+# Average salary by department
+depts = {}
+for emp in employees:
+    dept = emp["department"]
+    salary = int(emp["salary"])
+    depts.setdefault(dept, []).append(salary)
+
+print("\nAverage salary by department:")
+for dept, salaries in sorted(depts.items()):
+    avg = sum(salaries) / len(salaries)
+    print(f"  {dept}: ${avg:,.0f} ({len(salaries)} employees)")
+
+# Highest paid
+top = max(employees, key=lambda e: int(e["salary"]))
+print(f"\nHighest paid: {top['name']} (${int(top['salary']):,})")
+</interactive-code>
+
+## Writing CSV Files
+
+```python
+import csv
+
+with open("output.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["name", "score"])     # Header
+    writer.writerow(["Alice", 95])
+    writer.writerows([["Bob", 87], ["Charlie", 92]])
+```
+
+### Practice: Generate a Report
+
+<interactive-code>
+import csv
+import io
+
+# Generate and write a CSV report
+output = io.StringIO()
+writer = csv.writer(output)
+
+# Write header
+writer.writerow(["Student", "Math", "Science", "English", "Average"])
+
+# Student data
+students = [
+    ("Alice", 92, 88, 95),
+    ("Bob", 78, 85, 72),
+    ("Charlie", 95, 91, 89),
+    ("Diana", 64, 70, 68),
+]
+
+for name, math, sci, eng in students:
+    avg = (math + sci + eng) / 3
+    writer.writerow([name, math, sci, eng, f"{avg:.1f}"])
+
+# Display the result
+print("Generated CSV:")
+print(output.getvalue())
+</interactive-code>
+
+> **Pro Tip:** Always use `newline=""` when opening CSV files for writing on Windows. Without it, you get extra blank lines between rows.
+
+> **Common Mistake:** Forgetting that CSV values are always strings. `row["age"]` returns `"30"` not `30`. Always convert: `int(row["age"])`.
+
+<InlineQuiz id="quiz-csv-1" question="What does CSV stand for?" options={["Common Separated Values", "Comma-Separated Values", "Computer Standard Values", "Content Storage Version"]} correct={1} explanation="CSV stands for Comma-Separated Values � a simple text format where each line is a data record with fields separated by commas." />
+
+<InlineQuiz id="quiz-csv-2" question="What does csv.reader() return?" options={["A list of strings", "An iterator that yields rows as lists", "A dictionary", "A DataFrame"]} correct={1} explanation="csv.reader() returns an iterator where each row is a list of strings: ['name', 'age', 'city']." />
+
+<InlineQuiz id="quiz-csv-3" question="What does csv.DictReader() do differently from csv.reader()?" options={["It is faster", "It returns rows as dictionaries with column headers as keys", "It writes instead of reads", "It returns tuples"]} correct={1} explanation="DictReader uses the first row as keys: {'name': 'Alice', 'age': '30', 'city': 'NYC'} instead of ['Alice', '30', 'NYC']." />
+
+<InlineQuiz id="quiz-csv-4" question="What delimiter does CSV use by default?" options={["Tab", "Semicolon", "Comma", "Pipe"]} correct={2} explanation="CSV uses comma by default. You can change it: csv.reader(f, delimiter=';') for semicolon-separated files." />
+
+<InlineQuiz id="quiz-csv-5" question="How do you write CSV data?" options={["f.write(data)", "csv.writer(f).writerow(row)", "csv.dump(data, f)", "f.writecsv(data)"]} correct={1} explanation="Create a writer: writer = csv.writer(f). Then writerow([values]) for one row, or writerows(list_of_rows) for multiple." />
+
+<InlineQuiz id="quiz-csv-6" question="Why should you open CSV files with newline='?" options={["It is faster", "To prevent extra blank lines on Windows", "To enable binary mode", "It is not necessary"]} correct={1} explanation="On Windows, csv module handles its own line endings. newline=' prevents double newlines in the output." />
+
+<InlineQuiz id="quiz-csv-7" question="What happens with commas inside a CSV field?" options={["They split the field", "The field must be quoted to preserve the comma", "They are removed", "An error occurs"]} correct={1} explanation="Fields containing commas, quotes, or newlines must be quoted (enclosed in double quotes) to be parsed correctly." />
+
+<InlineQuiz id="quiz-csv-8" question="What is csv.DictWriter used for?" options={["Reading dicts", "Writing dictionaries as CSV rows", "Converting dicts to JSON", "Sorting CSV data"]} correct={1} explanation="DictWriter writes dicts as CSV rows using specified fieldnames: writer = csv.DictWriter(f, fieldnames=['name','age'])." />
+
+<InlineQuiz id="quiz-csv-9" question="What Python library is commonly used instead of csv for large datasets?" options={["json", "pandas", "numpy", "sqlite3"]} correct={1} explanation="pandas provides pd.read_csv() and df.to_csv() with powerful data manipulation. It's the standard for data analysis workflows." />
+
+<InlineQuiz id="quiz-csv-10" question="What encoding issues might you encounter with CSV files?" options={["None, CSV is always ASCII", "UTF-8 BOM, encoding mismatches, special characters", "CSV doesn&apos;t support encoding", "Only with Excel files"]} correct={1} explanation="Common issues: UTF-8 BOM (byte order mark), Latin-1 vs UTF-8 mismatch. Always specify encoding='utf-8' explicitly." />

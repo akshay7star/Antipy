@@ -1,0 +1,7 @@
+{
+    "id": "recursion-sorting",
+    "title": "Recursion & Sorting",
+    "description": "Understand the call stack, base cases, and divide-and-conquer strategies.",
+    "icon": "GitBranch",
+    "order": 25
+}

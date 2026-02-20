@@ -1,0 +1,177 @@
+---
+title: "String Methods"
+description: "Manipulating text — the operations you'll use in every single program."
+order: 1
+---
+
+# Strings: Working with Text
+
+Strings are everywhere in programming — user input, file paths, API responses, database queries, log messages. Python gives you a massive toolkit for manipulating text, and learning these methods will make your code dramatically cleaner.
+
+## Strings Are Immutable
+
+This is the single most important thing to understand: **strings cannot be changed**. Every "modification" creates a **new** string.
+
+```python
+name = "Alice"
+upper = name.upper()   # Creates a NEW string "ALICE"
+print(name)             # Still "Alice" — unchanged
+print(upper)            # "ALICE"
+```
+
+This means all string methods return new strings — they never modify the original.
+
+## Essential String Methods
+
+<MethodUnit category="string-methods" />
+
+| Method | Purpose | Example | Result |
+|--------|---------|---------|--------|
+| `.upper()` | ALL CAPS | `"hello".upper()` | `"HELLO"` |
+| `.lower()` | all lowercase | `"HELLO".lower()` | `"hello"` |
+| `.strip()` | Remove whitespace | `" hi ".strip()` | `"hi"` |
+| `.split()` | Split into list | `"a,b,c".split(",")` | `["a","b","c"]` |
+| `.join()` | Join list into string | `",".join(["a","b"])` | `"a,b"` |
+| `.replace()` | Replace substring | `"hello".replace("l","r")` | `"herro"` |
+| `.startswith()` | Check prefix | `"hello".startswith("he")` | `True` |
+| `.find()` | Find position | `"hello".find("ll")` | `2` |
+| `.count()` | Count occurrences | `"hello".count("l")` | `2` |
+
+## split() and join() — The Power Pair
+
+These two methods are inverses of each other and you'll use them constantly:
+
+```python
+# split: string → list
+csv_line = "Alice,30,NYC"
+parts = csv_line.split(",")    # ["Alice", "30", "NYC"]
+
+# join: list → string
+parts = ["Alice", "30", "NYC"]
+csv_line = ",".join(parts)     # "Alice,30,NYC"
+```
+
+**Key insight:** `.join()` is called on the **separator**, not the list. Think of it as "glue this separator BETWEEN each item."
+
+### Practice: Text Processing
+
+<interactive-code>
+# Clean messy user input
+raw_input = "   Hello, World!   "
+cleaned = raw_input.strip()
+print(f"Cleaned: '{cleaned}'")
+
+# Split a sentence into words
+sentence = "Python is an amazing language"
+words = sentence.split()
+print(f"Words: {words}")
+print(f"Word count: {len(words)}")
+
+# Join with a custom separator
+tags = ["python", "learning", "code"]
+hashtag_line = " #".join(tags)
+print(f"Tags: #{hashtag_line}")
+
+# Chain methods together
+title = "  hello world  ".strip().title()
+print(f"Title case: '{title}'")
+</interactive-code>
+
+## Checking String Content
+
+Python provides methods to test what a string contains:
+
+```python
+"hello123".isalnum()    # True — all alphanumeric
+"hello".isalpha()       # True — all letters
+"12345".isdigit()       # True — all digits
+"  \t\n".isspace()      # True — all whitespace
+"Hello World".istitle() # True — title case
+```
+
+### Practice: Input Validation
+
+<interactive-code>
+# Validate user input
+test_inputs = ["Alice123", "42", "hello world", "", "  ", "ADMIN"]
+
+for inp in test_inputs:
+    checks = []
+    if inp.isalpha(): checks.append("letters only")
+    if inp.isdigit(): checks.append("numbers only")
+    if inp.isalnum(): checks.append("alphanumeric")
+    if inp.isupper(): checks.append("ALL CAPS")
+    if not inp.strip(): checks.append("empty/whitespace")
+    
+    label = ", ".join(checks) if checks else "mixed content"
+    print(f"  '{inp}' → {label}")
+</interactive-code>
+
+## in Operator and find()
+
+Check if a substring exists or find its position:
+
+```python
+text = "Python is great for data science"
+
+# Check existence
+"great" in text          # True
+"terrible" in text       # False
+
+# Find position (returns -1 if not found)
+text.find("great")       # 10
+text.find("terrible")    # -1
+```
+
+### Practice: Search and Replace
+
+<interactive-code>
+# Real-world: clean and process log data
+log = "ERROR: Connection timeout at 14:30:05 | WARN: Retry attempt 3 | ERROR: Failed"
+
+# Count errors
+error_count = log.count("ERROR")
+warn_count = log.count("WARN")
+print(f"Errors: {error_count}, Warnings: {warn_count}")
+
+# Extract each entry
+entries = log.split(" | ")
+for entry in entries:
+    level = "ERROR" if entry.startswith("ERROR") else "WARN"
+    message = entry.replace("ERROR: ", "").replace("WARN: ", "")
+    print(f"  [{level}] {message}")
+
+# Replace
+fixed = log.replace("ERROR", "RESOLVED")
+print(f"\nFixed: {fixed}")
+</interactive-code>
+
+> **Pro Tip:** String methods can be **chained**: `" Hello World ".strip().lower().replace(" ", "_")` → `"hello_world"`. This is clean and common in Python.
+
+> **Common Mistake:** Thinking `.replace()` modifies the original string. It doesn't — strings are immutable. You must **assign** the result: `text = text.replace("old", "new")`.
+
+<InlineQuiz
+  id="quiz-strings-1"
+  question="Are Python strings mutable or immutable?"
+  options={["Mutable � you can change individual characters", "Immutable � string methods return NEW strings", "It depends on the string length", "Mutable only inside functions"]}
+  correct={1}
+  explanation="Strings are immutable in Python. Methods like .upper(), .replace(), .strip() don't modify the original string � they return a brand new string. You must assign the result: s = s.upper()."
+/>
+
+<InlineQuiz id="quiz-str-2" question="What does 'hello'.upper() return?" options={["Hello", "HELLO", "hello", "hELLO"]} correct={1} explanation="upper() converts ALL characters to uppercase. title() would give 'Hello', capitalize() would also give 'Hello'." />
+
+<InlineQuiz id="quiz-str-3" question="What does ' hello '.strip() return?" options={["hello", "&apos; hello&apos;", "&apos;hello &apos;", "&apos; hello &apos;"]} correct={0} explanation="strip() removes leading and trailing whitespace. lstrip() removes only leading, rstrip() removes only trailing." />
+
+<InlineQuiz id="quiz-str-4" question="What does 'a,b,c'.split(',') return?" options={["&apos;a,b,c&apos;", "[&apos;a&apos;, &apos;b&apos;, &apos;c&apos;]", "(&apos;a&apos;, &apos;b&apos;, &apos;c&apos;)", "[&apos;a,b,c&apos;]"]} correct={1} explanation="split(delimiter) breaks a string into a list of substrings at each delimiter. The delimiter itself is removed." />
+
+<InlineQuiz id="quiz-str-5" question="What does '-'.join(['a', 'b', 'c']) return?" options={["a b c", "a-b-c", "-a-b-c-", "abc-"]} correct={1} explanation="join() is the opposite of split(). It joins list elements with the string as separator: '-'.join(['a','b','c']) -> 'a-b-c'." />
+
+<InlineQuiz id="quiz-str-6" question="What does 'hello world'.replace('world', 'Python') return?" options={["hello Python", "hello world", "Python", "Error"]} correct={0} explanation="replace(old, new) returns a new string with all occurrences of 'old' replaced by 'new'." />
+
+<InlineQuiz id="quiz-str-7" question="How do you check if a string starts with a specific prefix?" options={["str.begins(&apos;prefix&apos;)", "str.startswith(&apos;prefix&apos;)", "str[0] == &apos;prefix&apos;", "str.prefix(&apos;prefix&apos;)"]} correct={1} explanation="startswith() checks if a string begins with the given prefix. Similarly, endswith() checks the suffix." />
+
+<InlineQuiz id="quiz-str-8" question="What is an f-string?" options={["A string that starts with f and allows embedded expressions: f&apos;{x + 1}&apos;", "A formatted file string", "A frozen string (immutable)", "A fast string type"]} correct={0} explanation="F-strings (f'...') allow you to embed Python expressions inside curly braces: f'Hello {name}, you are {age} years old'." />
+
+<InlineQuiz id="quiz-str-9" question="What does 'hello'.find('ll') return?" options={["-1", "0", "2", "True"]} correct={2} explanation="find() returns the INDEX of the first occurrence of the substring. 'll' starts at index 2 in 'hello'. Returns -1 if not found." />
+
+<InlineQuiz id="quiz-str-10" question="What is string interpolation?" options={["Splitting a string", "Embedding variables or expressions inside a string", "Removing characters from a string", "Comparing two strings"]} correct={1} explanation="String interpolation inserts variable values into a string. Python offers f-strings, .format(), and % formatting for this." />

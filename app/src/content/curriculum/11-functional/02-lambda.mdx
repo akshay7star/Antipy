@@ -1,0 +1,166 @@
+---
+title: "Lambda & Closures"
+description: "Anonymous functions, closures, and functional patterns."
+order: 2
+---
+
+# Lambda Functions & Closures
+
+Lambda functions are small, anonymous functions written in one line. Combined with closures — functions that remember their enclosing scope — they form powerful patterns used throughout Python.
+
+## Lambda: Quick Anonymous Functions
+
+A lambda is a function without a name. Use it for short, throw-away operations:
+
+```python
+# Regular function
+def double(x):
+    return x * 2
+
+# Same thing as a lambda
+double = lambda x: x * 2
+```
+
+### Where Lambdas Shine
+
+Lambdas are best used as arguments to functions like `sorted()`, `map()`, and `filter()`:
+
+```python
+# Sort by second element
+pairs = [(1, "b"), (3, "a"), (2, "c")]
+sorted(pairs, key=lambda p: p[1])
+# [(3, 'a'), (1, 'b'), (2, 'c')]
+
+# Sort by multiple criteria
+students = [("Alice", 88), ("Bob", 95), ("Charlie", 88)]
+sorted(students, key=lambda s: (-s[1], s[0]))
+# Sort by score (descending), then name (ascending)
+```
+
+### Practice: Sorting with Lambdas
+
+<interactive-code>
+# Real-world: sort a list of dicts
+products = [
+    {"name": "Laptop", "price": 999, "rating": 4.5},
+    {"name": "Phone", "price": 699, "rating": 4.7},
+    {"name": "Tablet", "price": 449, "rating": 4.3},
+    {"name": "Watch", "price": 299, "rating": 4.8},
+]
+
+# Sort by price (ascending)
+by_price = sorted(products, key=lambda p: p["price"])
+print("By price:")
+for p in by_price:
+    print(f"  {p['name']}: ${p['price']}")
+
+# Sort by rating (descending)
+by_rating = sorted(products, key=lambda p: p["rating"], reverse=True)
+print("\nBy rating:")
+for p in by_rating:
+    print(f"  {p['name']}: {p['rating']}★")
+</interactive-code>
+
+## Closures: Functions That Remember
+
+A **closure** is a function that remembers variables from its enclosing scope, even after that scope has finished:
+
+<MermaidDiagram>
+graph TD
+  OUTER["Outer function: defines multiplier"] --> INNER["Inner function: uses multiplier"]
+  INNER --> CLOSED["Returned function remembers multiplier"]
+  style OUTER fill:#8b5cf6,stroke:#7c3aed,color:#fff
+  style CLOSED fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+```python
+def make_multiplier(factor):
+    def multiply(x):
+        return x * factor     # 'factor' is remembered from outer scope
+    return multiply
+
+double = make_multiplier(2)
+triple = make_multiplier(3)
+
+print(double(5))   # 10
+print(triple(5))   # 15
+```
+
+The inner function "closes over" the variable `factor` — hence the name "closure."
+
+### Practice: Closures
+
+<interactive-code>
+# Closure: counter factory
+def make_counter(start=0):
+    count = [start]  # Using list for mutability in closure
+    
+    def increment():
+        count[0] += 1
+        return count[0]
+    
+    return increment
+
+counter_a = make_counter()
+counter_b = make_counter(100)
+
+print(f"Counter A: {counter_a()}")  # 1
+print(f"Counter A: {counter_a()}")  # 2
+print(f"Counter B: {counter_b()}")  # 101
+print(f"Counter A: {counter_a()}")  # 3
+
+# Closure: greeting factory
+def make_greeter(greeting):
+    def greet(name):
+        return f"{greeting}, {name}!"
+    return greet
+
+hello = make_greeter("Hello")
+hola = make_greeter("Hola")
+
+print(f"\n{hello('Alice')}")
+print(f"{hola('Alice')}")
+</interactive-code>
+
+## Higher-Order Functions
+
+Functions that take other functions as arguments or return functions. You've already used them — `sorted(key=...)`, `map()`, `filter()`:
+
+### Practice: Custom Higher-Order Functions
+
+<interactive-code>
+# Apply a function to each item and collect results
+def transform(data, func):
+    return [func(item) for item in data]
+
+numbers = [1, -2, 3, -4, 5]
+
+print(f"Doubled: {transform(numbers, lambda x: x * 2)}")
+print(f"Absolute: {transform(numbers, abs)}")
+print(f"Squared: {transform(numbers, lambda x: x ** 2)}")
+print(f"As strings: {transform(numbers, str)}")
+</interactive-code>
+
+> **Pro Tip:** Use `lambda` for simple one-liners only. If your lambda is complex (with ternary operators, multiple operations), define a proper function — it's more readable and debuggable.
+
+> **Common Mistake:** Lambda functions can only have a single expression, not statements. You can't use `if/else` statements, assignments, or loops inside a lambda.
+
+<InlineQuiz id="quiz-lambda-1" question="What is a lambda function?" options={["A named function", "An anonymous single-expression function", "A class method", "A generator"]} correct={1} explanation="Lambda functions are anonymous (unnamed) functions defined with the lambda keyword: lambda x: x * 2. They can only contain one expression." />
+
+<InlineQuiz id="quiz-lambda-2" question="What does lambda x, y: x + y do?" options={["Defines a named function", "Creates an anonymous function that adds two arguments", "Creates a list", "Raises an error"]} correct={1} explanation="This creates a function that takes two parameters (x, y) and returns their sum. Equivalent to: def add(x, y): return x + y" />
+
+<InlineQuiz id="quiz-lambda-3" question="Can a lambda contain multiple statements?" options={["Yes, separated by semicolons", "No, only a single expression", "Yes, with indentation", "Only in Python 3"]} correct={1} explanation="Lambda functions are limited to a single expression. For multiple statements, use a regular def function." />
+
+<InlineQuiz id="quiz-lambda-4" question="Where are lambdas most commonly used?" options={["As module-level functions", "As inline callbacks for sort, map, filter", "As class constructors", "As decorators"]} correct={1} explanation="Lambdas shine as short callbacks: sorted(data, key=lambda x: x['name']), map(lambda x: x*2, nums), filter(lambda x: x > 0, nums)." />
+
+<InlineQuiz id="quiz-lambda-5" question="What is the output of: (lambda x: x ** 2)(5)?" options={["10", "25", "Error", "lambda"]} correct={1} explanation="This creates a lambda that squares its argument and immediately calls it with 5. 5 ** 2 = 25." />
+
+<InlineQuiz id="quiz-lambda-6" question="Should you assign a lambda to a variable like: square = lambda x: x**2?" options={["Yes, always", "No, use def instead � PEP 8 discourages assigning lambdas to variables", "Only for short functions", "Only in interactive mode"]} correct={1} explanation="PEP 8 says: don't assign lambdas to names. If you need a name, use def. Lambdas are for anonymous, inline use." />
+
+<InlineQuiz id="quiz-lambda-7" question="What does sorted(words, key=lambda w: w[-1]) do?" options={["Sorts by first letter", "Sorts by last letter", "Sorts by length", "Reverses the list"]} correct={1} explanation="w[-1] accesses the last character. So this sorts words alphabetically by their last character." />
+
+<InlineQuiz id="quiz-lambda-8" question="Can lambdas have default arguments?" options={["No", "Yes: lambda x, y=10: x + y", "Only positional args", "Only keyword args"]} correct={1} explanation="Lambda functions support default arguments just like regular functions: lambda x, y=10: x + y." />
+
+<InlineQuiz id="quiz-lambda-9" question="What is a closure in the context of lambdas?" options={["A syntax error", "A lambda that captures variables from its enclosing scope", "A way to close a lambda", "A terminated function"]} correct={1} explanation="Closures remember variables from the enclosing scope: make_adder = lambda n: lambda x: x + n. The inner lambda 'closes over' n." />
+
+<InlineQuiz id="quiz-lambda-10" question="What is the Pythonic alternative to lambda for simple operations?" options={["Longer lambda", "operator module functions like operator.add", "C extensions", "There is no alternative"]} correct={1} explanation="The operator module provides function versions of operators: operator.add instead of lambda a, b: a + b, operator.itemgetter(0) instead of lambda x: x[0]." />

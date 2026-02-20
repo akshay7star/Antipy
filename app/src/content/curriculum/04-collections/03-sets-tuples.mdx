@@ -1,0 +1,203 @@
+---
+title: "Sets & Tuples"
+description: "Immutable sequences and unique collections — when to use each."
+order: 3
+---
+
+# When to Use Which Collection?
+
+Python has four core collection types, and choosing the right one is a fundamental skill. Each exists because it solves a specific problem better than the others.
+
+<MermaidDiagram>
+graph TD
+  Q1{"Need key-value pairs?"} -- Yes --> DICT["Use dict"]
+  Q1 -- No --> Q2{"Need uniqueness?"} 
+  Q2 -- Yes --> SET["Use set"]
+  Q2 -- No --> Q3{"Need to change it?"}
+  Q3 -- Yes --> LIST["Use list"]
+  Q3 -- No --> TUPLE["Use tuple"]
+  style DICT fill:#3b82f6,stroke:#2563eb,color:#fff
+  style SET fill:#22c55e,stroke:#16a34a,color:#fff
+  style LIST fill:#f59e0b,stroke:#d97706,color:#000
+  style TUPLE fill:#8b5cf6,stroke:#7c3aed,color:#fff
+</MermaidDiagram>
+
+| Collection | Ordered | Mutable | Duplicates | Use Case |
+|-----------|---------|---------|------------|----------|
+| **List** | Yes | Yes | Yes | General purpose sequences |
+| **Tuple** | Yes | No | Yes | Fixed data, dict keys, function returns |
+| **Set** | No | Yes | No | Unique items, membership testing |
+| **Dict** | Yes | Yes | Keys: No | Key-value mapping |
+
+## Tuples: Immutable Lists
+
+A tuple is like a list that **cannot be changed** after creation. Use tuples when data should stay constant — like coordinates, RGB colors, or database records.
+
+```python
+# Creating tuples
+point = (3, 7)
+rgb = (255, 128, 0)
+single = (42,)       # Note the comma! Without it, it's just a number in parentheses
+
+# Access (same as lists)
+print(point[0])       # 3
+print(rgb[-1])        # 0
+
+# BUT you can't modify them
+# point[0] = 5        # TypeError: tuples don't support item assignment
+```
+
+### Why Use Tuples?
+
+1. **Safety** — data can't be accidentally modified
+2. **Speed** — tuples are slightly faster than lists
+3. **Dict keys** — tuples can be dictionary keys (lists cannot)
+4. **Function returns** — `divmod(17, 5)` returns `(3, 2)`
+
+### Tuple Unpacking
+
+Python lets you unpack tuple values into separate variables in one line:
+
+```python
+point = (3, 7)
+x, y = point         # x = 3, y = 7
+
+# Swap variables — no temp variable needed!
+a, b = 1, 2
+a, b = b, a           # a = 2, b = 1
+```
+
+### Practice: Tuples
+
+<interactive-code>
+# Tuple basics
+coordinates = (40.7128, -74.0060)  # NYC lat/long
+lat, lon = coordinates
+print(f"NYC is at {lat}°N, {lon}°W")
+
+# Named tuples — one of the coolest features
+from collections import namedtuple
+Color = namedtuple("Color", ["red", "green", "blue"])
+
+sky_blue = Color(135, 206, 235)
+print(f"\nSky blue: R={sky_blue.red}, G={sky_blue.green}, B={sky_blue.blue}")
+
+# Swap trick
+a, b = "first", "second"
+a, b = b, a
+print(f"\nAfter swap: a='{a}', b='{b}'")
+</interactive-code>
+
+## Sets: Unique Items Only
+
+A set is an **unordered** collection of **unique** items. Think of it as a bag where duplicates are automatically removed. Sets are incredibly fast for membership testing.
+
+```python
+# Creating sets
+fruits = {"apple", "banana", "cherry"}
+nums = set([1, 2, 2, 3, 3, 3])    # {1, 2, 3} — duplicates removed!
+
+# Membership test — O(1), blazing fast
+print("apple" in fruits)    # True
+```
+
+### Set Operations
+
+Sets support mathematical operations — union, intersection, difference:
+
+```python
+a = {1, 2, 3, 4}
+b = {3, 4, 5, 6}
+
+a | b    # Union:        {1, 2, 3, 4, 5, 6}
+a & b    # Intersection: {3, 4}
+a - b    # Difference:   {1, 2}
+a ^ b    # Symmetric:    {1, 2, 5, 6}
+```
+
+### Practice: Sets in Action
+
+<interactive-code>
+# Remove duplicates from a list
+raw_data = [1, 5, 3, 2, 5, 1, 8, 3, 2, 7, 5]
+unique = list(set(raw_data))
+print(f"Original: {raw_data}")
+print(f"Unique: {sorted(unique)}")
+
+# Set operations
+enrolled_python = {"Alice", "Bob", "Charlie", "Dave"}
+enrolled_js = {"Charlie", "Dave", "Eve", "Frank"}
+
+# Who's in both?
+both = enrolled_python & enrolled_js
+print(f"\nIn both courses: {both}")
+
+# Who's only in Python?
+python_only = enrolled_python - enrolled_js
+print(f"Python only: {python_only}")
+
+# Everyone combined
+everyone = enrolled_python | enrolled_js
+print(f"All students: {everyone}")
+</interactive-code>
+
+## Performance: Why This Matters
+
+The choice of collection affects your program's speed dramatically:
+
+```python
+# Checking "is x in this collection?" on 1 million items:
+# List:  O(n) — checks every item → ~0.05 seconds
+# Set:   O(1) — instant hash lookup → ~0.000001 seconds
+# That's 50,000x faster!
+```
+
+### Practice: Speed Test
+
+<interactive-code>
+import time
+
+N = 500_000
+big_list = list(range(N))
+big_set = set(range(N))
+target = N - 1  # Worst case for list
+
+# List search
+start = time.time()
+found = target in big_list
+list_time = time.time() - start
+
+# Set search
+start = time.time()
+found = target in big_set
+set_time = time.time() - start
+
+print(f"List search: {list_time:.6f} seconds")
+print(f"Set search:  {set_time:.6f} seconds")
+if list_time > 0 and set_time > 0:
+    print(f"Set is ~{int(list_time / set_time)}x faster!")
+</interactive-code>
+
+> **Pro Tip:** If you're checking membership in a loop (`if x in collection`), always convert to a set first. A loop with a list check turns O(n) into O(n²).
+
+> **Common Mistake:** Trying to create an empty set with `{}` — this creates an empty **dict**, not a set. Use `set()` for an empty set.
+
+<InlineQuiz id="quiz-sets-1" question="What is unique about elements in a set?" options={["They must be strings", "They are always sorted", "No duplicates allowed", "They can be mutable"]} correct={2} explanation="Sets automatically remove duplicates. {1, 2, 2, 3} becomes {1, 2, 3}. This makes sets ideal for removing duplicates from lists." />
+
+<InlineQuiz id="quiz-sets-2" question="What does set1 & set2 return?" options={["Union of both sets", "Intersection (elements in both)", "Difference", "Symmetric difference"]} correct={1} explanation="& is the intersection operator: elements that appear in BOTH sets. set1 | set2 is union, set1 - set2 is difference." />
+
+<InlineQuiz id="quiz-sets-3" question="Can a tuple be used as a dictionary key?" options={["No, only strings", "Yes, because tuples are immutable", "Only if it contains integers", "No, only frozensets"]} correct={1} explanation="Tuples are immutable and hashable, so they CAN be dictionary keys. Lists cannot because they are mutable." />
+
+<InlineQuiz id="quiz-sets-4" question="What is a frozenset?" options={["A set that is very fast", "An immutable version of a set", "A set of frozen food items", "A set with sorted elements"]} correct={1} explanation="A frozenset is an immutable set � you can't add or remove elements after creation. It can be used as a dictionary key or set element." />
+
+<InlineQuiz id="quiz-sets-5" question="How do you create an empty set?" options={["{}", "set()", "[]", "()"]} correct={1} explanation="{} creates an empty DICTIONARY, not a set. To create an empty set, use set(). {1, 2, 3} creates a non-empty set." />
+
+<InlineQuiz id="quiz-sets-6" question="What does set1 | set2 return?" options={["Intersection", "Union (all elements from both)", "Difference", "The larger set"]} correct={1} explanation="| is the union operator: combines all elements from both sets without duplicates." />
+
+<InlineQuiz id="quiz-sets-7" question="How do you create a tuple with a single element?" options={["(1)", "(1,)", "tuple(1)", "[1]"]} correct={1} explanation="A single-element tuple MUST have a trailing comma: (1,). Without it, (1) is just the number 1 in parentheses." />
+
+<InlineQuiz id="quiz-sets-8" question="What is tuple unpacking?" options={["Removing items from a tuple", "Assigning tuple elements to separate variables: a, b = (1, 2)", "Converting a tuple to a list", "Sorting a tuple"]} correct={1} explanation="Unpacking assigns tuple values to variables: a, b, c = (1, 2, 3). This also works in for loops: for k, v in dict.items()." />
+
+<InlineQuiz id="quiz-sets-9" question="What is the time complexity of checking membership in a set?" options={["O(n)", "O(log n)", "O(1) average", "O(n log n)"]} correct={2} explanation="Sets use hash tables internally, so 'x in set' is O(1) average case. This is much faster than checking 'x in list' which is O(n)." />
+
+<InlineQuiz id="quiz-sets-10" question="What does set.discard(x) do vs set.remove(x)?" options={["Same thing", "discard raises error if missing, remove doesn&apos;t", "remove raises KeyError if missing, discard doesn&apos;t", "discard removes all occurrences"]} correct={2} explanation="remove(x) raises KeyError if x is not in the set. discard(x) does nothing if x is missing � it's the safe version." />
