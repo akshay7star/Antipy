@@ -6,6 +6,8 @@ order: 1
 
 # Asynchronous Programming
 
+<ConcurrencyVisualizer />
+
 Modern applications need to handle many tasks at once — downloading files, processing API requests, updating a UI. Python offers several ways to handle concurrency, with `async/await` being the most modern approach.
 
 ## Why Async?
@@ -106,3 +108,4 @@ print("\nAll done in ~0.5s (not 0.9s) — that's the power of async!")
 <InlineQuiz id="quiz-async-9" question="What is the difference between concurrency and parallelism?" options={["Same thing", "Concurrency = managing multiple tasks, parallelism = executing simultaneously", "Parallelism is slower", "Concurrency requires multiple CPUs"]} correct={1} explanation="Concurrency is about managing multiple tasks (they may not run at the same time). Parallelism is about executing multiple tasks simultaneously on multiple cores." />
 
 <InlineQuiz id="quiz-async-10" question="What is aiohttp used for?" options={["Synchronous HTTP", "Async HTTP client/server", "File I/O", "Database queries"]} correct={1} explanation="aiohttp is an async HTTP library. Unlike requests (synchronous), aiohttp can make HTTP calls without blocking the event loop." />
+

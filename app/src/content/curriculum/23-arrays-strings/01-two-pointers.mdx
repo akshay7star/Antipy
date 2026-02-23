@@ -8,6 +8,9 @@ order: 1
 
 Arrays and strings are the most tested data structures in interviews. Two patterns dominate: **Two Pointers** (work from both ends) and **Sliding Window** (track a range). Master these and you'll solve most array problems.
 
+
+<TwoPointersVisualizer />
+
 ## Two Pointers
 
 Use two indices that move toward each other or in the same direction:
@@ -146,3 +149,4 @@ for s in tests:
 <InlineQuiz id="quiz-2ptr-9" question="Can two-pointer be used on unsorted arrays?" options={["Never", "Sometimes, but often the array needs to be sorted first", "Always", "Only with linked lists"]} correct={1} explanation="Classic two-pointer (converging) usually requires a sorted array. Sliding window doesn't always need sorting. Sort first if needed." />
 
 <InlineQuiz id="quiz-2ptr-10" question="What does the 'Container With Most Water' problem demonstrate?" options={["Stack usage", "Two pointers starting from both ends, moving the shorter side inward", "Binary search", "Dynamic programming"]} correct={1} explanation="Start with pointers at both ends. Area = min(height[l], height[r]) * (r-l). Move the shorter pointer inward to potentially find a taller line." />
+

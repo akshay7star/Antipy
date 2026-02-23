@@ -1,0 +1,79 @@
+---
+title: "Abstract Classes"
+description: "Enforcing blueprints using the abc module."
+order: 9
+---
+
+# Abstract Base Classes (ABCs)
+
+<OOPVisualizer initialMode="polymorphism" />
+
+Sometimes you want to create a parent class that is purely a "blueprint." You want to force all child classes to implement certain methods, but you never actually want anyone to instantiate the parent class directly.
+
+In Python, we achieve this using the `abc` (Abstract Base Classes) module.
+
+## The `@abstractmethod` Decorator
+
+By inheriting from `ABC` and using the `@abstractmethod` decorator, you make a class abstract. 
+
+1. **You cannot instantiate an abstract class.**
+2. **Any child class MUST override the abstract methods**, or else it too becomes abstract and cannot be instantiated.
+
+<interactive-code>
+from abc import ABC, abstractmethod
+
+# 1. Inherit from ABC
+class Shape(ABC):
+    
+    # 2. Use the decorator
+    @abstractmethod
+    def area(self):
+        pass
+        
+    @abstractmethod
+    def perimeter(self):
+        pass
+
+    # You can still have normal, implemented methods!
+    def description(self):
+        return "I am a geometric shape."
+
+# Let's try to instantiate the blueprint (This will fail!)
+try:
+    my_shape = Shape()
+except TypeError as e:
+    print(f"ERROR: {e}")
+
+# Now let's create a valid child class
+class Square(Shape):
+    def __init__(self, side):
+        self.side = side
+        
+    # We MUST implement both area and perimeter!
+    def area(self):
+        return self.side * self.side
+        
+    def perimeter(self):
+        return self.side * 4
+
+# This works perfectly!
+my_square = Square(5)
+print(f"Area: {my_square.area()}")
+print(my_square.description())
+</interactive-code>
+
+## Why use Abstract Classes?
+
+If Python has "Duck Typing" (where we don't care about the strict type of an object as long as it has the methods we need - discussed in Polymorphism), why do we need Abstract Classes?
+
+The answer is **Safety and Architecture**. 
+
+When building large applications or libraries for other developers, an Abstract Class acts as a strict contract. It guarantees that anyone who subclasses your `Shape` or `DatabaseConnector` *will absolutely* implement the required methods, catching errors the moment the program tries to start, rather than crashing later randomly during runtime.
+
+---
+
+<InlineQuiz id="oop-abc-1" question="What happens if you try to create an object directly from an Abstract Base Class (ABC)?" options={["It creates an empty object", "It throws a TypeError", "It defaults all methods to None", "It creates a generic Singleton"]} correct={1} explanation="Abstract classes cannot be instantiated. They are purely blueprints." />
+<InlineQuiz id="oop-abc-2" question="If a child class inherits from an ABC but FORGETS to implement one of the @abstractmethods, what happens?" options={["The code runs fine, but the method silently does nothing", "The child class inherits the 'pass' from the parent", "The child class also becomes abstract and attempting to instantiate it will throw an Error", "Python auto-generates the method"]} correct={2} explanation="If you don't implement all abstract methods, the child inherits the abstraction. You won't be able to create an object of the child class." />
+<InlineQuiz id="oop-abc-3" question="Can an Abstract Base Class contain normal, fully-implemented methods alongside abstract ones?" options={["Yes, it can contain both", "No, it must ONLY contain abstract methods", "Only if the normal methods are static", "Only if they are private"]} correct={0} explanation="Yes! This is why they are called Abstract Base Classes instead of strict 'Interfaces'. You can provide default functionality that all children inherit." />
+<InlineQuiz id="oop-abc-4" question="Which module in the Python Standard Library must you import to use ABCs?" options={["math", "typing", "collections", "abc"]} correct={3} explanation="from abc import ABC, abstractmethod" />
+<InlineQuiz id="oop-abc-5" question="What is the primary architectural benefit of an ABC in Python?" options={["It makes the code run significantly faster in CPython", "It allows multiple inheritance", "It serves as a strict contract, guaranteeing that subclasses implement required behaviors before they can be used", "It compresses memory usage"]} correct={2} explanation="It enforces rules on subclasses, preventing runtime errors caused by missing methods." />

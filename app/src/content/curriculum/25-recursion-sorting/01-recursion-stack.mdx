@@ -6,6 +6,8 @@ order: 1
 
 # Recursion: Functions That Call Themselves
 
+<FunctionsVisualizer />
+
 Recursion is when a function calls itself to break a big problem into smaller identical problems. It's the foundation of many algorithms — tree traversal, divide-and-conquer, dynamic programming.
 
 ## The Two Rules of Recursion
@@ -170,3 +172,4 @@ print(f"Built-in:   {sorted(data)}")
 <InlineQuiz id="quiz-rec-9" question="What is the time complexity of quicksort on average?" options={["O(n)", "O(n log n)", "O(n)", "O(log n)"]} correct={1} explanation="Quicksort averages O(n log n). Worst case is O(n) for already-sorted arrays (with poor pivot selection), but it's fast in practice." />
 
 <InlineQuiz id="quiz-rec-10" question="Can every recursive solution be converted to an iterative one?" options={["No, some problems require recursion", "Yes, using an explicit stack data structure", "Only simple recursion", "Only with tail call optimization"]} correct={1} explanation="Every recursive algorithm can be rewritten iteratively using an explicit stack. However, some problems (like tree traversal) are more natural with recursion." />
+

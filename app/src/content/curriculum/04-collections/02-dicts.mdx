@@ -27,15 +27,7 @@ pairs = dict(name="Alice", age=30)
 
 ## How Dictionaries Work
 
-<MermaidDiagram>
-graph LR
-  K1["Key: 'name'"] --> V1["Value: 'Alice'"]
-  K2["Key: 'age'"] --> V2["Value: 30"]
-  K3["Key: 'city'"] --> V3["Value: 'NYC'"]
-  style K1 fill:#3b82f6,stroke:#2563eb,color:#fff
-  style K2 fill:#3b82f6,stroke:#2563eb,color:#fff
-  style K3 fill:#3b82f6,stroke:#2563eb,color:#fff
-</MermaidDiagram>
+<DataStructuresVisualizer initialMode="dict" />
 
 **Keys** must be unique and immutable (strings, numbers, tuples). **Values** can be anything — even other dictionaries.
 
@@ -180,3 +172,4 @@ name_lengths = {name: len(name) for name in names}
 <InlineQuiz id="quiz-dicts-9" question="What does dict.pop(key) do?" options={["Returns the value without removing", "Removes the key and returns its value", "Removes the last item", "Raises an error always"]} correct={1} explanation="pop(key) removes the specified key and returns its value. You can provide a default: dict.pop(key, default) to avoid KeyError." />
 
 <InlineQuiz id="quiz-dicts-10" question="Are dictionaries ordered in Python 3.7+?" options={["No, they are always unordered", "Yes, they maintain insertion order", "Only if you sort them", "Only with OrderedDict"]} correct={1} explanation="Since Python 3.7, regular dicts officially maintain insertion order. Before 3.7, you needed collections.OrderedDict for ordering." />
+

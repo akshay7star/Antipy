@@ -1,0 +1,129 @@
+---
+title: "Polymorphism"
+description: "Duck typing, method overriding, and interfaces."
+order: 4
+---
+
+# Polymorphism
+
+Polymorphism comes from the Greek words *poly* (many) and *morph* (form). In programming, it means that the same function name (but different signatures) can be used for different types.
+
+The classic example is how Python's built-in `len()` function can calculate the length of a string, a list, or a dictionary. It acts polymorphically!
+
+## Polymorphism with Class Methods
+
+In custom OOP, polymorphism is often achieved via **method overriding**. If multiple classes have the same method names, we can iterate through them and call the method without needing to know what specific type of object it is.
+
+<interactive-code>
+class Rectangle:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        
+    def calculate_area(self):
+        return self.width * self.height
+
+class Circle:
+    def __init__(self, radius):
+        self.radius = radius
+        
+    def calculate_area(self):
+        # Using 3.14 roughly for simplicity
+        return 3.14 * (self.radius ** 2)
+
+# We create a list containing DIFFERENT object types
+shapes = [Rectangle(4, 5), Circle(3)]
+
+# We can call the exact same method on all of them
+# because they both implement the same "interface"
+for shape in shapes:
+    # Polymorphism in action! Python knows which specific
+    # method to call based on the object's actual class.
+    print(f"Area is: {shape.calculate_area()}")
+</interactive-code>
+
+## Dynamic Dispatch Visualized
+
+*Watch how the exact same method call (`.speak()`) is dynamically routed to different code implementations based on the object's underlying class!*
+
+<OOPVisualizer initialMode="polymorphism" />
+
+## Method Overloading vs Overriding
+
+We just used **Method Overriding** (redefining a parent's method in a child class). 
+
+But what about **Method Overloading**? In languages like Java or C++, Method Overloading means having *multiple methods in the same class with the exact same name*, but different parameters (e.g., `add(int a, int b)` and `add(int a, int b, int c)`). 
+
+**Python DOES NOT support traditional Method Overloading natively.** If you define `def add(a, b)` and then immediately define `def add(a, b, c)`, Python just deletes the first one and only remembers the second!
+
+However, Python fakes overloading elegantly using **Default Arguments** or `*args`.
+
+<interactive-code>
+class Calculator:
+    # Instead of defining 'add' 3 different times, we use default arguments
+    # to make it act polymorphically depending on how many arguments are passed.
+    def add(self, a, b, c=0, d=0):
+        return a + b + c + d
+
+    # For infinite overloading, we use *args
+    def multiply(self, *args):
+        result = 1
+        for num in args:
+            result *= num
+        return result
+
+calc = Calculator()
+
+# "Overloaded" add method
+print(calc.add(2, 3))       # 5
+print(calc.add(2, 3, 5))    # 10
+
+# "Overloaded" multiply method
+print(calc.multiply(2, 4))       # 8
+print(calc.multiply(2, 4, 10))   # 80
+</interactive-code>
+
+## "Duck Typing" in Python
+
+Python is a dynamically typed language. It fully embraces a concept called **Duck Typing**.
+
+> *"If it walks like a duck, and it quacks like a duck, then it must be a duck."*
+
+In Python, we don't care if an object *is* a specific type of class. We only care if it has the *methods or attributes* we need.
+
+<interactive-code>
+class Duck:
+    def sound(self):
+        print("Quack quack!")
+
+class Dog:
+    def sound(self):
+        print("Woof woof!")
+
+class Car:
+    def sound(self):
+        print("Vroom vroom!")
+
+def make_it_sound(thing):
+    # This functional physically doesn't care WHAT class 'thing' is.
+    # It just blindly trusts that the object has a .sound() method!
+    thing.sound()
+
+my_duck = Duck()
+my_dog = Dog()
+my_car = Car()
+
+make_it_sound(my_duck)
+make_it_sound(my_dog)
+make_it_sound(my_car)
+</interactive-code>
+
+Because of Duck Typing, Python doesn't need strict Java-style Interfaces. As long as the object implements the required methods, it works gracefully.
+
+---
+
+<InlineQuiz id="oop-poly-1" question="What does Polymorphism literally translate to?" options={["Same shape", "Many forms", "Data hiding", "Object relations"]} correct={1} explanation="'Poly' means many, 'morph' means form. Many forms." />
+<InlineQuiz id="oop-poly-2" question="Which built-in Python function is a classic example of polymorphism?" options={["print()", "int()", "len()", "type()"]} correct={2} explanation="len() can give you the length of a string, list, dictionary, tuple, set, etc. It handles many different object types!" />
+<InlineQuiz id="oop-poly-3" question="In the Shape example, how did the loop know whether to use the Rectangle area logic or the Circle area logic?" options={["We wrote an IF statement checking the type", "Python automatically binds to the specific method defined on the object's actual class", "We used the super() function", "It randomly picked one"]} correct={1} explanation="This is dynamic dispatch. The language runtime automatically routes the calculate_area() call to the correct class implementation." />
+<InlineQuiz id="oop-poly-4" question="What does 'Duck Typing' refer to in Python?" options={["Strictly verifying the type of an object before using it", "Throwing errors if a user passes the wrong class", "Assuming an object is valid if it has the necessary methods/attributes, regardless of its actual class inheritance", "Writing code specifically meant for dealing with iterables like iter(duck)"]} correct={2} explanation="If it walks like a duck and quacks like a duck... Python trusts it's a duck without asking for its birth certificate." />
+<InlineQuiz id="oop-poly-5" question="Do you need to formally declare 'Interfaces' (like in Java or C#) to achieve polymorphism in Python?" options={["Yes, required by language design", "No, Python relies on Duck Typing instead", "Yes, using the ABC module is strictly enforced constantly", "Only when working with Integers"]} correct={1} explanation="While Python does have Abstract Base Classes (ABC) for advanced typing, standard Python code just uses Duck Typing to achieve polymorphic behavior effortlessly." />

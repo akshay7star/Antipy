@@ -26,6 +26,9 @@ graph TD
 
 **With memoization**, we store each result and look it up instead of recomputing:
 
+
+<DPVisualizer />
+
 ## Two Approaches
 
 | Approach | Direction | Strategy |
@@ -172,3 +175,4 @@ for amt in amounts:
 <InlineQuiz id="quiz-dp-9" question="What is the coin change problem?" options={["Making change at a store", "Finding minimum coins to make a target amount", "Counting coins", "Sorting coins"]} correct={1} explanation="Given coin denominations, find the minimum number of coins to make a target amount. DP solution: dp[amount] = min(dp[amount-coin]+1)." />
 
 <InlineQuiz id="quiz-dp-10" question="When should you NOT use DP?" options={["When the problem is simple", "When subproblems don&apos;t overlap or lack optimal substructure", "When input is small", "When recursion is available"]} correct={1} explanation="DP only helps when subproblems overlap (same computations repeated) and the problem has optimal substructure. Greedy may be better for some problems." />
+

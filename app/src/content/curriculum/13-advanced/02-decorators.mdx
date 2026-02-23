@@ -6,6 +6,8 @@ order: 3
 
 # Decorators: Modifying Functions
 
+<DecoratorsVisualizer />
+
 A decorator is a function that takes another function and extends its behavior without modifying the original. Think of it like gift wrapping — the present stays the same, but the wrapper adds something extra.
 
 ## How Decorators Work
@@ -182,3 +184,4 @@ except ValueError as e:
 <InlineQuiz id="quiz-deco-9" question="Can you decorate a class?" options={["No, only functions", "Yes, class decorators modify the class", "Only with @dataclass", "Only abstract classes"]} correct={1} explanation="Class decorators work similarly: @decorator\nclass MyClass: is equivalent to MyClass = decorator(MyClass). @dataclass is a common example." />
 
 <InlineQuiz id="quiz-deco-10" question="What is the @dataclass decorator?" options={["Creates a database model", "Auto-generates __init__, __repr__, __eq__ for classes", "Makes a class callable", "Converts to JSON"]} correct={1} explanation="@dataclass automatically generates boilerplate methods (__init__, __repr__, __eq__, etc.) based on class attributes." />
+

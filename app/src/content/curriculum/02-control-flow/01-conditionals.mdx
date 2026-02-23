@@ -12,19 +12,7 @@ Programs aren't just straight lines. In the real world, every app makes thousand
 
 Think of `if` statements like a fork in the road. Python checks a condition, and if it's `True`, it takes one path. If it's `False`, it takes the other.
 
-<MermaidDiagram>
-graph TD
-  Start["Check Condition"] --> IsTrue{"Is it True?"}
-  IsTrue -- Yes --> DoThis["Run the if block"]
-  IsTrue -- No --> CheckElif{"Any elif?"}
-  CheckElif -- Yes --> ElifTrue{"elif True?"}
-  ElifTrue -- Yes --> DoElif["Run elif block"]
-  ElifTrue -- No --> CheckElif
-  CheckElif -- No more --> DoElse["Run else block"]
-  style DoThis fill:#22c55e,stroke:#16a34a,color:#fff
-  style DoElif fill:#3b82f6,stroke:#2563eb,color:#fff
-  style DoElse fill:#ef4444,stroke:#dc2626,color:#fff
-</MermaidDiagram>
+<ControlFlowVisualizer />
 
 ## The Basic Structure
 
@@ -193,3 +181,4 @@ Use this only for **simple** conditions. For anything complex, stick with the fu
 <InlineQuiz id="quiz-cond-9" question="What is short-circuit evaluation?" options={["Stopping a loop early", "Python skipping evaluation of the second operand when the result is already determined", "A type of error", "Compiling code faster"]} correct={1} explanation="In 'x and y', if x is False, Python doesn't evaluate y (result is already False). In 'x or y', if x is True, Python skips y." />
 
 <InlineQuiz id="quiz-cond-10" question="What does 'x = 5 if True else 10' assign to x?" options={["True", "5", "10", "Error"]} correct={1} explanation="This is Python's ternary/conditional expression. Since the condition is True, x gets the value 5." />
+

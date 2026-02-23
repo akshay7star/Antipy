@@ -1,0 +1,93 @@
+---
+title: "Encapsulation"
+description: "Public, private, and protected variables. Getters & setters using @property."
+order: 5
+---
+
+# Encapsulation
+
+<OOPVisualizer initialMode="instantiation" />
+
+Encapsulation is the bundling of data (attributes) and methods that operate on that data into a single unit (a class). Crucially, encapsulation also involves **restricting direct access** to some of the object's components.
+
+This protects the internal state of the object from unintended changes.
+
+## Public, Protected, and Private
+
+Unlike Java or C++, Python does not have strict access modifiers. Instead, it relies on naming conventions:
+
+1.  **Public** (`name`): Accessible from anywhere.
+2.  **Protected** (`_name`): A single leading underscore signals to other programmers "please don't touch this from the outside, it's for internal use." (But it *is* still accessible).
+3.  **Private** (`__name`): A double leading underscore triggers **name mangling**, making it genuinely harder (though not impossible) to access directly from outside.
+
+<interactive-code>
+class BankAccount:
+    def __init__(self, owner, starting_balance):
+        self.owner = owner             # Public
+        self._branch = "Main St"       # Protected (Convention)
+        self.__balance = starting_balance # Private!
+
+    def deposit(self, amount):
+        if amount > 0:
+            self.__balance += amount
+            return True
+        return False
+
+    def get_balance(self):
+        # We provide a PUBLIC method to let users READ the private data
+        return self.__balance
+
+account = BankAccount("Alice", 100)
+print(f"Owner: {account.owner}")
+print(f"Balance via method: {account.get_balance()}")
+
+# If we try to access the double-underscore variable directly:
+try:
+    print(account.__balance)
+except AttributeError as e:
+    print(f"ERROR: {e}")
+</interactive-code>
+
+## Getters, Setters, and `@property`
+
+Instead of writing classic `get_balance()` and `set_balance()` methods like you would in Java, Python provides a much more elegant solution: the `@property` decorator.
+
+It allows you to define methods that can be accessed *as if they were simple attributes*.
+
+<interactive-code>
+class Temperature:
+    def __init__(self, celsius):
+        self._celsius = celsius
+        
+    # The Getter
+    @property
+    def fahrenheit(self):
+        # This code runs when someone accesses obj.fahrenheit !
+        return (self._celsius * 9 / 5) + 32
+        
+    # The Setter
+    @fahrenheit.setter
+    def fahrenheit(self, value):
+        # This code runs when someone DOES obj.fahrenheit = 100 !
+        if value < -459.67:
+            raise ValueError("Temperature below absolute zero is impossible")
+        self._celsius = (value - 32) * 5 / 9
+
+temp = Temperature(0)
+print(f"In C: {temp._celsius}")     # 0
+print(f"In F: {temp.fahrenheit}")   # 32 (Calculated behind the scenes!)
+
+# Now let's trigger the SETTER
+temp.fahrenheit = 212
+print(f"New C: {temp._celsius}")    # 100
+</interactive-code>
+
+By using `@property`, you can add validation logic to your variables later without breaking existing code that accesses them with dot notation!
+
+---
+
+<InlineQuiz id="oop-encap-1" question="What is Encapsulation?" options={["Putting classes inside a list", "Bundling data and methods together and restricting direct access", "Making variables global so any function can see them", "Writing tests for methods"]} correct={1} explanation="Encapsulation bundles the state and behavior together and protects the internal state." />
+<InlineQuiz id="oop-encap-2" question="If an attribute is named _secret, what does the single leading underscore mean in Python?" options={["It raises an Error if accessed outside the class", "It implies the attribute is 'protected' and shouldn't be touched by external code, but is still accessible", "It makes the attribute completely invisible", "It marks the variable as read-only"]} correct={1} explanation="A single underscore is a gentleman's agreement among Python developers not to touch it from outside the class." />
+<InlineQuiz id="oop-encap-3" question="What happens to an attribute named __balance (double leading underscore)?" options={["It becomes strictly typed", "Python triggers 'name mangling', changing its internal name to make accidental access very difficult", "It becomes a static class variable", "It is deleted when the program exits"]} correct={1} explanation="Name mangling renames it internally (e.g., _BankAccount__balance) to prevent subclass collisions or accidental access." />
+<InlineQuiz id="oop-encap-4" question="What is the advantage of the @property decorator in Python?" options={["It allows methods to be accessed as if they were simple attributes", "It makes a property inherently thread-safe", "It allows properties to be stored in SQL databases automatically", "It prevents garbage collection"]} correct={0} explanation="@property transforms a method so it can be read like a standard attribute (e.g. obj.val instead of obj.val())." />
+<InlineQuiz id="oop-encap-5" question="Why might you want to restrict direct access to a variable (make it private) instead of public?" options={["To make the code look more complex", "To save RAM during execution", "To validate the data before it is set and prevent invalid states", "To force users to write more Python code"]} correct={2} explanation="If variables are public, anyone can set them to anything (e.g., negative balance). If they are private and guarded by setters, you can validate the input to ensure the object stays in a valid state." />

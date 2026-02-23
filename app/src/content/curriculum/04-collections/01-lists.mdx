@@ -29,17 +29,7 @@ nums = list(range(5))    # [0, 1, 2, 3, 4]
 
 Every item has a position number called an **index**. Python indexing starts at **0**, not 1.
 
-<MermaidDiagram>
-graph LR
-  I0["Index 0"] --> A["apple"]
-  I1["Index 1"] --> B["banana"]
-  I2["Index 2"] --> C["cherry"]
-  IN1["Index -1"] --> C
-  IN2["Index -2"] --> B
-  IN3["Index -3"] --> A
-  style I0 fill:#3b82f6,stroke:#2563eb,color:#fff
-  style IN1 fill:#f59e0b,stroke:#d97706,color:#000
-</MermaidDiagram>
+<DataStructuresVisualizer initialMode="list" />
 
 ```python
 fruits = ["apple", "banana", "cherry"]
@@ -175,3 +165,4 @@ print(f"Short lowercase: {lower_short}")
 <InlineQuiz id="quiz-lists-9" question="What is a nested list?" options={["A list with no elements", "A list that contains other lists", "A list sorted alphabetically", "A list with unique elements only"]} correct={1} explanation="A nested list is a list containing other lists: [[1,2], [3,4]]. It can represent grids, matrices, or hierarchical data." />
 
 <InlineQuiz id="quiz-lists-10" question="What does list.extend([4, 5]) do?" options={["Adds [4,5] as a single element", "Adds 4 and 5 as separate elements", "Returns a new extended list", "Raises an error"]} correct={1} explanation="extend() adds each element individually. append([4,5]) would add the list as a single element, but extend() unpacks it." />
+

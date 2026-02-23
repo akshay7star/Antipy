@@ -8,6 +8,9 @@ order: 2
 
 When you have a million items, loading them all into a list wastes memory. Generators produce items **one at a time**, on demand. They're like a vending machine — it doesn't store all the drinks in front of you, it delivers one when you press the button.
 
+
+<GeneratorsVisualizer />
+
 ## The Problem Generators Solve
 
 ```python
@@ -164,3 +167,5 @@ print(f"Paired: {paired}")
 <InlineQuiz id="quiz-iter-9" question="What is lazy evaluation?" options={["Slow code execution", "Computing values only when they are needed", "Skipping some values", "Running code in background"]} correct={1} explanation="Lazy evaluation defers computation until the value is actually needed. Generators and iterators use lazy evaluation for memory efficiency." />
 
 <InlineQuiz id="quiz-iter-10" question="How does a for loop work internally?" options={["Magic", "It calls iter() to get an iterator, then calls next() repeatedly until StopIteration", "It uses indexing", "It copies the entire collection"]} correct={1} explanation="for x in iterable: internally does: it = iter(iterable), then repeatedly calls next(it), catching StopIteration to end the loop." />
+
+

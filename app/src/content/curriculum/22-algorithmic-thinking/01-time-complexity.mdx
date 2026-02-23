@@ -6,6 +6,8 @@ order: 1
 
 # Algorithmic Thinking: Big O Notation
 
+<BigOVisualizer />
+
 When your code works on 100 items, does it still work on 1 million? **Big O notation** measures how your algorithm's performance scales with input size. It's the language every developer must speak.
 
 ## Why It Matters
@@ -140,3 +142,4 @@ def double_all(items):
 <InlineQuiz id="quiz-bigO-9" question="What is amortized time complexity?" options={["The worst case", "Average time per operation over many operations", "The best case", "Approximate time"]} correct={1} explanation="Amortized analysis averages cost over sequences. list.append() is O(1) amortized even though occasional resizes are O(n)." />
 
 <InlineQuiz id="quiz-bigO-10" question="Why does Big O ignore constants and lower-order terms?" options={["To make math easier", "Because they become insignificant as input grows very large", "Constants don&apos;t exist", "It is a convention"]} correct={1} explanation="Big O describes growth rate. O(2n + 100) is O(n) because as n  , the constant 2 and +100 become negligible." />
+

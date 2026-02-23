@@ -8,6 +8,8 @@ order: 2
 
 Almost every program needs to build strings dynamically — inserting variables, formatting numbers, aligning output. Python has evolved its string formatting over the years, and **f-strings** (introduced in Python 3.6) are the modern, fastest, most readable way.
 
+<FormattingVisualizer />
+
 ## f-strings: The Modern Way
 
 Prefix a string with `f` and put expressions inside `{curly braces}`:
@@ -165,5 +167,6 @@ f-strings are preferred in all new code — they're faster and more readable.
 <InlineQuiz id="quiz-fmt-9" question="Can you call methods inside f-string expressions?" options={["No, only variables", "Yes, any valid Python expression", "Only built-in functions", "Only string methods"]} correct={1} explanation="F-strings accept ANY valid Python expression: f'{name.upper()}', f'{len(items)}', f'{x + y * 2}' all work." />
 
 <InlineQuiz id="quiz-fmt-10" question="What is the output of: f'{True}'?" options={["1", "true", "True", "Error"]} correct={2} explanation="F-strings convert values using str(). str(True) returns 'True' with a capital T (Python's boolean representation)." />
+
 
 

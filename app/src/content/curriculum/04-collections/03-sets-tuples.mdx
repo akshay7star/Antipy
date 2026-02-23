@@ -8,19 +8,7 @@ order: 3
 
 Python has four core collection types, and choosing the right one is a fundamental skill. Each exists because it solves a specific problem better than the others.
 
-<MermaidDiagram>
-graph TD
-  Q1{"Need key-value pairs?"} -- Yes --> DICT["Use dict"]
-  Q1 -- No --> Q2{"Need uniqueness?"} 
-  Q2 -- Yes --> SET["Use set"]
-  Q2 -- No --> Q3{"Need to change it?"}
-  Q3 -- Yes --> LIST["Use list"]
-  Q3 -- No --> TUPLE["Use tuple"]
-  style DICT fill:#3b82f6,stroke:#2563eb,color:#fff
-  style SET fill:#22c55e,stroke:#16a34a,color:#fff
-  style LIST fill:#f59e0b,stroke:#d97706,color:#000
-  style TUPLE fill:#8b5cf6,stroke:#7c3aed,color:#fff
-</MermaidDiagram>
+<DataStructuresVisualizer initialMode="set" />
 
 | Collection | Ordered | Mutable | Duplicates | Use Case |
 |-----------|---------|---------|------------|----------|
@@ -201,3 +189,4 @@ if list_time > 0 and set_time > 0:
 <InlineQuiz id="quiz-sets-9" question="What is the time complexity of checking membership in a set?" options={["O(n)", "O(log n)", "O(1) average", "O(n log n)"]} correct={2} explanation="Sets use hash tables internally, so 'x in set' is O(1) average case. This is much faster than checking 'x in list' which is O(n)." />
 
 <InlineQuiz id="quiz-sets-10" question="What does set.discard(x) do vs set.remove(x)?" options={["Same thing", "discard raises error if missing, remove doesn&apos;t", "remove raises KeyError if missing, discard doesn&apos;t", "discard removes all occurrences"]} correct={2} explanation="remove(x) raises KeyError if x is not in the set. discard(x) does nothing if x is missing � it's the safe version." />
+

@@ -1,0 +1,88 @@
+---
+title: "Class vs Static Methods"
+description: "Understanding @classmethod and @staticmethod decorators vs instance methods."
+order: 6
+---
+
+# Class vs Static Methods
+
+<OOPVisualizer initialMode="instantiation" />
+
+So far, all the methods we've written have been **Instance Methods**. They take `self` as their first parameter, meaning they act upon a specific, individual instance of a class.
+
+But what if you want a method that belongs to the *Class* itself, rather than an instance? Or a method that belongs inside the class logically, but doesn't need to access the class or instance at all?
+
+## `@classmethod`
+
+A class method takes `cls` as its first parameter instead of `self`. It can parse and modify class state that applies across all instances of the class.
+
+A very common use case for `@classmethod` is creating **Alternative Constructors**.
+
+<interactive-code>
+class Employee:
+    company_name = "TechCorp" # Class variable
+
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+        
+    # Standard Instance Method
+    def get_details(self):
+        return f"{self.name} is {self.age} years old"
+
+    # Class Method
+    @classmethod
+    def from_string(cls, emp_string):
+        # Let's say we receive data as "John-35"
+        name, age = emp_string.split("-")
+        
+        # 'cls' refers to the Employee class itself.
+        # We are using it to instantiate and return a new object!
+        return cls(name, int(age))
+        
+    @classmethod
+    def change_company(cls, new_name):
+        cls.company_name = new_name
+
+# Using the alternative constructor!
+emp1 = Employee.from_string("Alice-28")
+print(emp1.get_details())
+
+# Modifying class state
+Employee.change_company("Initech")
+print(Employee.company_name)
+</interactive-code>
+
+## `@staticmethod`
+
+A static method doesn't take a mandatory `self` or `cls` parameter. It behaves exactly like a regular standalone Python function, but it's nested inside the class because it logically belongs there.
+
+<interactive-code>
+class MathUtils:
+    
+    @staticmethod
+    def is_even(number):
+        # Notice there is no 'self' or 'cls' here!
+        return number % 2 == 0
+        
+    @staticmethod
+    def add(a, b):
+        return a + b
+
+# You call static methods directly on the class itself
+print(MathUtils.is_even(10)) # True
+print(MathUtils.add(5, 7))   # 12
+</interactive-code>
+
+### Summary Rule of Thumb
+*   Use standard **Instance Methods** (`self`) when you need to read or modify specific data for that specific object.
+*   Use `@classmethod` (`cls`) when you need to read or modify state shared by *all* objects of that class, or to create alternative constructors.
+*   Use `@staticmethod` when the code doesn't care about the class or the object instances, but it makes conceptual sense to put the function inside the class namespace.
+
+---
+
+<InlineQuiz id="oop-cls-1" question="What is the first parameter automatically passed into an Instance Method?" options={["cls", "self", "this", "None"]} correct={1} explanation="Instance methods take 'self', pointing to the specific object instance." />
+<InlineQuiz id="oop-cls-2" question="What is the first parameter automatically passed into a @classmethod?" options={["cls", "self", "this", "None"]} correct={0} explanation="Class methods take 'cls', pointing to the Class object itself." />
+<InlineQuiz id="oop-cls-3" question="What is a very common use case for @classmethod?" options={["Doing math operations", "Creating alternative constructors", "Creating private variables", "Importing external modules"]} correct={1} explanation="They are excellent for parsing strings or dictionaries and then returning a newly minted instance of the class." />
+<InlineQuiz id="oop-cls-4" question="What does a @staticmethod take as its first automatic parameter?" options={["self", "cls", "Nothing! It takes no automatic parameters.", "The global environment dictionary"]} correct={2} explanation="Static methods act like normal standalone functions inside a class namespace. They do not get 'self' or 'cls'." />
+<InlineQuiz id="oop-cls-5" question="If I have a helper function `def calculate_tax(amount):` that has nothing to do with class variables or instance states, but mathematically belongs with my `Order` class, what should I make it?" options={["Instance method", "Class method", "Static method", "Global variable"]} correct={2} explanation="Since it doesn't need to read or write class/instance data, it should be a @staticmethod." />

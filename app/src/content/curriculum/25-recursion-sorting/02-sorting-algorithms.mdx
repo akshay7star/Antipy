@@ -1,0 +1,180 @@
+---
+title: "Sorting Algorithms"
+description: "Visualize and understand O(n^2) and O(n log n) sorting techniques."
+order: 2
+---
+
+# Sorting Algorithms
+
+Sorting is one of the most fundamental operations in computer science. Let's visualize how a few common algorithms work step-by-step.
+
+<SortingVisualizer />
+
+## Common O(n²) Algorithms
+
+These algorithms are intuitive but inefficient for large datasets.
+
+### 1. Bubble Sort
+Bubble Sort repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order. It "bubbles" the largest elements to the end of the array one by one.
+
+<interactive-code>
+def bubble_sort(arr):
+    n = len(arr)                     # 1. Get the length of the array
+    for i in range(n):               # 2. Outer loop: tracks how many elements are sorted
+        swapped = False              # 3. Optimization: check if any swaps happen this pass
+        
+        # 4. Inner loop: go up to the unsorted portion (n-i-1)
+        for j in range(0, n - i - 1):
+            if arr[j] > arr[j + 1]:  # 5. Compare adjacent elements
+                # 6. Swap them if the left is greater than the right
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                swapped = True       # 7. Mark that a swap occurred
+                
+        if not swapped:              # 8. If no swaps happened, it's already sorted!
+            break
+            
+    return arr
+
+# Test it
+print(bubble_sort([64, 34, 25, 12, 22, 11, 90]))
+</interactive-code>
+
+### 2. Selection Sort
+Selection Sort divides the list into a sorted and unsorted sublist. It repeatedly "selects" the absolute smallest element from the unsorted sublist and swaps it with the leftmost unsorted element.
+
+<interactive-code>
+def selection_sort(arr):
+    n = len(arr)                        # 1. Get length
+    for i in range(n):                  # 2. Outer loop: boundary of sorted/unsorted parts
+        min_idx = i                     # 3. Assume the first unsorted element is the minimum
+        
+        for j in range(i + 1, n):       # 4. Inner loop: scan the rest of the array
+            if arr[j] < arr[min_idx]:   # 5. If we find a strictly smaller element...
+                min_idx = j             # 6. ...update our minimum index tracker
+                
+        # 7. Swap the found minimum element with the first unsorted element
+        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+        
+    return arr
+
+# Test it
+print(selection_sort([64, 25, 12, 22, 11]))
+</interactive-code>
+
+### 3. Insertion Sort
+Insertion Sort builds the final sorted array one item at a time. It takes the current element and inserts it into the correct position within the already sorted part of the array, shifting other elements down.
+
+<interactive-code>
+def insertion_sort(arr):
+    # 1. Start from the second element (index 1), assume index 0 is sorted
+    for i in range(1, len(arr)):
+        key = arr[i]                 # 2. Store the element we want to place
+        j = i - 1                    # 3. Point to the last element of the sorted portion
+        
+        # 4. While we haven't reached the start AND the sorted element is > our key
+        while j >= 0 and key < arr[j]:
+            arr[j + 1] = arr[j]      # 5. Shift the larger element one position to the right
+            j -= 1                   # 6. Move our pointer left
+            
+        # 7. We found the correct spot, insert the key!
+        arr[j + 1] = key
+        
+    return arr
+
+# Test it
+print(insertion_sort([12, 11, 13, 5, 6]))
+</interactive-code>
+
+---
+
+## The Power of O(n log n): Divide & Conquer
+
+For large datasets, O(n²) is too slow. Modern sorting relies on "Divide and Conquer" algorithms that recursively break the array down into smaller chunks, resulting in an O(n log n) time complexity.
+
+### 4. Merge Sort
+Merge Sort recursively splits the array in half until we have sub-arrays of size 1. Then, it expertly "merges" those tiny sorted arrays back together into larger sorted arrays.
+
+<interactive-code>
+def merge_sort(arr):
+    # 1. Base case: if array is length 1 or 0, it is already sorted
+    if len(arr) <= 1:
+        return arr
+
+    # 2. Find the middle index and split the array into Left and Right halves
+    mid = len(arr) // 2
+    left_half = arr[:mid]
+    right_half = arr[mid:]
+
+    # 3. Recursively call merge_sort on both halves
+    left_sorted = merge_sort(left_half)
+    right_sorted = merge_sort(right_half)
+
+    # 4. Merge the two sorted halves back together
+    return merge(left_sorted, right_sorted)
+
+def merge(left, right):
+    result = []
+    i = j = 0
+
+    # 5. Compare the "tops" of both left and right lists
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i])  # 6. Left item is smaller, append it
+            i += 1
+        else:
+            result.append(right[j]) # 7. Right item is smaller, append it
+            j += 1
+
+    # 8. Append any remaining elements (one list will be empty, one will have leftovers)
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+# Test it
+print(merge_sort([38, 27, 43, 3, 9, 82, 10]))
+</interactive-code>
+
+### 5. Quick Sort
+Quick Sort picks a "pivot" element. It then "partitions" the array so that all elements smaller than the pivot go to the left, and elements larger go to the right. It then recursively applies this to the left and right sides.
+
+<interactive-code>
+def quick_sort(arr):
+    # 1. Base case: array of length 0 or 1 is sorted
+    if len(arr) <= 1:
+        return arr
+        
+    # 2. Choose a pivot (we'll just use the last element for simplicity)
+    pivot = arr[-1]
+    
+    # 3. Create buckets for elements less than, equal to, and greater than the pivot
+    # (This uses Python list comprehensions for concise and readable code)
+    left = [x for x in arr[:-1] if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr[:-1] if x > pivot]
+    
+    # 4. Recursively sort the left and right sub-arrays, then combine them!
+    return quick_sort(left) + middle + quick_sort(right)
+
+# Test it
+print(quick_sort([10, 7, 8, 9, 1, 5]))
+</interactive-code>
+
+<InlineQuiz id="quiz-sort-1" question="Which sorting algorithm 'bubbles' the largest elements to the end of the array on each pass?" options={["Merge Sort", "Selection Sort", "Bubble Sort", "Insertion Sort"]} correct={2} explanation="Bubble Sort gets its name because the larger elements 'bubble' up to the top (end) of the array as they are swapped." />
+
+<InlineQuiz id="quiz-sort-2" question="Which algorithm searches for the absolute smallest element in the remaining unsorted array and swaps it into place?" options={["Selection Sort", "Bubble Sort", "Merge Sort", "Quick Sort"]} correct={0} explanation="Selection Sort explicitly 'selects' the minimum element from the unsorted portion and places it at the end of the sorted portion." />
+
+<InlineQuiz id="quiz-sort-3" question="What is the average time complexity for Bubble, Selection, and Insertion Sort?" options={["O(n)", "O(n log n)", "O(n²)", "O(log n)"]} correct={2} explanation="All three of these basic sorting algorithms have an average and worst-case time complexity of O(n²) due to their nested loops." />
+
+<InlineQuiz id="quiz-sort-4" question="Which algorithm is typically best for a small array that is already mostly sorted?" options={["Bubble Sort", "Insertion Sort", "Selection Sort", "Heap Sort"]} correct={1} explanation="Insertion sort is extremely fast (approaching O(n)) when the array is already mostly sorted because it just leaves elements in place." />
+
+<InlineQuiz id="quiz-sort-5" question="In Selection Sort, how many swaps are made per pass (outer loop iteration)?" options={["0 or 1", "n", "n/2", "It varies wildly"]} correct={0} explanation="Selection Sort finds the minimum element and does at most exactly ONE swap per outer loop iteration." />
+
+<InlineQuiz id="quiz-sort-6" question="Is it possible for Bubble Sort to finish early?" options={["No, it always runs O(n²)", "Yes, if it makes a full pass with zero swaps", "Yes, but only if the array length is odd", "No, unless we break the loop manually"]} correct={1} explanation="Optimized Bubble Sort keeps a 'swapped' flag. If a full pass happens without any swaps, the array is sorted and it can stop early." />
+
+<InlineQuiz id="quiz-sort-7" question="Which of these is a stable sort? (Equal elements retain their original relative order)" options={["Selection Sort", "Insertion Sort", "Heap Sort", "Quick Sort"]} correct={1} explanation="Insertion Sort is stable. It only shifts elements if they are strictly greater, so equal elements never leapfrog each other." />
+
+<InlineQuiz id="quiz-sort-8" question="What does 'in-place' sorting mean?" options={["It sorts the array without needing significant extra memory (e.g. O(1) auxiliary space)", "It sorts the array in exactly O(n) time", "It only sorts numbers", "It never swaps elements"]} correct={0} explanation="An in-place algorithm modifies the input array directly and requires only a small, constant amount of extra memory space." />
+
+<InlineQuiz id="quiz-sort-9" question="Are Bubble, Insertion, and Selection sort in-place algorithms?" options={["Only Bubble Sort is", "No, they all need O(n) extra space", "Only Selection Sort is", "Yes, they are all in-place"]} correct={3} explanation="They all sort within the original array boundaries using just a few temporary variables for swapping, so they are all O(1) space (in-place)." />
+
+<InlineQuiz id="quiz-sort-10" question="If you had to sort a million randomly ordered names, would you use Insertion Sort?" options={["Yes, it is the standard for text", "Yes, it is O(1)", "No, O(n²) is too slow for 1,000,000 items. Look at O(n log n) sorts instead.", "No, it only works on numbers"]} correct={2} explanation="O(n²) on 1,000,000 items is 1,000,000,000,000 operations. This would take far too long. O(n log n) sorts like Merge Sort or Quick Sort are required for large datasets." />

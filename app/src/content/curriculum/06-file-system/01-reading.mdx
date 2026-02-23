@@ -8,6 +8,9 @@ order: 1
 
 Most real programs work with external data — CSV exports, log files, configuration files, user uploads. Python's built-in `open()` function is your gateway to all of them.
 
+
+<FileSystemVisualizer />
+
 ## The `with` Statement (Context Manager)
 
 The safest way to work with files is using `with`. It automatically closes the file when you're done, even if an error occurs:
@@ -166,3 +169,5 @@ except PermissionError:
 <InlineQuiz id="quiz-read-9" question="What encoding should you typically use when reading text files?" options={["ASCII", "UTF-8", "Latin-1", "Binary"]} correct={1} explanation="UTF-8 is the universal standard that supports all characters. Always specify encoding='utf-8' for consistent behavior." />
 
 <InlineQuiz id="quiz-read-10" question="What does the pathlib module provide over os.path?" options={["Nothing, they are identical", "Object-oriented path handling with / operator", "Faster file reading", "Network file access"]} correct={1} explanation="pathlib provides an object-oriented API: Path('dir') / 'file.txt' instead of os.path.join('dir', 'file.txt'). It's more readable." />
+
+

@@ -8,6 +8,8 @@ order: 2
 
 If you had to print "Hello" 1000 times, you wouldn't write 1000 `print()` statements. Loops let you repeat a block of code as many times as you need. They're the core of automation — bulk processing files, analyzing datasets, handling user requests, and everything in between.
 
+<LoopsVisualizer />
+
 ## Two Types of Loops
 
 Python has exactly two loop types. The choice between them is simple:
@@ -177,3 +179,4 @@ for row in range(1, size + 1):
 <InlineQuiz id="quiz-loops-9" question="How do you iterate over both index and value in a list?" options={["for i, v in list:", "for i in range(len(list)): v = list[i]", "for i, v in enumerate(list):", "Both B and C work, but C is preferred"]} correct={3} explanation="Both approaches work, but enumerate() is the Pythonic way. It gives you (index, value) tuples directly." />
 
 <InlineQuiz id="quiz-loops-10" question="What is the output of: for i in range(3): print(i, end=' ')?" options={["1 2 3", "0 1 2", "0 1 2 3", "1 2"]} correct={1} explanation="range(3) gives [0, 1, 2]. The end=' ' makes print use a space instead of newline. Output: '0 1 2 '." />
+

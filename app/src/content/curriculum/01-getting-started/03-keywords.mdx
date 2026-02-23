@@ -8,6 +8,8 @@ order: 3
 
 Every language has words with special meaning. In English, words like "if", "and", "not" have fixed meanings. Python has **35 reserved keywords** that work the same way — they have special meaning to the interpreter, and you **cannot** use them as variable names.
 
+<KeywordsVisualizer />
+
 ## Why Keywords Matter
 
 When the interpreter sees the word `if`, it knows you're about to write a condition. When it sees `for`, it knows a loop is coming. If you tried to name a variable `if`, Python would get confused — is this a condition or a variable?
@@ -171,3 +173,4 @@ print(f"Count: {len(scores)}")
 <InlineQuiz id="quiz-keywords-9" question="What does 'elif' stand for?" options={["else if", "element if", "elif is not an abbreviation", "else iterate first"]} correct={0} explanation="'elif' is Python's shorthand for 'else if'. It allows you to chain multiple conditions: if/elif/elif/else." />
 
 <InlineQuiz id="quiz-keywords-10" question="How many reserved keywords does Python 3 have (approximately)?" options={["15", "25", "35", "50"]} correct={2} explanation="Python 3 has about 35 reserved keywords (like def, class, if, else, for, while, return, import, etc.). These cannot be used as variable names." />
+

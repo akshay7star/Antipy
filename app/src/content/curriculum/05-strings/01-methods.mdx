@@ -8,6 +8,8 @@ order: 1
 
 Strings are everywhere in programming — user input, file paths, API responses, database queries, log messages. Python gives you a massive toolkit for manipulating text, and learning these methods will make your code dramatically cleaner.
 
+<StringsVisualizer />
+
 ## Strings Are Immutable
 
 This is the single most important thing to understand: **strings cannot be changed**. Every "modification" creates a **new** string.
@@ -175,3 +177,5 @@ print(f"\nFixed: {fixed}")
 <InlineQuiz id="quiz-str-9" question="What does 'hello'.find('ll') return?" options={["-1", "0", "2", "True"]} correct={2} explanation="find() returns the INDEX of the first occurrence of the substring. 'll' starts at index 2 in 'hello'. Returns -1 if not found." />
 
 <InlineQuiz id="quiz-str-10" question="What is string interpolation?" options={["Splitting a string", "Embedding variables or expressions inside a string", "Removing characters from a string", "Comparing two strings"]} correct={1} explanation="String interpolation inserts variable values into a string. Python offers f-strings, .format(), and % formatting for this." />
+
+

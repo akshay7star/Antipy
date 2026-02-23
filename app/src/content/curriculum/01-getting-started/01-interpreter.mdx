@@ -12,15 +12,7 @@ Before you write a single line of code, it helps to understand **what happens wh
 
 When you type `python my_script.py` in a terminal, here's what actually happens under the hood:
 
-<MermaidDiagram>
-graph LR
-  A["Your Code: hello.py"] --> B["Python Interpreter"]
-  B --> C["Bytecode: .pyc files"]
-  C --> D["Python Virtual Machine"]
-  D --> E["Output on Screen"]
-  style A fill:#8b5cf6,stroke:#7c3aed,color:#fff
-  style E fill:#22c55e,stroke:#16a34a,color:#fff
-</MermaidDiagram>
+<InterpreterVisualizer />
 
 1. **You write code** in a `.py` text file — it's just plain English-like text
 2. **The interpreter reads** your file line by line from top to bottom
@@ -62,15 +54,7 @@ print(100 / 3)
 
 Variables are **labels** that point to data stored in your computer's memory. Think of them like sticky notes — you write a name on the note and stick it on a value.
 
-<MermaidDiagram>
-graph LR
-  V1["name"] --> D1["'Akshay'"]
-  V2["age"] --> D2["25"]
-  V3["is_learning"] --> D3["True"]
-  style D1 fill:#f59e0b,stroke:#d97706,color:#000
-  style D2 fill:#3b82f6,stroke:#2563eb,color:#fff
-  style D3 fill:#22c55e,stroke:#16a34a,color:#fff
-</MermaidDiagram>
+<VariablesVisualizer />
 
 In Python, you don't need to declare the *type* of a variable. Python figures it out automatically. This is called **dynamic typing**.
 
@@ -161,3 +145,5 @@ print(type(10 // 3))        # Floor division returns an int
 <InlineQuiz id="quiz-interp-9" question="Which of these is a valid variable name in Python?" options={["2name", "my-var", "my_var", "class"]} correct={2} explanation="Variable names can contain letters, numbers, and underscores, but cannot start with a number, contain hyphens, or be a reserved keyword like 'class'." />
 
 <InlineQuiz id="quiz-interp-10" question="What does the print() function do?" options={["Saves data to a file", "Displays output to the console", "Creates a new variable", "Reads user input"]} correct={1} explanation="print() displays output to the console/terminal. It's one of the most commonly used functions for debugging and showing results." />
+
+

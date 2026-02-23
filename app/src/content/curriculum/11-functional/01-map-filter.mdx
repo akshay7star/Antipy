@@ -12,13 +12,7 @@ Python supports **functional programming** — a style where you transform data 
 
 `map()` applies a function to every item in an iterable and returns the results:
 
-<MermaidDiagram>
-graph LR
-  IN["[1, 2, 3, 4]"] --> MAP["map: x * 2"]
-  MAP --> OUT["[2, 4, 6, 8]"]
-  style IN fill:#3b82f6,stroke:#2563eb,color:#fff
-  style OUT fill:#22c55e,stroke:#16a34a,color:#fff
-</MermaidDiagram>
+<FunctionalVisualizer />
 
 ```python
 nums = [1, 2, 3, 4]
@@ -121,3 +115,4 @@ result = [x**2 for x in nums if x > 0]
 <InlineQuiz id="quiz-mapf-9" question="What does sorted(data, key=len) do?" options={["Sorts by value", "Sorts by the length of each element", "Sorts in reverse", "Filters by length"]} correct={1} explanation="The key parameter specifies a function to extract a comparison key. key=len sorts elements by their length." />
 
 <InlineQuiz id="quiz-mapf-10" question="Can you chain map and filter?" options={["No", "Yes: map(func, filter(pred, data))", "Only with reduce", "Only in functional languages"]} correct={1} explanation="You can chain them: map(str.upper, filter(lambda s: len(s) > 3, words)) � first filter, then transform. Or use comprehensions." />
+

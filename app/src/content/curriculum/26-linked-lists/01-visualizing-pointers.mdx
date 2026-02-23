@@ -8,6 +8,9 @@ order: 1
 
 Unlike arrays (which store elements contiguously in memory), linked lists store elements in separate **nodes** connected by **pointers**. Each node knows about the next node, forming a chain.
 
+
+<LinkedListVisualizer />
+
 ## Visualization
 
 <MermaidDiagram>
@@ -38,6 +41,12 @@ class ListNode:
         self.val = val
         self.next = next
 ```
+
+## Interactive Pointers
+
+Play around with this visualizer to understand how pointers move when appending, prepending, or reversing a linked list. Notice how the `head`, `prev`, `curr`, and `next` pointers shift during the reverse operation!
+
+<LinkedListVisualizer />
 
 ### Practice: Linked List Operations
 
@@ -147,3 +156,4 @@ def reverse(head):
 <InlineQuiz id="quiz-ll-9" question="What is the time complexity of searching in an unsorted linked list?" options={["O(1)", "O(log n)", "O(n)", "O(n)"]} correct={2} explanation="You must traverse from head to find an element: O(n) in the worst case. No random access or binary search possible." />
 
 <InlineQuiz id="quiz-ll-10" question="When should you use a linked list over an array?" options={["Always", "When you need frequent insertions/deletions and don&apos;t need random access", "When you need fast lookup", "For sorted data"]} correct={1} explanation="Linked lists excel at frequent insert/delete operations (no shifting needed). Use arrays when you need index-based access." />
+

@@ -1,0 +1,116 @@
+---
+title: "Inheritance"
+description: "Creating class hierarchies and code reuse (DRY)."
+order: 3
+---
+
+# Inheritance
+
+Inheritance is one of the core concepts of Object-Oriented Programming (OOP). It allows a new class (the **child class** or **subclass**) to inherit attributes and methods from an existing class (the **parent class** or **superclass**).
+
+This promotes **code reusability** (DRY - Don't Repeat Yourself) because you can create customized versions of a class without rewriting all the basic functionality.
+
+## The `super()` Function
+
+When you create a child class, you often want to use the parent class's `__init__` method to set up the foundational attributes, and then add your own. The `super()` function is the standard way to call methods from the parent class.
+
+<interactive-code>
+# Parent Class
+class Animal:
+    def __init__(self, name, species):
+        self.name = name
+        self.species = species
+
+    def make_sound(self):
+        return "Generic animal sound"
+
+# Child Class
+class Dog(Animal):
+    def __init__(self, name, breed):
+        # We call the parent's __init__ using super()
+        super().__init__(name, "Dog")
+        # Then we add our own specific attribute
+        self.breed = breed
+        
+    # We can OVERRIDE the parent's method
+    def make_sound(self):
+        return "Woof! Woof!"
+
+my_dog = Dog("Buddy", "Golden Retriever")
+print(f"{my_dog.name} is a {my_dog.species} ({my_dog.breed})")
+print(f"He says: {my_dog.make_sound()}")
+</interactive-code>
+
+## Types of Inheritance
+
+There are several structural patterns of inheritance you will encounter in Python:
+
+### 1. Single Inheritance
+A single child class inherits from a single parent class. This is the `Animal -> Dog` structure we just implemented above.
+
+### 2. Hierarchical Inheritance
+Multiple different child classes inherit from the exact same single parent class. For example, `Dog` and `Cat` both inherit from `Animal`.
+
+<OOPVisualizer initialMode="inheritance" />
+
+### 3. Multilevel Inheritance
+A child class acts as a parent for another child class, creating a multi-generational chain (Grandparent -> Parent -> Child).
+
+<interactive-code>
+class Vehicle:
+    def fuel_type(self):
+        return "Generic Fuel"
+
+class Car(Vehicle):
+    def wheels(self):
+        return 4
+
+class ElectricCar(Car):
+    def fuel_type(self):
+        # We override the grandparent's method!
+        return "Electricity"
+
+tesla = ElectricCar()
+# Accessing parent's method
+print(f"Wheels: {tesla.wheels()}") 
+# Accessing overridden grandparent's method
+print(f"Fuel: {tesla.fuel_type()}")
+</interactive-code>
+
+*(Note: There is also **Multiple Inheritance**, which allows a child to have multiple parents at the same time. We will cover that complex topic in a dedicated lesson later in this module!)*
+
+## Extending Functionality
+
+Sometimes you don't want to completely *override* the parent method; you just want to *add* to it. You can do this by calling the parent method via `super()` inside the child method.
+
+<interactive-code>
+class Employee:
+    def __init__(self, name, salary):
+        self.name = name
+        self.salary = salary
+        
+    def get_details(self):
+        return f"Employee {self.name} makes ${self.salary}"
+
+class Manager(Employee):
+    def __init__(self, name, salary, team_size):
+        super().__init__(name, salary)
+        self.team_size = team_size
+        
+    def get_details(self):
+        # Get the base string from the parent
+        base_details = super().get_details()
+        # Append our new information
+        return f"{base_details} and manages {self.team_size} people."
+
+manager = Manager("Alice", 120000, 5)
+print(manager.get_details())
+</interactive-code>
+
+---
+
+<InlineQuiz id="oop-inherit-1" question="What is the primary benefit of Inheritance in OOP?" options={["It makes code execute much faster", "Code reusability (DRY)", "It hides data from other users", "It turns functions into classes"]} correct={1} explanation="Inheritance promotes code reuse by allowing subclasses to use the parent's code without rewriting it." />
+<InlineQuiz id="oop-inherit-2" question="If an Animal class has a walk() method, and a Dog subclass inherits from it, does the Dog need to define its own walk() method?" options={["Yes, subclasses must redefine all methods", "No, it automatically inherits walk() from Animal", "Only if it uses super()", "Yes, unless it is a static method"]} correct={1} explanation="The subclass automatically inherits all methods from the superclass and can use them immediately." />
+<InlineQuiz id="oop-inherit-3" question="What does the super() function do?" options={["Makes a variable global", "Calls the super-fast C-compiled version of a function", "Returns a proxy object that delegates method calls to a parent class", "Creates a super-user in a web app context"]} correct={2} explanation="super() allows you to call methods from the parent class from within the child class." />
+<InlineQuiz id="oop-inherit-4" question="What happens if a child class defines a method with the EXACT SAME NAME as a method in the parent class?" options={["It throws an Error", "The parent method runs first, then the child method", "The child method overrides and replaces the parent method", "Both methods run simultaneously"]} correct={2} explanation="This is called 'Method Overriding'. The specific child method takes precedence over the generic parent method." />
+<InlineQuiz id="oop-inherit-5" question="Can a subclass add new attributes that the parent class doesn't have?" options={["No, subclasses must have the exact same attributes", "Yes, after calling super().__init__(), you can define infinite new attributes", "Only if the parent allows it via *args", "Yes, but they must be private"]} correct={1} explanation="Subclasses are extensions. They can add as many new methods and attributes as they want." />

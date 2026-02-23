@@ -8,7 +8,9 @@ order: 2
 
 Imagine moving into a new apartment. Some places come empty — you have to buy and install everything yourself. Python is like an apartment that comes **fully furnished**. It has a set of ~70 built-in functions that are always available, no `import` needed. These are your essential tools.
 
-## The Big 5: Functions You'll Use Every Day
+<VariablesVisualizer />
+
+## The Big 5: Functions You''ll Use Every Day
 
 Out of the ~70 built-ins, there are 5 you'll use in almost every program:
 
@@ -186,3 +188,4 @@ for student, grade in zip(students, grades):
 <InlineQuiz id="quiz-builtins-9" question="What happens when you call int('hello')?" options={["Returns 0", "Returns None", "Raises a ValueError", "Returns the ASCII codes"]} correct={2} explanation="int() can only convert strings that contain valid integer representations. 'hello' is not a number, so Python raises a ValueError." />
 
 <InlineQuiz id="quiz-builtins-10" question="What is the difference between sorted() and .sort()?" options={["No difference", "sorted() modifies in place, .sort() returns new list", "sorted() returns new list, .sort() modifies in place", ".sort() is faster"]} correct={2} explanation="sorted() creates and returns a NEW sorted list (original unchanged). .sort() modifies the list IN PLACE and returns None." />
+

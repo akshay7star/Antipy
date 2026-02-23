@@ -8,6 +8,9 @@ order: 1
 
 Hash tables (Python's `dict` and `set`) are the most important data structure in programming. They provide **O(1) average-case** lookup, insert, and delete — making them the go-to solution for counting, grouping, caching, and deduplication.
 
+
+<HashMapVisualizer />
+
 ## How Hash Tables Work
 
 <MermaidDiagram>
@@ -125,3 +128,4 @@ for num in [1, 2, 2, 3, 3, 3]:
 <InlineQuiz id="quiz-hash-9" question="What is the load factor of a hash table?" options={["The hash function quality", "The ratio of entries to table size", "The number of collisions", "The memory usage"]} correct={1} explanation="Load factor = n/capacity. Higher load factors mean more collisions. Python dicts resize when load factor exceeds ~2/3." />
 
 <InlineQuiz id="quiz-hash-10" question="What is defaultdict?" options={["A regular dict", "A dict that provides a default value for missing keys", "A sorted dict", "An ordered dict"]} correct={1} explanation="defaultdict(list) automatically creates an empty list for new keys: d['new_key'].append(1) works without checking key existence first." />
+

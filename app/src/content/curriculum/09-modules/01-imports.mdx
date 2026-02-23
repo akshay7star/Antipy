@@ -8,7 +8,10 @@ order: 1
 
 As your programs grow, you can't keep everything in one file. Modules let you split your code into separate files and import functionality from one file into another. This is how every real Python project is organized.
 
-## What Is a Module?
+
+<ImportsVisualizer />
+
+## What Is a Module??
 
 A module is simply a `.py` file. Any Python file can be imported as a module.
 
@@ -162,3 +165,5 @@ print(f"\nRound-trip: 72°F → {fahrenheit_to_celsius(72):.1f}°C → {celsius_
 <InlineQuiz id="quiz-import-9" question="Can you import your own Python files as modules?" options={["No, only standard library", "Yes, by placing them in the same directory or package", "Only if they are .pyc files", "Only with pip install"]} correct={1} explanation="Any .py file can be imported as a module: import myfile. Python searches the current directory, PYTHONPATH, and installed packages." />
 
 <InlineQuiz id="quiz-import-10" question="What is a circular import?" options={["Importing a module twice", "Two modules importing each other, causing an error", "Importing from a loop", "A fast import method"]} correct={1} explanation="Circular imports occur when module A imports module B and module B imports module A. This often causes ImportError. Restructure code to avoid it." />
+
+

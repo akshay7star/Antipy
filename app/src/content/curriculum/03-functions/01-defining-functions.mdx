@@ -10,16 +10,7 @@ Imagine you cook a recipe. Would you write out every step each time you make it?
 
 ## Anatomy of a Function
 
-<MermaidDiagram>
-graph LR
-  DEF["def keyword"] --> NAME["function name"]
-  NAME --> PARAMS["(parameters)"]
-  PARAMS --> COLON[":"]
-  COLON --> BODY["Indented body"]
-  BODY --> RETURN["return value"]
-  style DEF fill:#8b5cf6,stroke:#7c3aed,color:#fff
-  style RETURN fill:#22c55e,stroke:#16a34a,color:#fff
-</MermaidDiagram>
+<FunctionsVisualizer />
 
 ```python
 def greet(name):                  # 'def' creates the function, 'name' is the parameter
@@ -194,3 +185,4 @@ print(apply_operation(str, 123))    # "123"
 <InlineQuiz id="quiz-func-9" question="What is a lambda function?" options={["A regular function", "An anonymous one-line function", "A function that takes no arguments", "A function inside a class"]} correct={1} explanation="Lambda functions are anonymous, one-expression functions: square = lambda x: x**2. They are useful for short callbacks." />
 
 <InlineQuiz id="quiz-func-10" question="What does it mean that functions are 'first-class objects' in Python?" options={["They run first", "They can be passed as arguments, returned, and assigned to variables", "They are the most important feature", "They are compiled before other code"]} correct={1} explanation="First-class means functions can be treated like any other value � passed to other functions, returned from functions, stored in lists, etc." />
+

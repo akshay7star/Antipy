@@ -1,0 +1,88 @@
+---
+title: "Magic Methods (Dunder)"
+description: "Understanding __init__, __str__, and object lifecycles."
+order: 2
+---
+
+# Magic Methods (Dunder)
+
+<OOPVisualizer initialMode="instantiation" />
+
+In Python, "Magic Methods" are special methods that have double underscores at the beginning and end of their names. They are often jokingly called "dunder" methods (for **d**ouble **under**score). These methods allow you to implement and customize core Python behavior within your own classes.
+
+## The Most Famous Dunder: `__init__`
+
+You've already seen `__init__`. It's the constructor method that's automatically called when a new object is created.
+
+<interactive-code>
+class Wand:
+    def __init__(self, wood, core):
+        self.wood = wood
+        self.core = core
+        print(f"A new {wood} wand with a {core} core was forged!")
+
+my_wand = Wand("Holly", "Phoenix Feather")
+</interactive-code>
+
+## String Representation: `__str__` and `__repr__`
+
+If you try to print an object, Python usually outputs something ugly like `<__main__.Wand object at 0x...>`, which isn't very helpful to users.
+
+You can customize this using `__str__` (for user-friendly strings) and `__repr__` (for developer-friendly representation, usually code needed to recreate the object).
+
+<interactive-code>
+class Book:
+    def __init__(self, title, author):
+        self.title = title
+        self.author = author
+        
+    def __str__(self):
+        # This is what prints when you cast to string or print() the object
+        return f"'{self.title}' by {self.author}"
+        
+    def __repr__(self):
+        # This is what prints in the REPL or for debugging
+        return f"Book(title='{self.title}', author='{self.author}')"
+
+book1 = Book("1984", "George Orwell")
+print(str(book1))    # Uses __str__
+print(repr(book1))   # Uses __repr__
+print(book1)         # Uses __str__ implicitly!
+</interactive-code>
+
+## Operator Overloading: `__add__` and `__eq__`
+
+Want to use the `+` operator or `==` operator on your custom objects? You can do that by defining `__add__` and `__eq__`! This is called **Operator Overloading**.
+
+<interactive-code>
+class Vector:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        
+    def __add__(self, other):
+        # Define what happens when we do Vector + Vector
+        return Vector(self.x + other.x, self.y + other.y)
+        
+    def __eq__(self, other):
+        # Define what happens when we do Vector == Vector
+        return self.x == other.x and self.y == other.y
+        
+    def __str__(self):
+        return f"({self.x}, {self.y})"
+
+v1 = Vector(2, 3)
+v2 = Vector(4, 1)
+
+v3 = v1 + v2
+print(v3)           # Output: (6, 4)
+print(v3 == Vector(6, 4)) # Output: True
+</interactive-code>
+
+---
+
+<InlineQuiz id="oop-dunder-1" question="What does 'dunder' stand for in Python?" options={["Dynamic underlying", "Double underscore", "Data unioner", "Dungeon underneath"]} correct={1} explanation="It's short for 'double underscore', indicating the __ at the start and end of magic methods." />
+<InlineQuiz id="oop-dunder-2" question="Which method is called automatically to initialize a newly created object?" options={["__create__", "__new__", "__init__", "__start__"]} correct={2} explanation="__init__ initializes the object. (__new__ actually creates the memory instance, but __init__ sets up the initial state)." />
+<InlineQuiz id="oop-dunder-3" question="If you want your object to print out nicely for end-users when they call print(my_obj), which method should you define?" options={["__repr__", "__print__", "__output__", "__str__"]} correct={3} explanation="__str__ is meant for readable, user-facing output. __repr__ is meant for unambiguous developer output." />
+<InlineQuiz id="oop-dunder-4" question="To allow two custom objects to be added together using the '+' symbol, what method must you define?" options={["__plus__", "__add__", "__concat__", "__sum__"]} correct={1} explanation="Defining __add__ overloads the + operator for your specific class." />
+<InlineQuiz id="oop-dunder-5" question="What does the __eq__ method allow you to do?" options={["Check if two objects' memory addresses are exactly the same", "Use the == operator to compare the values of two objects", "Check if an object equals None or not", "Equate an object to an integer in all contexts"]} correct={1} explanation="__eq__ allows you to define custom logic for the == operator." />

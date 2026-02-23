@@ -8,6 +8,9 @@ order: 1
 
 No program runs perfectly every time. Users enter bad data. Files go missing. Networks fail. The difference between amateur and professional code is how it handles these inevitable problems. Python's `try/except` system lets your program **recover** from errors instead of crashing.
 
+
+<ExceptionsVisualizer />
+
 ## Why Error Handling Matters
 
 Without error handling, one bad input crashes your entire program:
@@ -232,3 +235,5 @@ except InvalidAmountError as e:
 <InlineQuiz id="quiz-exc-9" question="What is EAFP?" options={["Error After Function Processing", "Easier to Ask Forgiveness than Permission", "Exception And Finally Protocol", "Error Analysis For Python"]} correct={1} explanation="EAFP means try the operation first, handle exceptions if they occur. This is Python's preferred style over checking conditions first (LBYL)." />
 
 <InlineQuiz id="quiz-exc-10" question="What happens if an exception is not caught?" options={["It is silently ignored", "The program crashes with a traceback", "It is automatically logged", "Python retries the operation"]} correct={1} explanation="Uncaught exceptions cause the program to terminate and display a traceback showing the error type, message, and call stack." />
+
+

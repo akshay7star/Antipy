@@ -33,6 +33,9 @@ class TreeNode:
         self.right = right
 ```
 
+
+<TreeVisualizer />
+
 ## Tree Traversals
 
 | Order | Pattern | Result for tree above |
@@ -209,3 +212,4 @@ print(f"Shortest A→D: {shortest_path(graph, 'A', 'D')}")
 <InlineQuiz id="quiz-tree-9" question="What is BFS traversal of a tree also called?" options={["Depth-first", "Level-order traversal", "Inorder", "Preorder"]} correct={1} explanation="BFS visits nodes level by level (top to bottom, left to right). It uses a queue." />
 
 <InlineQuiz id="quiz-tree-10" question="When does a BST degrade to O(n) performance?" options={["Never", "When the tree becomes skewed (like a linked list)", "When there are too many nodes", "When values are negative"]} correct={1} explanation="If you insert sorted data into a BST, it becomes a straight line (no branching) � essentially a linked list with O(n) operations." />
+

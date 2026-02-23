@@ -1,0 +1,91 @@
+---
+title: "Data Classes"
+description: "The modern Pythonic way to build data containers instantly."
+order: 8
+---
+
+# Data Classes
+
+<OOPVisualizer initialMode="instantiation" />
+
+Introduced in Python 3.7, **Data Classes** are an absolute game-changer for OOP design. 
+
+Often, we create classes entirely for the purpose of holding data (like a database row or an API response). Writing the `__init__`, `__repr__`, and `__eq__` methods over and over for these data-holder classes involves heavy, boring boilerplate code. 
+
+The `@dataclass` decorator writes all of those magic methods for you automatically!
+
+## The Old Way vs The Dataclass Way
+
+Here is a side-by-side comparison.
+
+<interactive-code>
+# THE OLD WAY (Boilerplate-heavy)
+class OldPoint:
+    def __init__(self, x, y, z=0):
+        self.x = x
+        self.y = y
+        self.z = z
+        
+    def __repr__(self):
+        return f"OldPoint(x={self.x}, y={self.y}, z={self.z})"
+        
+    def __eq__(self, other):
+        if not isinstance(other, OldPoint):
+            return NotImplemented
+        return self.x == other.x and self.y == other.y and self.z == other.z
+
+
+from dataclasses import dataclass
+
+# THE DATACLASS WAY (Clean & Modern)
+@dataclass
+class Point:
+    x: int
+    y: int
+    z: int = 0  # Default values work perfectly
+
+# Let's test them out!
+p1 = Point(10, 20)
+p2 = Point(10, 20)
+
+print(p1)           # __repr__ is automatically generated perfectly!
+print(p1 == p2)     # __eq__ is automatically generated to compare values, not memory!
+</interactive-code>
+
+By simply adding the `@dataclass` decorator and using Type Hinting for our attributes, Python did all the hard work for us behind the scenes.
+
+## Advanced Dataclass Features
+
+Dataclasses aren't just for saving keystrokes; they offer advanced functional programming features like immutability.
+
+If you want to ensure your data object can never be modified after it's created, you can set `frozen=True`.
+
+<interactive-code>
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ImmutableConfig:
+    db_host: str
+    db_port: int
+    debug_mode: bool = False
+
+config = ImmutableConfig("localhost", 5432)
+print(f"Connecting to {config.db_host}:{config.db_port}")
+
+# Let's try to hack the config...
+try:
+    config.debug_mode = True
+except Exception as e:
+    print(f"HACK FAILED: {type(e).__name__} - {e}")
+</interactive-code>
+
+Because it's frozen, the configuration object is thread-safe and can be used safely as a key in a dictionary!
+
+---
+
+
+<InlineQuiz id="oop-data-1" question="What is the primary purpose of the @dataclass decorator?" options={["To connect to SQL databases", "To automatically generate boilerplate methods like __init__ and __repr__ for data-heavy classes", "To encrypt class variables", "To convert classes into JSON format"]} correct={1} explanation="Dataclasses save you from writing tedious boilerplate constructor and comparison code." />
+<InlineQuiz id="oop-data-2" question="In a @dataclass, how do you define the attributes that should be included in the auto-generated __init__?" options={["Inside a def setup(self): method", "By passing them as arguments to the decorator itself", "Using Type Hints inside the class body", "Using a __fields__ list"]} correct={2} explanation="Dataclasses read your class-body type hints (e.g. name: str) to know exactly what attributes exist." />
+<InlineQuiz id="oop-data-3" question="If Point1 = DataClassPoint(1, 2) and Point2 = DataClassPoint(1, 2), what does (Point1 == Point2) return?" options={["False, because they are different objects in memory", "True, because the auto-generated __eq__ method compares the actual values", "Error, because == is not supported", "None"]} correct={1} explanation="Unlike standard classes (which default to comparing memory ID), dataclasses automatically generate an __eq__ method that compares whether the internal attribute values match." />
+<InlineQuiz id="oop-data-4" question="How can you make a @dataclass entirely read-only (immutable) after creation?" options={["@dataclass(readonly=True)", "@dataclass(immutable=True)", "@dataclass(frozen=True)", "@dataclass(constant=True)"]} correct={2} explanation="@dataclass(frozen=True) effectively 'freezes' the object, raising a FrozenInstanceError if anyone tries to modify an attribute." />
+<InlineQuiz id="oop-data-5" question="What happens if you give an attribute a default value in a dataclass? e.g., 'age: int = 18'" options={["It becomes a class variable instead of an instance variable", "The auto-generated __init__ will make that parameter optional with a default of 18", "It crashes the dataclass parser", "It ignores the default value"]} correct={1} explanation="It elegantly translates into a default keyword argument in the generated constructor: def __init__(self, ..., age=18):" />

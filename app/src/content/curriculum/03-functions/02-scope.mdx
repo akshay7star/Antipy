@@ -8,6 +8,8 @@ order: 2
 
 When you create a variable inside a function, it only exists inside that function. When the function ends, the variable is destroyed. This is called **scope** — it controls where a variable can be seen and used.
 
+<ScopeVisualizer />
+
 ## Local vs Global Scope
 
 <MermaidDiagram>
@@ -194,3 +196,4 @@ print(f"Evens: {evens}")
 <InlineQuiz id="quiz-scope-9" question="Are function parameters local or global?" options={["Global", "Local to the function", "Neither", "It depends on the type"]} correct={1} explanation="Function parameters are local variables. They exist only within the function and are destroyed when the function returns." />
 
 <InlineQuiz id="quiz-scope-10" question="What happens with: x = 10; def f(): x = 20; f(); print(x)?" options={["20", "10", "Error", "None"]} correct={1} explanation="Inside f(), x = 20 creates a LOCAL variable x (shadowing the global x). The global x remains 10. Without 'global', the local change doesn't affect the global." />
+

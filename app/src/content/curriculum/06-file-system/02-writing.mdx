@@ -8,6 +8,9 @@ order: 2
 
 Writing files is how your programs create lasting output — logs, reports, saved game states, configuration files, exported data. Let's go beyond simple text writing and learn how to work with structured data formats.
 
+
+<FileSystemVisualizer />
+
 ## Write vs Append
 
 This distinction trips up many beginners:
@@ -189,3 +192,4 @@ with open("numbers.txt") as f:
 <InlineQuiz id="quiz-write-9" question="What happens if you open a file in 'w' mode but never write to it?" options={["Nothing changes", "The file becomes empty (0 bytes)", "An error occurs", "The file is deleted"]} correct={1} explanation="Opening in 'w' mode immediately truncates (empties) the file. Even if you don't write anything, the file becomes 0 bytes." />
 
 <InlineQuiz id="quiz-write-10" question="How do you safely write to a file (preventing partial writes on crash)?" options={["Use try/finally", "Write to a temp file, then rename", "Use &apos;w&apos; mode", "There is no way"]} correct={1} explanation="Write to a temporary file first, then atomically rename it to the target. This ensures the original file is intact if writing fails." />
+
