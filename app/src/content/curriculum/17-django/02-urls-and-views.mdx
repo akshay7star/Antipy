@@ -1,0 +1,107 @@
+---
+title: "URLs and Views"
+description: "How Django matches incoming web addresses to Python logic."
+order: 2
+---
+
+# URLs and Views
+
+While Flask uses decorators (`@app.route`) to bind URLs directly to functions, Django is a "batteries-included", heavyweight framework designed for massive applications. 
+
+Because a Django project may contain hundreds of URLs, it separates the "Street Address" (URLs) from the "Building Blueprint" (Views) into distinct files.
+
+## The `urls.py` File
+
+Every Django app has a `urls.py` file. This acts as the master directory for your website. It uses a list called `urlpatterns` to match incoming web addresses.
+
+<InteractiveCode 
+  initialCode={`from django.urls import path\nfrom . import views\n\n# urls.py\nurlpatterns = [\n    path('home/', views.home_page, name='home'),\n    path('about/', views.about_page, name='about'),\n]`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="Why does Django separate URL routing into a dedicated `urls.py` file instead of using decorators like Flask?"
+  options={[
+    "Because decorators are deprecated in Python 3.",
+    "Because it forces developers to write their logic inside the `urls.py` file.",
+    "To create a centralized, easily readable list of all routes, which scales better for massive applications.",
+    "Because Django cannot use functions as views."
+  ]}
+  correctAnswer="To create a centralized, easily readable list of all routes, which scales better for massive applications."
+  explanation="In a large app, scattering `@app.route` decorators across 50 files makes it extremely difficult to see all your website's URLs at a glance. A central `urls.py` solves this."
+/>
+
+## Path Converters (Dynamic URLs)
+
+Just like we occasionally want users to visit `yoursite.com/users/alice`, Django supports dynamic variables in the URL path.
+
+<InteractiveCode 
+  initialCode={`from django.urls import path\nfrom . import views\n\nurlpatterns = [\n    # Captures an integer representing the article year\n    path('articles/2003/', views.special_case_2003),\n    \n    # Captures any integer and passes it as 'year'\n    path('articles/<int:year>/', views.year_archive),\n    \n    # Captures any string (excluding slashes) as 'slug'\n    path('blog/<str:slug>/', views.blog_post),\n]`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="If a user visits your website at `/articles/2015/`, which Django view function from the above example will be called?"
+  options={[
+    "special_case_2003",
+    "year_archive",
+    "blog_post",
+    "None, it will 404 error"
+  ]}
+  correctAnswer="year_archive"
+  explanation="The path `<int:year>` acts as a wildcard that captures the digits `2015`, stores them in a variable named `year`, and passes them to the `year_archive` function."
+/>
+
+## The `views.py` File
+
+So what actually *is* a view? A view is simply a Python function (or class) that takes a web request and returns a web response.
+
+While the URL says "Oh, they want `/about/`", the view function is where you actually write the logic: reading the database, processing a form, and returning HTML.
+
+<InteractiveCode 
+  initialCode={`from django.http import HttpResponse\n\n# views.py\ndef home_page(request):\n    # Every view takes an HttpRequest object as its first parameter\n    return HttpResponse("Welcome to the Home Page")\n\n# This view expects the 'year' argument captured by urls.py\ndef year_archive(request, year):\n    return HttpResponse(f"Showing all articles from the year {year}.")`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="Every single Django view function **must** accept at least one argument. What is it?"
+  options={[
+    "request",
+    "response",
+    "url",
+    "self"
+  ]}
+  correctAnswer="request"
+  explanation="Django automatically passes an `HttpRequest` object as the very first argument to your view function. This object contains all the data about the incoming HTTP request (headers, POST data, cookies, etc)."
+/>
+
+## Class-Based Views (CBVs)
+
+As applications grow, you often find yourself writing the same code over and over: "Fetch list of articles", "Fetch list of products", "Fetch list of users".
+
+Django provides **Class-Based Views** that come entirely pre-written for common scenarios!
+
+<InteractiveCode 
+  initialCode={`from django.views.generic import ListView\nfrom .models import Article\n\n# Instead of writing a custom function to fetch a list of articles from \n# the database and send them to a template... just inherit ListView!\nclass ArticleListView(ListView):\n    model = Article\n    template_name = 'article_list.html'`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="What is the primary benefit of using a Class-Based View (like `ListView`) instead of a simple function?"
+  options={[
+    "They are required by modern web browsers.",
+    "They process database queries 10x faster.",
+    "They reduce 'boilerplate' code by inheriting massive amounts of pre-written logic for common tasks.",
+    "They do not require a `urls.py` file."
+  ]}
+  correctAnswer="They reduce 'boilerplate' code by inheriting massive amounts of pre-written logic for common tasks."
+  explanation="Django's generic CBVs are incredibly powerful. A `ListView` automatically queries the database for all objects of that model and passes them to a template layout, saving you from writing dozens of lines of repetitive code."
+/>
+
+## Summary
+
+The core request-response cycle in Django is incredibly strict:
+1. User requests `/about/`
+2. Django looks inside `urls.py` to find a match.
+3. `urls.py` routes the request to a specific function in `views.py`.
+4. The function in `views.py` returns an `HttpResponse` (usually an HTML template) back to the user.

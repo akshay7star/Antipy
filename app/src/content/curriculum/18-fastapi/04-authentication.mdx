@@ -1,0 +1,83 @@
+---
+title: "Authentication in FastAPI"
+description: "Securing endpoints utilizing OAuth2 and JWT Tokens."
+order: 4
+---
+
+# Authentication in FastAPI
+
+FastAPI embraces modern web architecture. While it supports traditional cookies and sessions, the framework heavily advocates for **stateless Token-based authentication**.
+
+If you look closely at the framework's name, it's called Fast*API*. APIs don't typically use cookies; they use OAuth2 and **JWTs (JSON Web Tokens)**.
+
+## Security Dependencies
+
+FastAPI pioneered a concept called **Dependency Injection**. Instead of writing `if not user_is_logged_in: return 401 Unauthorized` in the body of 50 different functions, you simply "inject" a security requirement into the function parameters.
+
+<InteractiveCode 
+  initialCode={`from fastapi import Depends, FastAPI, HTTPException, status\nfrom fastapi.security import OAuth2PasswordBearer\n\napp = FastAPI()\n\n# We define our token extraction logic securely at the top\noauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")\n\n# To protect this route, we mathematically force the injection of a valid token\n@app.get("/users/me")\nasync def read_users_me(token: str = Depends(oauth2_scheme)):\n    # If the token is missing or invalid, FastAPI intercepts it before this line runs!\n    return {"token_found": token}`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="In FastAPI, how do you prevent an unauthenticated user from executing the `/secure_data` endpoint?"
+  options={[
+    "By writing `@app.login_required` above the function.",
+    "By using `Depends(oauth2_scheme)` as a type hint in the function's parameters.",
+    "By manually writing an `if not request.user` loop inside the view logic.",
+    "FastAPI doesn't have built-in security features, you must use Flask."
+  ]}
+  correctAnswer="By using `Depends(oauth2_scheme)` as a type hint in the function's parameters."
+  explanation="FastAPI's dependency injection system mathematically requires the dependency to be satisfied before the function logic executes. If `oauth2_scheme` fails to find a token, the framework halts execution and returns a 401 error automatically."
+/>
+
+## JWT Tokens (JSON Web Tokens)
+
+So what exactly *is* the token that FastAPI's `OAuth2PasswordBearer` extracts from the HTTP header?
+
+In modern infrastructure, it's usually a **JWT** (pronounced "jot"). 
+
+A JWT is a cryptographically signed string that contains public JSON data. Because it's signed using a **Secret Key** known only to your server, you can literally trust the data inside the token without having to look up the user in the database every single request!
+
+<InteractiveCode 
+  initialCode={`import jwt  # PyJWT library\n\n# Server Secret\nSECRET_KEY = "my_secret_do_not_share"\n\n# Data we want to store inside the token\ntoken_data = {"sub": "alice_username", "role": "admin"}\n\n# Generating the signed token (We send this back to the user's React App)\nencoded_jwt = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")\nprint(encoded_jwt)`}
+  showConsole={true}
+/>
+
+A JWT has three parts separated by dots (`.`):
+1. **Header**: Describes the algorithm used (e.g., HS256).
+2. **Payload**: The JSON data you want to store (username, expiration date).
+3. **Signature**: A cryptographic hash verifying the payload wasn't tampered with.
+
+<InlineQuiz 
+  question="Why is a JWT called 'stateless' architecture?"
+  options={[
+    "It requires sending a gigabyte of data per request.",
+    "Because the server doesn't have to keep an ongoing 'session' open in its memory, nor does it have to repeatedly query a database to verify the user. The signed token itself proves the user's identity mathematically.",
+    "Because state is maintained in the Flask session dictionary.",
+    "Because users cannot check their geographic state."
+  ]}
+  correctAnswer="Because the server doesn't have to keep an ongoing 'session' open in its memory, nor does it have to repeatedly query a database to verify the user. The signed token itself proves the user's identity mathematically."
+  explanation="Stateless architectures scale flawlessly. A user can get a token from Server A in New York, and use that identical token later on Server B in California, without the two servers ever needing to coordinate state."
+/>
+
+## Verifying the JWT
+
+When the user takes that token and tries to access your secure endpoint, you simply write a dependency that decrypts and verifies the signature using your `SECRET_KEY`.
+
+<InteractiveCode 
+  initialCode={`from jose import JWTError, jwt\n\nasync def get_current_user(token: str = Depends(oauth2_scheme)):\n    credentials_exception = HTTPException(\n        status_code=status.HTTP_401_UNAUTHORIZED,\n        detail="Could not validate credentials",\n        headers={"WWW-Authenticate": "Bearer"},\n    )\n    \n    try:\n        # Verify the signature! If a hacker changed their \"role\" to \"admin\", \n        # the signature becomes invalid and this throws a JWTError!\n        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])\n        username: str = payload.get("sub")\n        if username is None:\n            raise credentials_exception\n    except JWTError:\n        raise credentials_exception\n        \n    return username`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="If an attacker intercepts their own JWT containing `{'username': 'alice', 'role': 'user'}` and changes it to `{'username': 'alice', 'role': 'admin'}`, can they hack your API?"
+  options={[
+    "Yes, because JWT contents are public JSON data.",
+    "Yes, because JWTs are fundamentally insecure.",
+    "No. While they can decode and edit the payload text, they cannot recreate the cryptographic **Signature** without knowing your server's deep `SECRET_KEY`. When `jwt.decode()` attempts to verify the tampered token, it will instantly fail and throw a `JWTError`.",
+    "No, because the browser blocks text editing."
+  ]}
+  correctAnswer="No. While they can decode and edit the payload text, they cannot recreate the cryptographic **Signature** without knowing your server's deep `SECRET_KEY`. When `jwt.decode()` attempts to verify the tampered token, it will instantly fail and throw a `JWTError`."
+  explanation="This is the magic of digital signatures! The JSON payload is public (anyone can read it), but it is cryptographically sealed against tampering."
+/>

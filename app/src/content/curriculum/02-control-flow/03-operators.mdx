@@ -1,200 +1,195 @@
 ---
-title: "Operators & Logic"
-description: "Math, comparisons, and boolean logic — the building blocks of every condition."
+title: "Operators & Mechanics: Deep Dive"
+description: "Mastering practical Math, the Walrus Operator, Bitwise Operations, and Dunder Method Overloading."
 order: 3
 ---
 
-# Operators: How Python Does Math & Logic
+# Operators & Mechanics: Deep Dive
 
-Every program needs to compute, compare, and decide. Python provides three families of operators to handle this. Think of operators as the **verbs** of programming — they tell Python what to *do* with your data.
+Operators are the structural glue that binds logic together. While basic operators (`+`, `-`, `==`) seem mathematically simple, their underlying architecture in Python is endlessly customizable. 
+
+In this deep dive, we will cover the foundational mathematics, transition into testing memory **Identity**, explore the controversial **Walrus Operator**, and unlock core engine customization via **Dunder Overloading**.
 
 <OperatorsVisualizer />
 
-## Arithmetic Operators
+## 1. Practical Mathematics and Comparisons
 
-These are your basic math tools. They work on numbers (`int` and `float`).
+Before modifying the Python engine, you must be completely fluent in the built-in operators that manipulate native data types.
 
-| Operator | Name | Example | Result |
-|----------|------|---------|--------|
-| `+` | Addition | `10 + 3` | `13` |
-| `-` | Subtraction | `10 - 3` | `7` |
-| `*` | Multiplication | `10 * 3` | `30` |
-| `/` | Division | `10 / 3` | `3.333...` |
-| `//` | Floor Division | `10 // 3` | `3` |
-| `%` | Modulo (remainder) | `10 % 3` | `1` |
-| `**` | Exponentiation | `2 ** 10` | `1024` |
+### Arithmetic Operators
+- `+`, `-`, `*`, `/`: Standard addition, subtraction, multiplication, and floating-point division.
+- `//`: **Floor Division** (drops the decimal exactly).
+- `%`: **Modulus** (returns precisely the remainder after division).
+- `**`: **Exponentiation** (X to the power of Y).
 
-<MethodUnit category="operators" />
-
-### The Division Trap
-
-Python has **two** division operators, and confusing them is a common source of bugs:
-
-```python
-10 / 3    # 3.3333... — true division, ALWAYS returns float
-10 // 3   # 3         — floor division, rounds DOWN to integer
--10 // 3  # -4        — rounds toward NEGATIVE infinity, not zero!
-```
-
-### The Modulo Operator `%`
-
-Modulo gives you the **remainder** after division. It's more useful than it sounds:
-
-```python
-15 % 4    # 3  (15 ÷ 4 = 3 remainder 3)
-10 % 2    # 0  (10 ÷ 2 = 5 remainder 0 — it's even!)
-7 % 2     # 1  (7 ÷ 2 = 3 remainder 1 — it's odd!)
-```
-
-**Real-world uses:**
-- Check if even/odd: `num % 2 == 0`
-- Wrap around (clock math): `hour % 12`
-- Every Nth item: `if index % 5 == 0`
-
-### Practice: Calculator
+### Comparison Operators
+- `==` / `!=`: Equal to / Not Equal to.
+- `>`, `<`, `>=`, `<=`: Standard greater/less bounds checking.
 
 <interactive-code>
-a = 17
-b = 5
+# Advanced Math Mechanics
+print(f"Standard Division (10 / 3) = {10 / 3}")
+print(f"Floor Division (10 // 3) = {10 // 3}")
+print(f"Modulus/Remainder (10 % 3) = {10 % 3}")
+print(f"Exponentiation (2 ** 8) = {2 ** 8}")
 
-print(f"{a} + {b} = {a + b}")
-print(f"{a} - {b} = {a - b}")
-print(f"{a} * {b} = {a * b}")
-print(f"{a} / {b} = {a / b}")        # True division
-print(f"{a} // {b} = {a // b}")      # Floor division
-print(f"{a} % {b} = {a % b}")        # Remainder
-print(f"{a} ** {b} = {a ** b}")      # 17 to the power of 5
-
-# Practical: Is 'a' even or odd?
-if a % 2 == 0:
-    print(f"\n{a} is EVEN")
-else:
-    print(f"\n{a} is ODD")
+# Modulus is universally used to check for Even/Odd numbers!
+number = 42
+is_even = (number % 2 == 0)
+print(f"Is {number} strictly even? {is_even}")
 </interactive-code>
 
-## Comparison Operators
+## 2. Identity (`is`) vs Equality (`==`)
 
-These compare two values and return `True` or `False`. They're the foundation of every `if` statement and loop condition.
+One of the most catastrophic bugs novice engineers make is confusing Value Equality with Object Identity.
 
-| Operator | Meaning | Example | Result |
-|----------|---------|---------|--------|
-| `==` | Equal to | `5 == 5` | `True` |
-| `!=` | Not equal to | `5 != 3` | `True` |
-| `>` | Greater than | `5 > 3` | `True` |
-| `<` | Less than | `5 < 3` | `False` |
-| `>=` | Greater or equal | `5 >= 5` | `True` |
-| `<=` | Less or equal | `5 <= 3` | `False` |
-
-### Chained Comparisons
-
-Python lets you chain comparisons — this is rare in other languages and very readable:
-
-```python
-# Instead of: x > 0 and x < 100
-x = 50
-print(0 < x < 100)    # True — x is between 0 and 100
-print(1 <= x <= 10)    # False — x is not between 1 and 10
-```
-
-## Boolean Logic
-
-<MethodUnit category="boolean-operations" />
-
-Boolean operators combine True/False values. Think of them like an electrical circuit:
-
-<MermaidDiagram>
-graph LR
-  A["Condition A"] --> AND{"and"}
-  B["Condition B"] --> AND
-  AND --> R1["True only if BOTH are True"]
-  A2["Condition A"] --> OR{"or"}
-  B2["Condition B"] --> OR
-  OR --> R2["True if EITHER is True"]
-  C["Condition"] --> NOT{"not"}
-  NOT --> R3["Flips True to False"]
-  style AND fill:#3b82f6,stroke:#2563eb,color:#fff
-  style OR fill:#22c55e,stroke:#16a34a,color:#fff
-  style NOT fill:#ef4444,stroke:#dc2626,color:#fff
-</MermaidDiagram>
-
-### Truth Table
-
-| A | B | `A and B` | `A or B` | `not A` |
-|------|------|-----------|----------|---------|
-| True | True | True | True | False |
-| True | False | False | True | False |
-| False | True | False | True | True |
-| False | False | False | False | True |
-
-### Practice: Logical Combinations
+- `==` asks: **"Do these two objects contain the exact same data?"**
+- `is` asks: **"Do these two variables point to the exact same C-memory address integer in physical RAM?"**
 
 <interactive-code>
-# Real-world example: Password validator
-password = "MyP@ss123"
+list_A = [1, 2, 3]
+list_B = [1, 2, 3]
 
-has_upper = any(c.isupper() for c in password)
-has_digit = any(c.isdigit() for c in password)
-long_enough = len(password) >= 8
+# EQUALITY (Data Match)
+print(f"EQUALITY (list_A == list_B): {list_A == list_B}") 
 
-print(f"Password: '{password}'")
-print(f"  Has uppercase: {has_upper}")
-print(f"  Has digit: {has_digit}")
-print(f"  Long enough: {long_enough}")
+# IDENTITY (Memory Match)
+# Because they are two physically separate lists in RAM, this is False!
+print(f"IDENTITY (list_A is list_B): {list_A is list_B}")
 
-if has_upper and has_digit and long_enough:
-    print("  Result: Strong password!")
-elif has_upper or has_digit:
-    print("  Result: Moderate — add more complexity")
-else:
-    print("  Result: Weak password!")
+# The Singleton Exception
+# None, True, and False are 'Singletons'. 
+# There is literally only ONE 'None' object in the entire computer's memory.
+value = None
+print(f"Identity with None (value is None): {value is None}")
 </interactive-code>
 
-## Operator Precedence
+## 3. The Walrus Operator (`:=`)
 
-Just like in math, Python evaluates operators in a specific order. When in doubt, use **parentheses** to make it explicit:
+Introduced in Python 3.8, the **Assignment Expression** (lovingly called the Walrus Operator because `:=` looks like eyes and tusks) ignited massive controversy in the engineering community.
 
-```python
-# Without parentheses — confusing
-result = 2 + 3 * 4    # 14, not 20 (multiplication first)
-
-# With parentheses — clear
-result = (2 + 3) * 4  # 20
-```
-
-**Order (highest → lowest):** `**` → `*` `/` `//` `%` → `+` `-` → `==` `!=` `>` `<` → `not` → `and` → `or`
-
-### Practice: Precedence Puzzle
+It allows you to assign a variable AND mathematically evaluate it *inside a single line of code*. This structurally eliminates the need for redundant "primer" variables before `while` loops or complex `if` blocks.
 
 <interactive-code>
-# What does each line evaluate to? Predict, then check!
-print(2 + 3 * 4)         # ? (hint: multiplication first)
-print((2 + 3) * 4)       # ? (hint: parentheses first)
-print(10 - 2 ** 3)       # ? (hint: exponent first)
-print(True or False and False)  # ? (hint: 'and' before 'or')
-print((True or False) and False) # ? (parentheses change it!)
+import random
+
+def fetch_network_packet():
+    return random.choice(["DataA", "DataB", None])
+
+# --- Approach 1: The Old Way ---
+# We have to declare 'packet' before the loop, and then manually re-declare it inside.
+packet = fetch_network_packet()
+while packet is not None:
+    print(f"Legacy Processed: {packet}")
+    packet = fetch_network_packet()
+
+print("-" * 20)
+
+# --- Approach 2: The Walrus Way ---
+# We call the function, assign its result to 'p', 
+# AND check if 'p' is not None simultaneously!
+while (p := fetch_network_packet()) is not None:
+    print(f"Walrus Processed: {p}")
 </interactive-code>
 
-> **Pro Tip:** When combining `and`/`or` in complex conditions, always use parentheses even if they're technically not required. `(a > 5) and (b < 10)` is much clearer than `a > 5 and b < 10`.
+## 4. Dunder Method Operator Overloading
 
-> **Common Mistake:** Using `=` (assignment) instead of `==` (comparison) in conditions. `if x = 5` is a syntax error. You want `if x == 5`.
+In Python, the `+` sign does not technically "add" things. It explicitly asks the left-hand object: *"Please execute your `__add__()` hidden method and return the result."*
 
-<InlineQuiz id="quiz-ops-1" question="What does the // operator do?" options={["Regular division", "Floor division (rounds down)", "Modulo", "Exponentiation"]} correct={1} explanation="// is floor division � it divides and rounds DOWN to the nearest integer. 7 // 2 = 3, not 3.5." />
+Because operators are just syntactical mapped functions, you can overwrite exactly how standard math behaves on any class you build!
 
-<InlineQuiz id="quiz-ops-2" question="What does 7 % 3 return?" options={["2", "1", "2.33", "0"]} correct={1} explanation="% is the modulo operator � it returns the REMAINDER of division. 7 divided by 3 is 2 remainder 1." />
+| Operator | Dunder Method | Reverse Method | In-Place Method |
+|----------|---------------|----------------|-----------------|
+| `+` | `__add__(self, other)` | `__radd__` | `__iadd__` |
+| `-` | `__sub__(self, other)` | `__rsub__` | `__isub__` |
+| `==` | `__eq__(self, other)` | N/A | N/A |
+| `<` | `__lt__(self, other)` | N/A | N/A |
 
-<InlineQuiz id="quiz-ops-3" question="What does 2 ** 10 evaluate to?" options={["20", "100", "1024", "210"]} correct={2} explanation="** is the exponentiation operator. 2 ** 10 means 2 to the power of 10, which is 1024." />
+<interactive-code>
+class Wallet:
+    def __init__(self, currency, amount):
+        self.currency = currency
+        self.amount = amount
+        
+    # We overload the exact behavior of the '+' sign!
+    def __add__(self, other):
+        if self.currency != other.currency:
+            raise ValueError("FATAL: Cannot add USD to EUR without a conversion system!")
+        return Wallet(self.currency, self.amount + other.amount)
+        
+    # We overload the exact behavior of 'str()'
+    def __str__(self):
+        return f"{self.amount} {self.currency}"
 
-<InlineQuiz id="quiz-ops-4" question="What is the difference between = and ==?" options={["No difference", "= assigns, == compares", "= compares, == assigns", "Both compare values"]} correct={1} explanation="= is the assignment operator (x = 5). == is the equality comparison operator (x == 5 returns True or False)." />
+w1 = Wallet("USD", 100)
+w2 = Wallet("USD", 250)
 
-<InlineQuiz id="quiz-ops-5" question="What does 'hello' * 3 produce?" options={["Error", "hellohellohello", "hello 3", "hello*3"]} correct={1} explanation="The * operator with strings repeats them. 'hello' * 3 produces 'hellohellohello'." />
+# This seamlessly invokes w1.__add__(w2)
+print(f"Total Funds: {w1 + w2}")
 
-<InlineQuiz id="quiz-ops-6" question="What is the result of: 5 > 3 and 2 < 1?" options={["True", "False", "Error", "None"]} correct={1} explanation="5 > 3 is True, but 2 < 1 is False. True and False = False. Both conditions must be True for 'and' to return True." />
+try:
+    w3 = Wallet("EUR", 50)
+    w1 + w3
+except ValueError as e:
+    print(e)
+</interactive-code>
 
-<InlineQuiz id="quiz-ops-7" question="What does += do?" options={["Checks equality", "Adds and assigns (x += 1 is x = x + 1)", "Increments by 2", "Concatenates only"]} correct={1} explanation="x += 1 is shorthand for x = x + 1. It's an augmented assignment operator. Also works with strings: s += 'text'." />
+## 5. Bitwise Mathematics
 
-<InlineQuiz id="quiz-ops-8" question="What is operator precedence?" options={["The order operators were added to Python", "The order Python evaluates operators in an expression", "How fast operators execute", "The number of operands"]} correct={1} explanation="Operator precedence determines the order of evaluation. For example, * has higher precedence than +, so 2 + 3 * 4 = 14, not 20." />
+Python fully supports C-level hardware manipulation using Bitwise Operators. These operate literally on the underlying 1s and 0s of an integer, bypassing high-level decimal addition. Engineers building Cryptography, Image Processing filters, or networking subnets use these constantly to achieve microscopic C-level performance.
 
-<InlineQuiz id="quiz-ops-9" question="What does the 'in' operator do?" options={["Checks if a value exists in a collection", "Imports a module", "Creates a loop", "Assigns a value"]} correct={0} explanation="'in' checks membership: '5 in [1,2,5]' returns True. Works with lists, tuples, sets, dict keys, and substrings." />
+| Operator | Syntax | Purpose |
+|----------|--------|---------|
+| `&` | `x & y` | **Bitwise AND**. Returns 1 if *both* bits are 1. Used strictly for "Masking" subnets. |
+| `\|` | `x \| y` | **Bitwise OR**. Returns 1 if *either* bit is 1. |
+| `^` | `x ^ y` | **Bitwise XOR**. Returns 1 if the bits are *different*. Foundational for Cryptographic Ciphers. |
+| `~` | `~x` | **Bitwise NOT**. Inverts all bits geometrically. |
+| `<<` | `x << 1` | **Left Shift**. Multiplies the integer by a power of 2 mathematically faster than standard `*`. |
+| `>>` | `x >> 1` | **Right Shift**. Divides the integer by a power of 2 mathematically faster than standard `/`. |
 
-<InlineQuiz id="quiz-ops-10" question="What is the result of: not (True or False)?" options={["True", "False", "None", "Error"]} correct={1} explanation="True or False = True. Then not True = False. Parentheses around 'or' ensure it evaluates first." />
+<interactive-code>
+# We start with the number 5 (Binary: 0b0101)
+num = 5
 
+# A Left Shift pushes all bits to the left, stuffing a 0 on the right.
+# 0b0101 becomes 0b1010  (Which is the number 10!)
+shifted = num << 1
+
+print(f"Base: {num} (Binary: {bin(num)})")
+print(f"Shifted: {shifted} (Binary: {bin(shifted)})")
+
+# Proof that Bitwise Shifting is literally ultra-fast multiplication
+x = 100
+print(f"100 * 2 = {x * 2}")
+print(f"100 << 1 = {x << 1}")
+</interactive-code>
+
+---
+
+## Knowledge Check
+
+Test your understanding of advanced operator mechanics.
+
+<InlineQuiz 
+  question="You wrote `student1 == student2`. In the CPython engine, what exact function is secretly executed to evaluate this?"
+  options={[
+    "CPython compares the two Memory ID values.",
+    "CPython executes `student1.__eq__(student2)`.",
+    "CPython raises a TypeError.",
+    "CPython compares all internal attributes alphabetically."
+  ]}
+  correctAnswer="CPython executes `student1.__eq__(student2)`."
+  explanation="Every single comparison in Python (`==`, `>=`, `<`, `!=`) translates to a specific internal dunder method (like `__eq__` for equal, or `__ge__` for greater-or-equal). By defining these on your classes, you control exactly how sorting and logic behaves."
+/>
+
+<InlineQuiz 
+  question="Why is the Walrus Operator (`:=`) highly valued when executing regular expressions (`re.match()`)?"
+  options={[
+    "It makes Regex execute 5x faster.",
+    "It allows you to simultaneously run the regex match, assign the resulting Match Object to a variable, and check if the regex actually found anything, all in a single `if` line.",
+    "It is required by the `re` module in Python 3.10.",
+    "It is not valued, it is forbidden."
+  ]}
+  correctAnswer="It allows you to simultaneously run the regex match, assign the resulting Match Object to a variable, and check if the regex actually found anything, all in a single `if` line."
+  explanation="Without the walrus, you have to run `match = re.match()`, then on a separate line write `if match:`. The walrus combines these into `if (match := re.match(...)):`."
+/>

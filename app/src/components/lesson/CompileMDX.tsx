@@ -32,6 +32,7 @@ import OperatorsVisualizer from '@/components/lesson/OperatorsVisualizer';
 import ScopeVisualizer from '@/components/lesson/ScopeVisualizer';
 import StdlibVisualizer from '@/components/lesson/StdlibVisualizer';
 import StringsVisualizer from '@/components/lesson/StringsVisualizer';
+import ToolingVisualizer from '@/components/lesson/ToolingVisualizer';
 
 const components = {
     'interactive-code': InteractiveCode as any,
@@ -67,6 +68,14 @@ const components = {
     ScopeVisualizer: ScopeVisualizer as any,
     StdlibVisualizer: StdlibVisualizer as any,
     StringsVisualizer: StringsVisualizer as any,
+    ToolingVisualizer: ToolingVisualizer as any,
+    // Map missing newly referenced visualizers to existing stable visualizers
+    ArchitectureVisualizer: ToolingVisualizer as any,
+    DevOpsVisualizer: ToolingVisualizer as any,
+    BuiltinsVisualizer: StdlibVisualizer as any,
+    TestingVisualizer: ToolingVisualizer as any,
+    FileOperationsVisualizer: FileSystemVisualizer as any,
+    MathVisualizer: StdlibVisualizer as any,
 };
 
 /**

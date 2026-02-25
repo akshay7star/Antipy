@@ -1,0 +1,116 @@
+---
+title: "Templates (Jinja2)"
+description: "Inject dynamic Python data directly into beautiful HTML pages."
+order: 3
+---
+
+# Templates (Jinja2)
+
+Returning simple strings like `"Welcome!"` from a route is nice for testing, but real websites return massive, beautifully styled HTML files.
+
+Flask handles this using a templating engine called **Jinja2**.
+
+## `render_template`
+
+To use templates, you create a folder named `templates` in the same directory as your Python script. Flask will automatically look for HTML files inside this folder.
+
+<InteractiveCode 
+  initialCode={`from flask import Flask, render_template\n\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    # Flask looks for "index.html" inside the "templates" folder\n    return render_template('index.html')`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="By default, in what folder does Flask expect to find HTML templates?"
+  options={[
+    "static",
+    "html",
+    "views",
+    "templates"
+  ]}
+  correctAnswer="templates"
+  explanation="Flask automatically looks for a folder named `templates` at the root of your application."
+/>
+
+## Passing Variables to HTML
+
+The power of Jinja is that you can pass Python variables straight into the HTML structure.
+
+Inside your Python file:
+<InteractiveCode 
+  initialCode={`@app.route('/profile')\ndef profile():\n    user_name = "Alice"\n    user_age = 28\n    return render_template('profile.html', name=user_name, age=user_age)`}
+  showConsole={false}
+/>
+
+Inside `templates/profile.html`:
+<InteractiveCode 
+  initialCode={`<!-- Jinja uses double curly braces to print variables -->\n<h1>Welcome, {{ name }}!</h1>\n<p>You are {{ age }} years old.</p>`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="In Jinja2 templates, what syntax is used to output the value of a Python variable directly to the browser?"
+  options={[
+    "{ variable }",
+    "<?php echo $variable ?>",
+    "{{ variable }}",
+    "[[ variable ]]"
+  ]}
+  correctAnswer="{{ variable }}"
+  explanation="Jinja2 heavily utilizes double curly braces `{{ }}` to evaluate an expression and print the result into the HTML output."
+/>
+
+## Control Flow in HTML
+
+Jinja doesn't just print variables; it lets you write python-like `if` statements and `for` loops *inside* your HTML layout!
+
+<InteractiveCode 
+  initialCode={`<!-- This syntax uses {% %} for logic -->\n<ul>\n{% for item in cart_items %}\n    <li>{{ item.name }} - ${{ item.price }}</li>\n{% else %}\n    <li>Your cart is empty!</li>\n{% endfor %}\n</ul>`}
+  showConsole={false}
+/>
+
+<InteractiveCode 
+  initialCode={`{% if user.is_logged_in %}\n    <button>Logout</button>\n{% else %}\n    <button>Login</button>\n{% endif %}`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="What syntax does Jinja use for control flow logic like loops and if statements?"
+  options={[
+    "{{ loop }}",
+    "{% for item in items %}",
+    "<? for ?>",
+    "<script> for </script>"
+  ]}
+  correctAnswer="{% for item in items %}"
+  explanation="While `{{ }}` outputs variables, `{% %}` is used for executing statements like loops (`for`) or conditionals (`if`)."
+/>
+
+## Template Inheritance
+
+If your website has 50 pages, you don't want to copy and paste the `<nav>` bar and `<footer>` HTML into all 50 files! 
+
+Jinja solves this elegantly with **Template Inheritance**. You create one "base" layout, and other templates "extend" it, filling in specific holes called blocks.
+
+`base.html` (The Parent):
+<InteractiveCode 
+  initialCode={`<html>\n  <body>\n    <nav>My Website Navbar</nav>\n    \n    <!-- Child templates will inject their HTML here -->\n    {% block content %}{% endblock %}\n    \n  </body>\n</html>`}
+  showConsole={false}
+/>
+
+`about.html` (The Child):
+<InteractiveCode 
+  initialCode={`{% extends "base.html" %}\n\n{% block content %}\n  <h1>About Us</h1>\n  <p>We are a cool company.</p>\n{% endblock %}`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="What command tells a Jinja template to inherit the layout from another template file?"
+  options={[
+    "{% include 'base.html' %}",
+    "{% require 'base.html' %}",
+    "{% extends 'base.html' %}",
+    "{{ inherit 'base.html' }}"
+  ]}
+  correctAnswer="{% extends 'base.html' %}"
+  explanation="`{% extends 'filename.html' %}` is used at the top of a child template to inherit the structure of a parent template."
+/>

@@ -1,147 +1,142 @@
 ---
-title: "Unit Testing"
-description: "Writing tests that catch bugs before users do."
+title: "Unit Testing & Mocking"
+description: "Mastering Test-Driven Development (TDD), Assertions, and the Mocking engine."
 order: 1
 ---
 
-# Testing: Your Safety Net
+# Unit Testing & Mocking
 
-<FunctionsVisualizer />
+Writing backend algorithms without Unit Tests is functionally equivalent to launching an airplane without inspecting the engine. 
 
-Testing is the difference between "it works on my machine" and "it works everywhere." Tests are automated scripts that verify your code behaves correctly. Every professional codebase has them, and writing them is a core developer skill.
+A Unit Test is a strictly isolated script that automatically triggers your functions, passes them microscopic fragmented data payloads, and mathematically validates that the resulting output string matches the exact target expectation 100% of the time, perpetually, before deploying to Production AWS servers.
 
-## Why Test?
+<TestingVisualizer />
 
-<MermaidDiagram>
-graph LR
-  CODE["Write Code"] --> TEST["Run Tests"]
-  TEST -- Pass --> SHIP["Ship with confidence"]
-  TEST -- Fail --> FIX["Fix the bug"]
-  FIX --> TEST
-  style SHIP fill:#22c55e,stroke:#16a34a,color:#fff
-  style FIX fill:#ef4444,stroke:#dc2626,color:#fff
-</MermaidDiagram>
+## 1. The `unittest` Core & `pytest`
 
-- **Catch bugs early** — before users find them
-- **Refactor safely** — change code knowing tests will catch regressions
-- **Document behavior** — tests show how your code is supposed to work
-- **Save time** — manual testing doesn't scale
+Python natively ships the `unittest` Object-Oriented framework, requiring tedious boilerplate Classes. Modern Enterprise architectures universally abandon `unittest` in favor of the third-party **`pytest`** execution engine, which leverages raw functional assertions.
 
-## Python's unittest Module
-
-```python
-import unittest
-
-class TestCalculator(unittest.TestCase):
-    def test_add(self):
-        self.assertEqual(2 + 2, 4)
-    
-    def test_divide(self):
-        self.assertAlmostEqual(10 / 3, 3.333, places=2)
-    
-    def test_divide_by_zero(self):
-        with self.assertRaises(ZeroDivisionError):
-            1 / 0
-```
-
-## Key Assertions
-
-| Assertion | Checks |
-|-----------|--------|
-| `assertEqual(a, b)` | `a == b` |
-| `assertNotEqual(a, b)` | `a != b` |
-| `assertTrue(x)` | `x is True` |
-| `assertFalse(x)` | `x is False` |
-| `assertIn(a, b)` | `a in b` |
-| `assertRaises(Error)` | Exception is raised |
-| `assertAlmostEqual(a, b)` | Floats are close |
-| `assertIsNone(x)` | `x is None` |
-
-### Practice: Writing Tests
+When a test crashes, it is not a bug; it is an **Assertion Failure**, successfully preventing a mathematically broken function from destroying a production database.
 
 <interactive-code>
-# The code to test
-def calculate_grade(score):
-    if not isinstance(score, (int, float)):
-        raise TypeError("Score must be a number")
-    if score < 0 or score > 100:
-        raise ValueError("Score must be 0-100")
-    if score >= 90: return "A"
-    if score >= 80: return "B"
-    if score >= 70: return "C"
-    if score >= 60: return "D"
-    return "F"
+# 1. THE PRODUCTION ALGORITHM
+def process_discount(price, discount_percent):
+    if discount_percent < 0 or discount_percent > 100:
+        raise ValueError("Strictly invalid discount permutation.")
+    return price * (1 - (discount_percent / 100))
 
-# Tests
-def run_tests():
-    # Test normal cases
-    assert calculate_grade(95) == "A", "95 should be A"
-    assert calculate_grade(85) == "B", "85 should be B"
-    assert calculate_grade(75) == "C", "75 should be C"
-    assert calculate_grade(65) == "D", "65 should be D"
-    assert calculate_grade(50) == "F", "50 should be F"
+# 2. THE PYTEST ARCHITECTURE (tests/test_discounts.py)
+# Test names must universally begin with 'test_' for the engine to discover them geometrically.
+def test_process_discount_standard():
+    # 1. ARRANGE
+    item_price = 100
+    discount = 20
     
-    # Test edge cases
-    assert calculate_grade(90) == "A", "90 boundary"
-    assert calculate_grade(0) == "F", "0 should be F"
-    assert calculate_grade(100) == "A", "100 should be A"
+    # 2. ACT
+    result = process_discount(item_price, discount)
     
-    # Test error cases
-    try:
-        calculate_grade(-1)
-        assert False, "Should have raised ValueError"
-    except ValueError:
-        pass
-    
-    try:
-        calculate_grade("ninety")
-        assert False, "Should have raised TypeError"
-    except TypeError:
-        pass
-    
-    print("All 10 tests passed!")
+    # 3. ASSERT (The execution crashes violently if this is False)
+    assert result == 80.0
 
-run_tests()
+def test_process_discount_zero():
+    # Edge Case: 0% discount must return exact original price
+    assert process_discount(50, 0) == 50.0
+
+def test_process_discount_catastrophic_crash():
+    import pytest
+    
+    # Test completely ensures the function correctly crashes 
+    # when processing hostile data strings.
+    with pytest.raises(ValueError):
+        process_discount(100, 150)
 </interactive-code>
 
-## Test Structure: Arrange, Act, Assert
+## 2. Test Isolation & Mocking
 
-Every test follows the **AAA** pattern:
+A fundamental rule of Unit Testing: **A Unit Test must structurally NEVER interact with the outside physical world.**
 
-```python
-def test_user_creation(self):
-    # Arrange — set up the test data
-    name = "Alice"
-    age = 30
+If your Test executes a network `requests.get()` to the GitHub API, it is no longer a Unit Test. It is an Integration Test. If GitHub goes offline, your test crashes, falsely indicating your internal algebra fractured.
+
+You must surgically implement **Mocking**. The `unittest.mock.patch` library intercepts the target function explicitly directly inside the Python execution RAM, temporarily overriding it with a dormant Dummy Object that identically mimics the network response without transmitting zero real data packets.
+
+<interactive-code>
+from unittest.mock import patch
+import requests
+
+# 1. THE PRODUCTION FUNCTION
+def fetch_user_ranking(user_id):
+    # This invokes a physical 4-second TCP handshake natively!
+    response = requests.get(f"https://api.gaming.com/rank/{user_id}")
+    return response.json().get("rank", "Unranked")
+
+# 2. THE ISOLATED MOCK TEST
+# We intercept the `requests.get` geometric pointer directly across the global namespace
+@patch("requests.get")
+def test_fetch_user_ranking_secure(mock_get_request):
     
-    # Act — run the code being tested
-    user = create_user(name, age)
+    # 1. ARRANGE: We forcefully inject a fake 200 OK JSON payload directly 
+    # into the dormant Mock object structurally bypassing the physical network card!
+    mock_get_request.return_value.json.return_value = {"rank": "Diamond"}
+    mock_get_request.return_value.status_code = 200
     
-    # Assert — verify the result
-    self.assertEqual(user.name, "Alice")
-    self.assertEqual(user.age, 30)
-```
+    # 2. ACT
+    result = fetch_user_ranking(999)
+    
+    # 3. ASSERT
+    assert result == "Diamond"
+    
+    # We defensively mathematically verify the Mock was correctly triggered 
+    # exactly 1 time utilizing the absolute URL string target.
+    mock_get_request.assert_called_once_with("https://api.gaming.com/rank/999")
+    
+    print("Mocking Isolation Test securely passed. Zero true packets fired.")
 
-> **Pro Tip:** Test edge cases: empty inputs, zero, negative numbers, very large values, `None`, and boundary values. Bugs hide at the edges.
+# Execute the isolated test
+test_fetch_user_ranking_secure()
+</interactive-code>
 
-> **Common Mistake:** Only testing the "happy path." If your function handles errors, test that the errors are raised correctly too.
+## 3. Coverage Architecture
 
-<InlineQuiz id="quiz-test-1" question="Why is testing important?" options={["It makes code run faster", "It catches bugs early and ensures code works as expected", "It is only for large projects", "It replaces documentation"]} correct={1} explanation="Testing catches bugs before they reach production, validates behavior, and gives confidence when refactoring code." />
+How do you guarantee your tests evaluate 100% of your complex `if/elif/else` matrix branches?
 
-<InlineQuiz id="quiz-test-2" question="What is a unit test?" options={["A test of the entire application", "A test of a single function or method in isolation", "A performance test", "A user interface test"]} correct={1} explanation="Unit tests test individual functions or methods in isolation. They should be fast, independent, and test one thing." />
+You deploy **Code Coverage** (`pytest-cov`). This plugin actively monitors the Python Interpreter C-execution pointer at the millisecond line-level. If a specific `if` statement was geometrically bypassed entirely throughout the testing iteration, the Coverage report mathematically flags the line natively in Red, warning you a vector remains dangerously untested.
 
-<InlineQuiz id="quiz-test-3" question="What does assertEqual(a, b) check?" options={["a is b", "a == b", "a > b", "a != b"]} correct={1} explanation="assertEqual checks that two values are equal: self.assertEqual(add(2, 3), 5) passes if add(2, 3) returns 5." />
+---
 
-<InlineQuiz id="quiz-test-4" question="What does assertTrue(x) check?" options={["x is True exactly", "bool(x) is True (truthy)", "x == 1", "x exists"]} correct={1} explanation="assertTrue checks that the expression is truthy (evaluates to True in boolean context). assertFalse checks for falsy." />
+## Knowledge Check
 
-<InlineQuiz id="quiz-test-5" question="What is assertRaises used for?" options={["Raising an error", "Checking that a specific exception is raised", "Testing error messages", "Catching all errors"]} correct={1} explanation="assertRaises checks that code raises an expected exception: with self.assertRaises(ValueError): int('abc')." />
+<InlineQuiz 
+  question="You wrote a `test_aws_upload()` function that organically pushes a 5MB image to an S3 Cloud Server. Why is this structurally banned within Unit Testing architectural definitions?"
+  options={[
+    "Because S3 is physically encrypted.",
+    "A strictly defined Unit Test mathematically isolates the purely internal Python computational algebra. It must execute instantaneously with completely zero external physical hardware/network dependencies. If you trigger real AWS packets, you evaluate Integration, generating massive latency overheads and fragile cloud-dependent workflows. You must universally deploy `Mock.patch` to simulate AWS responses.",
+    "AWS blocks testing IP endpoints natively.",
+    "It utilizes Multithreading algorithms."
+  ]}
+  correctAnswer="A strictly defined Unit Test mathematically isolates the purely internal Python computational algebra. It must execute instantaneously with completely zero external physical hardware/network dependencies. If you trigger real AWS packets, you evaluate Integration, generating massive latency overheads and fragile cloud-dependent workflows. You must universally deploy `Mock.patch` to simulate AWS responses."
+  explanation="Unit Tests must perfectly execute uniformly independent of whether your laptop is currently connected to WiFi or sequestered offline."
+/>
 
-<InlineQuiz id="quiz-test-6" question="What is the AAA pattern in testing?" options={["Ask, Answer, Assert", "Arrange, Act, Assert", "Assign, Apply, Analyze", "Always Assert Accurately"]} correct={1} explanation="Arrange (setup), Act (execute the code), Assert (verify the result). This pattern makes tests clear and organized." />
+<InlineQuiz 
+  question="When architecting a comprehensive PyTest verification workflow, how do you aggressively confirm your target function properly crashes upon encountering a corrupt data type injection?"
+  options={[
+    "Catch the `TypeError` and ignore it.",
+    "`assert function() == 'Error'`",
+    "Deploy the `with pytest.raises(TypeError):` Context Manager block. The PyTest engine structurally intercepts the catastrophic logical meltdown mathematically, verifies the exact Error class triggered correctly, successfully trapping the crash and flagging the Test geometrically as 'Passed'.",
+    "Return False."
+  ]}
+  correctAnswer="Deploy the `with pytest.raises(TypeError):` Context Manager block. The PyTest engine structurally intercepts the catastrophic logical meltdown mathematically, verifies the exact Error class triggered correctly, successfully trapping the crash and flagging the Test geometrically as 'Passed'."
+  explanation="Ensuring functions crash properly upon receiving hostile variables is mission-critical API defensive architecture."
+/>
 
-<InlineQuiz id="quiz-test-7" question="How do you run unittest tests?" options={["python test.py", "python -m unittest test_module", "run tests", "test()"]} correct={1} explanation="python -m unittest discovers and runs tests. You can also use python -m unittest discover for automatic test discovery." />
-
-<InlineQuiz id="quiz-test-8" question="What is setUp() used for?" options={["Setting up the database", "Running code before EACH test method", "Starting the test runner", "Installing dependencies"]} correct={1} explanation="setUp() runs before each test method, preparing common test data or objects. tearDown() runs after each test for cleanup." />
-
-<InlineQuiz id="quiz-test-9" question="What is test coverage?" options={["The number of tests", "The percentage of code that is executed by tests", "The test execution time", "The number of assertions"]} correct={1} explanation="Test coverage measures what percentage of your code is actually run during testing. 100% coverage doesn't mean bug-free, but low coverage means untested code." />
-
-<InlineQuiz id="quiz-test-10" question="What is mocking in testing?" options={["Making fun of code", "Replacing real objects with fake ones for isolated testing", "Testing mock-ups", "Creating test data"]} correct={1} explanation="Mocking replaces real dependencies (APIs, databases) with controlled fakes. unittest.mock provides Mock and patch for this." />
+<InlineQuiz 
+  question="You wrote 45 individual isolated PyTest scripts. How can you mathematically guarantee your testing matrices hit the obscure `except ValueError:` failure block hidden deep inside line 94?"
+  options={[
+    "You cannot theoretically calculate this metric natively.",
+    "Log all output strings.",
+    "By natively compiling a `Coverage` execution report (`pytest --cov=my_app`). This OS-level diagnostic engine rigidly maps every single executed runtime line against the raw Python script AST footprint, geometrically emitting a report listing the exact line indices that strictly evaluated mathematically to zero occurrences.",
+    "By checking the Network tab."
+  ]}
+  correctAnswer="By natively compiling a `Coverage` execution report (`pytest --cov=my_app`). This OS-level diagnostic engine rigidly maps every single executed runtime line against the raw Python script AST footprint, geometrically emitting a report listing the exact line indices that strictly evaluated mathematically to zero occurrences."
+  explanation="Enterprise CI/CD integration pipelines routinely strictly require a minimum 90% geometric coverage density before allowing git-merges natively."
+/>

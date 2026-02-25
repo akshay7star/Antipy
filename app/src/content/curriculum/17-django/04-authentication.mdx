@@ -1,0 +1,110 @@
+---
+title: "Authentication"
+description: "Leverage Django's battle-tested built-in user management system."
+order: 4
+---
+
+# Authentication in Django
+
+One of Django's biggest selling points is its wildly powerful, built-in User Authentication system.
+
+Unlike Flask, where you install a third-party package (`Flask-Login`), configure an encrypted session cookie securely, generate password hashes yourself using `Werkzeug`, and write the database models... Django does literally all of that for you the second you run `django-admin startproject`.
+
+## The `User` Model
+
+Django ships with a built-in `User` model out of the box. This model natively stores usernames, encrypted passwords, emails, first names, last names, and boolean flags like `is_staff` and `is_superuser`.
+
+<InteractiveCode 
+  initialCode={`from django.contrib.auth.models import User\n\n# Creating a new user is incredibly simple\nuser = User.objects.create_user('john', 'lennon@thebeatles.com', 'johnpassword')\n\n# Automatically hashes the password securely!\nuser.save()`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="If you use `User.objects.create_user('alice', 'alice@mail.com', 'password123')`, how does Django store the password in the database?"
+  options={[
+    "Plaintext: 'password123'",
+    "Base-64 encoded: 'cGFzc3dvcmQxMjM='",
+    "A one-way cryptographically secure hash (e.g. PBKDF2).",
+    "An AES encrypted string."
+  ]}
+  correctAnswer="A one-way cryptographically secure hash (e.g. PBKDF2)."
+  explanation="The `create_user` helper function automatically handles hashing the password securely before saving it to the database, removing any risk of accidentally storing plaintext passwords."
+/>
+
+## Logging Users In
+
+Django provides standard functions to verify credentials and log users in across the session.
+
+<InteractiveCode 
+  initialCode={`from django.contrib.auth import authenticate, login\n\ndef user_login(request, username, password):\n    # Authenticate checks the hash against the database\n    user = authenticate(request, username=username, password=password)\n    \n    if user is not None:\n        # Login sets the secure session cookie in the browser\n        login(request, user)\n        return "Success!"\n    else:\n        return "Invalid credentials."`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="What is the difference between Django's `authenticate()` function and `login()` function?"
+  options={[
+    "`authenticate` sets the cookie; `login` checks the database.",
+    "`authenticate` verifies the username/password hash exist and match; `login` attaches that verified user to the current session (sets the cookie).",
+    "They are the exact same thing.",
+    "`authenticate` is for admins; `login` is for standard users."
+  ]}
+  correctAnswer="`authenticate` verifies the username/password hash exist and match; `login` attaches that verified user to the current session (sets the cookie)."
+  explanation="Authentication is the act of proving you are who you say you are. Logging in is the act of establishing a persistent session using that proof."
+/>
+
+## Protecting Views
+
+Once logged in, how do you prevent anonymous guests from viewing private pages (like an account settings page)?
+
+Django provides an easy decorator: `@login_required`.
+
+<InteractiveCode 
+  initialCode={`from django.contrib.auth.decorators import login_required\nfrom django.http import HttpResponse\n\n@login_required\ndef secret_settings(request):\n    # request.user is beautifully injected by Django's middleware\n    return HttpResponse(f"Welcome to the secret vault, {request.user.username}.")`}
+  showConsole={false}
+/>
+
+If an unauthenticated user attempts to visit the `secret_settings` URL, the decorator intercepts them and redirects them to the login page automatically!
+
+Inside a template, you can completely change the layout based on the user's status using `{% if request.user.is_authenticated %}`.
+
+<InteractiveCode 
+  initialCode={`<!-- base.html -->\n<nav>\n    {% if request.user.is_authenticated %}\n        <span>Welcome, {{ request.user.username }}!</span>\n        <a href="/logout/">Logout</a>\n    {% else %}\n        <a href="/login/">Login</a>\n        <a href="/register/">Sign Up</a>\n    {% endif %}\n</nav>`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="How can you dynamically show a 'Logout' button in a Django template exclusively to logged-in users?"
+  options={[
+    "{% if request.method == 'POST' %}",
+    "{% if request.user.is_authenticated %}",
+    "{{ if request.user.logged_in }}",
+    "{% if session['user'] %}"
+  ]}
+  correctAnswer="{% if request.user.is_authenticated %}"
+  explanation="The `is_authenticated` property on the `request.user` object is a boolean that cleanly tells you if the visitor is an anonymous guest or a logged-in account."
+/>
+
+## Django Rest Framework (APIs)
+
+If you are building an API (e.g. for a mobile app or React frontend), cookies are essentially useless. APIs don't hold "sessions" for users.
+
+Instead, APIs use **Tokens**.
+
+When a user submits their username and password from an iPhone, the Django server responds with a random string of characters (e.g. `9944b09199c62...`). The iPhone saves that string, and attaches it as an `Authorization` Header to every future request!
+
+<InteractiveCode 
+  initialCode={`from rest_framework.authtoken.models import Token\nfrom django.contrib.auth.models import User\n\n# Create a user\nuser = User.objects.create_user('mobile_user', 'user@app.com', 'pass')\n\n# Generate an API Token\ntoken = Token.objects.create(user=user)\nprint(f"Send this token to the iPhone: {token.key}")`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="Why do modern APIs and mobile apps prefer Token Authentication over standard Session Cookies?"
+  options={[
+    "Tokens are encrypted using NSA military grade technology.",
+    "Tokens are completely stateless, meaning any server in a massive cluster can verify them simply by checking a database or signature, without relying on browser cookie jars.",
+    "Tokens use less bandwidth than cookies.",
+    "Tokens never expire."
+  ]}
+  correctAnswer="Tokens are completely stateless, meaning any server in a massive cluster can verify them simply by checking a database or signature, without relying on browser cookie jars."
+  explanation="Mobile apps do not maintain 'Cookie Jars' like standard web browsers do. Token headers provide a clean, explicitly programmed way to identify requests."
+/>

@@ -1,0 +1,79 @@
+---
+title: "Templates in FastAPI"
+description: "Combining high-performance APIs with classic HTML rendering."
+order: 3
+---
+
+# Templates in FastAPI
+
+While FastAPI is primarily designed for building raw JSON APIs (usually consumed by React, Vue, or mobile apps), you can absolutely use it to render full HTML pages just like Flask or Django!
+
+Since FastAPI is unopinionated about which templating engine you use, it does not include one built-in. However, the official recommendation is to simply install **Jinja2** (the exact same engine used by Flask).
+
+<InteractiveCode 
+  initialCode={`# Requires running: pip install jinja2 aiofiles\nfrom fastapi import FastAPI, Request\nfrom fastapi.templating import Jinja2Templates\n\napp = FastAPI()\n\ntemplates = Jinja2Templates(directory="templates")\n\n@app.get("/hello/{name}")\nasync def say_hello(request: Request, name: str):\n    return templates.TemplateResponse(\n        request=request, \n        name="hello.html", \n        context={"name": name}\n    )`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="Why does FastAPI require the user to explicitly pass the `Request` object into the `TemplateResponse`?"
+  options={[
+    "It requires the `Request` to extract the user's IP Address.",
+    "Jinja2 expects a `request` context variable to build absolute URLs using `url_for()`.",
+    "FastAPI doesn't actually require it; it's optional.",
+    "It uses the `Request` to log the template rendering time."
+  ]}
+  correctAnswer="Jinja2 expects a `request` context variable to build absolute URLs using `url_for()`."
+  explanation="Unlike Flask, which uses a global `request` object hidden in the background, FastAPI's design philosophy mandates explicitly passing dependencies. The template engine needs the `Request` to generate accurate internal links."
+/>
+
+## Using Static Files
+
+If you are rendering HTML templates, you inevitably need CSS, Images, and Javascript to make them look good.
+
+FastAPI handles static files brilliantly using its `StaticFiles` mounting system.
+
+<InteractiveCode 
+  initialCode={`from fastapi import FastAPI\nfrom fastapi.staticfiles import StaticFiles\n\napp = FastAPI()\n\n# Mount the 'static' folder onto the '/static' URL path\napp.mount("/static", StaticFiles(directory="static"), name="static")`}
+  showConsole={false}
+/>
+
+Once mounted, you can reference your CSS cleanly inside any Jinja template:
+
+<InteractiveCode 
+  initialCode={`<!-- Inside your templates/hello.html -->\n<html>\n  <head>\n    <!-- Using url_for() requires the 'request' parameter we passed earlier! -->\n    <link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">\n  </head>\n  <body>\n    <h1>Hello, {{ name }}!</h1>\n  </body>\n</html>`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="What happens if you place a `logo.png` image directly inside a FastAPI project folder, without mounting a `StaticFiles` directory?"
+  options={[
+    "FastAPI automatically serves it.",
+    "FastAPI ignores the file, making it completely impossible for users to download or view the image.",
+    "FastAPI deletes it to keep the app folder clean.",
+    "FastAPI compresses it into a zip file."
+  ]}
+  correctAnswer="FastAPI ignores the file, making it completely impossible for users to download or view the image."
+  explanation="By default, FastAPI blocks all file access. If you want a user's browser to read images, CSS, or JS files, you MUST explicitly mount that folder using `StaticFiles`."
+/>
+
+## Asynchronous Rendering
+
+FastAPI shines when dealing with concurrent requests. If your template requires data from a slow database query, you use `async def` and `await` to prevent the server from blocking other users.
+
+<InteractiveCode 
+  initialCode={`@app.get("/dashboard")\nasync def dashboard(request: Request):\n    # While the database fetches the tasks slowly, \n    # FastAPI moves on to serve thousands of other users instantly.\n    tasks = await slow_database_query()\n    \n    return templates.TemplateResponse(\n        request=request,\n        name="dashboard.html",\n        context={"tasks": tasks}\n    )`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="When fetching data for a template inside an `async def` route in FastAPI, what keyword must you use before a database query to ensure the server doesn't freeze while waiting?"
+  options={[
+    "return",
+    "yield",
+    "await",
+    "delay"
+  ]}
+  correctAnswer="await"
+  explanation="The `await` keyword hands execution control back to FastAPI's event loop, letting it process new incoming web traffic while the database finishes its slow work in the background."
+/>

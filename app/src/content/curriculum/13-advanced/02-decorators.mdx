@@ -1,187 +1,181 @@
 ---
-title: "Decorators"
-description: "Wrapping functions with extra behavior — Python's most powerful pattern."
-order: 3
+title: "Decorators & Metaprogramming"
+description: "Mastering Lexical Closures, Syntactic Sugar, and __name__ Preservation."
+order: 2
 ---
 
-# Decorators: Modifying Functions
+# Decorators & Metaprogramming
 
-<DecoratorsVisualizer />
+In computer science, Python supports **First-Class Functions**. This means Functions are not universally treated as rigid syntax blocks; they are treated as literal physical Objects stored in RAM. 
 
-A decorator is a function that takes another function and extends its behavior without modifying the original. Think of it like gift wrapping — the present stays the same, but the wrapper adds something extra.
+Because Functions are Objects, you can mathematically pass a Function into another Function, modify its internal structure dynamically, and return a brand new execution pipeline. This is the absolute architectural foundation of the **Decorator Pattern**.
 
-## How Decorators Work
+<GeneratorsVisualizer />
 
-<MermaidDiagram>
-graph LR
-  ORIG["Original Function"] --> WRAP["Decorator wraps it"]
-  WRAP --> ENHANCED["Enhanced Function"]
-  style ORIG fill:#3b82f6,stroke:#2563eb,color:#fff
-  style ENHANCED fill:#22c55e,stroke:#16a34a,color:#fff
-</MermaidDiagram>
+## 1. The `@` Syntactic Sugar
 
-```python
-def my_decorator(func):
-    def wrapper(*args, **kwargs):
-        print("Before function call")
-        result = func(*args, **kwargs)     # Call the original function
-        print("After function call")
-        return result
-    return wrapper
+Junior engineers frequently ask what the `@` symbol "does" in Python. The answer is **absolutely nothing**. 
 
-@my_decorator                               # Sugar for: greet = my_decorator(greet)
-def greet(name):
-    print(f"Hello, {name}!")
-
-greet("Alice")
-# Before function call
-# Hello, Alice!
-# After function call
-```
-
-## Practical Decorators
-
-### Practice: Timer Decorator
+The `@decorator_name` syntax is literally compiler syntactic sugar. It is a shorthand way to execute a Higher-Order Function that ingests the target function, wraps an inner Closure around it, and completely overwrites the original memory pointer.
 
 <interactive-code>
-import time
+# 1. THE DECORATOR ENGINE (A Function that accepts a Function)
+def logger_architecture(target_function):
+    
+    # We construct a Lexical Closure (the Wrapper)
+    def wrapper_layer(*args, **kwargs):
+        print(f"[SYSTEM LOG] Executing function: {target_function.__name__}")
+        
+        # We mathematically trigger the original function via reference
+        result = target_function(*args, **kwargs)
+        
+        print(f"[SYSTEM LOG] Execution completed successfully.\n")
+        return result
+        
+    # We return the new Wrapper Object back to the Interpreter!
+    return wrapper_layer
+
+# 2. THE SYNTACTIC SUGAR
+# This line is EXACTLY mathematically identical to:
+# process_transaction = logger_architecture(process_transaction)
+@logger_architecture
+def process_transaction(amount):
+    print(f"Processing ${amount} transaction securely.")
+
+# 3. EXECUTION
+# When we call this, we are actually executing 'wrapper_layer'!
+process_transaction(500)
+</interactive-code>
+
+## 2. The `functools.wraps` Metadata Bug
+
+Decorators possess one massive, catastrophic flaw out of the box. 
+
+When you wrap a function, you are physically replacing the original Object with the new `wrapper` Object. Therefore, the original function's `__name__` and `__doc__` (documentation string) are completely obliterated and permanently replaced by the string `"wrapper"`.
+
+For standard code, this is annoying. For modern frameworks like **FastAPI** or **Flask** which rely heavily on metadata routing (detecting a function's name to generate a URL endpoint), this destroys the entire application.
+
+You must rigorously deploy the **`@wraps`** utility to physically copy the metadata from the dead function onto the new wrapper.
+
+<interactive-code>
 from functools import wraps
 
-def timer(func):
-    @wraps(func)  # Preserves original function name/docstring
+# 1. THE BUGGY DECORATOR
+def flawed_decorator(func):
     def wrapper(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        elapsed = time.time() - start
-        print(f"  {func.__name__} took {elapsed:.4f}s")
-        return result
+        return func(*args, **kwargs)
     return wrapper
 
-def retry(max_attempts=3):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for attempt in range(1, max_attempts + 1):
-                try:
-                    return func(*args, **kwargs)
-                except Exception as e:
-                    print(f"  Attempt {attempt} failed: {e}")
-            raise Exception(f"All {max_attempts} attempts failed")
-        return wrapper
-    return decorator
+# 2. THE PRODUCTION DECORATOR
+def secure_decorator(func):
+    # This built-in C-command physically clones the __name__ and __doc__ 
+    # dictionaries from the original 'func' directly onto the new 'wrapper'.
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
 
-# Using the timer decorator
-@timer
-def slow_sum(n):
-    return sum(i**2 for i in range(n))
+@flawed_decorator
+def api_login():
+    """Authenticates the user."""
+    pass
 
-print("Timer decorator:")
-result = slow_sum(1_000_000)
-print(f"  Result: {result:,}")
+@secure_decorator
+def api_logout():
+    """Destroys the session."""
+    pass
 
-# Simulating the retry decorator
-@retry(max_attempts=3)
-def unreliable_api():
-    import random
-    if random.random() < 0.7:
-        raise ConnectionError("Server down")
-    return "Success!"
+# Compare the physical RAM identifiers!
+print(f"Flawed Endpoint Name : {api_login.__name__}")
+print(f"Flawed Endpoint Docs : {api_login.__doc__}")
 
-print("\nRetry decorator:")
-try:
-    print(f"  {unreliable_api()}")
-except Exception as e:
-    print(f"  Final: {e}")
+print(f"\nSecure Endpoint Name : {api_logout.__name__}")
+print(f"Secure Endpoint Docs : {api_logout.__doc__}")
 </interactive-code>
 
-## Decorators with Arguments
+## 3. Decorator Parameterization
 
-Decorators can accept parameters by adding an extra layer of nesting:
+A standard Decorator accepts exactly one argument: The target function. 
 
-```python
-def repeat(times):                    # Decorator factory
-    def decorator(func):              # Actual decorator
-        def wrapper(*args, **kwargs):
-            for _ in range(times):
-                result = func(*args, **kwargs)
-            return result
-        return wrapper
-    return decorator
+If you want to pass custom arguments into your Decorator (like `@retry(retries=3)`), you must construct an extreme **Three-Tier Nested Generator**. 
 
-@repeat(times=3)
-def say_hello():
-    print("Hello!")
-```
-
-## Built-in Decorators
-
-Python includes several useful decorators:
-
-| Decorator | Purpose |
-|-----------|---------|
-| `@property` | Make a method act like an attribute |
-| `@staticmethod` | Method that doesn't need self |
-| `@classmethod` | Method that receives the class, not instance |
-| `@functools.wraps` | Preserve function metadata in decorators |
-| `@functools.lru_cache` | Automatic memoization/caching |
-
-### Practice: Property Decorator
+1. **Layer 1 (The Factory)**: Ingests the arguments (`retries=3`).
+2. **Layer 2 (The Decorator)**: Ingests the Target Function Object.
+3. **Layer 3 (The Wrapper)**: Ingests the `*args` and `**kwargs` payload during runtime execution.
 
 <interactive-code>
-class Circle:
-    def __init__(self, radius):
-        self._radius = radius
-    
-    @property
-    def radius(self):
-        return self._radius
-    
-    @radius.setter
-    def radius(self, value):
-        if value < 0:
-            raise ValueError("Radius cannot be negative")
-        self._radius = value
-    
-    @property
-    def area(self):
-        import math
-        return math.pi * self._radius ** 2
+from functools import wraps
+import time
 
-c = Circle(5)
-print(f"Radius: {c.radius}")
-print(f"Area: {c.area:.2f}")
+# TIER 1: The Configurator
+def require_authorization(required_role):
+    
+    # TIER 2: The Core Decorator Engine
+    def decorator_engine(func):
+        
+        # TIER 3: The Runtime Payload Execution
+        @wraps(func)
+        def wrapper_layer(user_role, *args, **kwargs):
+            print(f"[AUTH CORE] Verifying {user_role} against {required_role} limit.")
+            
+            if user_role != required_role:
+                print("-> ACCESS DENIED: Security Breach.")
+                return None
+                
+            print("-> ACCESS GRANTED.")
+            return func(*args, **kwargs)
+            
+        return wrapper_layer
+    return decorator_engine
 
-c.radius = 10
-print(f"\nNew radius: {c.radius}")
-print(f"New area: {c.area:.2f}")
+# The Factory configures the engine dynamically
+@require_authorization(required_role="Admin")
+def delete_database():
+    print("Database physically destroyed.")
 
-try:
-    c.radius = -1
-except ValueError as e:
-    print(f"\nError: {e}")
+print("Attempt 1: Standard User")
+delete_database("Guest")
+
+print("\nAttempt 2: Administrator")
+delete_database("Admin")
 </interactive-code>
 
-> **Pro Tip:** Always use `@functools.wraps(func)` in your decorator wrappers. Without it, the decorated function loses its `__name__` and `__doc__`, making debugging harder.
+---
 
-> **Common Mistake:** Forgetting that `@decorator` is syntactic sugar. `@my_dec` on `def foo()` is identical to `foo = my_dec(foo)`. Understanding this makes complex decorators less mysterious.
+## Knowledge Check
 
-<InlineQuiz id="quiz-deco-1" question="What is a decorator?" options={["A design pattern", "A function that wraps another function to modify its behavior", "A class attribute", "A type of loop"]} correct={1} explanation="Decorators wrap functions to extend or modify their behavior without changing the original code. @decorator syntax applies them." />
+<InlineQuiz 
+  question="When an engineer executes the `@cache` syntax directly above a `def calculate():` declaration, what exact algebraic sequence is the CPython compiler physically translating this into under the hood?"
+  options={[
+    "It compiles the function natively to C.",
+    "It injects the caching API into the global namespace.",
+    "`calculate = cache(calculate)`. The `@` symbol is literally syntactic sugar that physically passes the target Function Pointer into the Higher-Order Function, returning the resulting Wrapper Closure and destructively explicitly overwriting the original variable name.",
+    "It caches the return string permanently."
+  ]}
+  correctAnswer="`calculate = cache(calculate)`. The `@` symbol is literally syntactic sugar that physically passes the target Function Pointer into the Higher-Order Function, returning the resulting Wrapper Closure and destructively explicitly overwriting the original variable name."
+  explanation="Always envision decorators as manual function-overwriting variables to demystify the logic."
+/>
 
-<InlineQuiz id="quiz-deco-2" question="What does @my_decorator above a function do?" options={["Deletes the function", "Equivalent to: func = my_decorator(func)", "Comments out the function", "Makes the function private"]} correct={1} explanation="@decorator is syntactic sugar. @my_decorator\ndef f(): is equivalent to def f(): ... f = my_decorator(f)" />
+<InlineQuiz 
+  question="You construct a custom `@authenticate` decorator for your FastAPI web server. Suddenly, all your Swagger UI documentation endpoints vanish, and the server router crashes violently regarding 'Duplicate endpoints named [wrapper]'. What completely broke?"
+  options={[
+    "You forgot to close the database.",
+    "FastAPI crashed.",
+    "By natively wrapping the functions, you explicitly destroyed their source `__name__` metadata parameters. Because every single function was returned as `wrapper`, the web-server interpreted them as a massive duplicated collision. You must universally deploy `functools.wraps` to clone the metadata.",
+    "You used the incorrect port."
+  ]}
+  correctAnswer="By natively wrapping the functions, you explicitly destroyed their source `__name__` metadata parameters. Because every single function was returned as `wrapper`, the web-server interpreted them as a massive duplicated collision. You must universally deploy `functools.wraps` to clone the metadata."
+  explanation="Always, immediately, natively import and utilize `@wraps` when constructing decorators. There is absolutely zero mathematical rationale to skip it."
+/>
 
-<InlineQuiz id="quiz-deco-3" question="What does functools.wraps do?" options={["Makes decorators faster", "Preserves the original function&apos;s name, docstring, and metadata", "Wraps strings", "Creates a wrapper class"]} correct={1} explanation="Without @wraps, the decorated function loses its original __name__ and __doc__. @wraps(func) copies these from the original." />
-
-<InlineQuiz id="quiz-deco-4" question="Can you stack multiple decorators?" options={["No, only one", "Yes, they are applied bottom-up", "Yes, they are applied top-down", "Only two maximum"]} correct={1} explanation="Decorators stack and are applied bottom-up: @A\n@B\ndef f() means f = A(B(f)). B is applied first, then A." />
-
-<InlineQuiz id="quiz-deco-5" question="What is a common use case for decorators?" options={["Sorting data", "Logging, timing, authentication, caching", "File I/O", "String formatting"]} correct={1} explanation="Decorators are ideal for cross-cutting concerns: @login_required, @cache, @retry, @log_calls, @timer." />
-
-<InlineQuiz id="quiz-deco-6" question="What is @staticmethod?" options={["A regular method", "A method that doesn&apos;t receive self or cls", "A class constructor", "A private method"]} correct={1} explanation="@staticmethod defines a method that doesn't receive self or cls. It's a regular function that lives inside a class for organizational purposes." />
-
-<InlineQuiz id="quiz-deco-7" question="What is @lru_cache used for?" options={["Limiting function calls", "Caching function results for repeated inputs", "Reducing memory", "Logging return values"]} correct={1} explanation="@lru_cache (functools) memoizes function results. If called again with the same args, it returns the cached result instantly." />
-
-<InlineQuiz id="quiz-deco-8" question="Can decorators take arguments?" options={["No", "Yes, but you need a decorator factory (3 levels of nesting)", "Only built-in decorators", "Only string arguments"]} correct={1} explanation="Decorator factories are functions that return decorators: @repeat(3) requires def repeat(n): def decorator(func): def wrapper: ..." />
-
-<InlineQuiz id="quiz-deco-9" question="Can you decorate a class?" options={["No, only functions", "Yes, class decorators modify the class", "Only with @dataclass", "Only abstract classes"]} correct={1} explanation="Class decorators work similarly: @decorator\nclass MyClass: is equivalent to MyClass = decorator(MyClass). @dataclass is a common example." />
-
-<InlineQuiz id="quiz-deco-10" question="What is the @dataclass decorator?" options={["Creates a database model", "Auto-generates __init__, __repr__, __eq__ for classes", "Makes a class callable", "Converts to JSON"]} correct={1} explanation="@dataclass automatically generates boilerplate methods (__init__, __repr__, __eq__, etc.) based on class attributes." />
-
+<InlineQuiz 
+  question="Why does constructing a Parameterized Decorator like `@rate_limit(requests=5)` absolutely demand a Three-Tier nested function architecture?"
+  options={[
+    "To maximize security encryption.",
+    "To support asynchronous concurrency threading pools.",
+    "Because the execution is evaluated strictly in two steps. The compiler natively executes `rate_limit(requests=5)` immediately upon evaluation. That execution mathematically MUST return a Function (Tier 2) strictly capable of ingesting the remaining target Function Parameter, which subsequently constructs the Runtime Closure (Tier 3).",
+    "It doesn't. You can use two layers."
+  ]}
+  correctAnswer="Because the execution is evaluated strictly in two steps. The compiler natively executes `rate_limit(requests=5)` immediately upon evaluation. That execution mathematically MUST return a Function (Tier 2) strictly capable of ingesting the remaining target Function Parameter, which subsequently constructs the Runtime Closure (Tier 3)."
+  explanation="Parameter factories return the actual core decorator. The core decorator returns the runtime wrapper."
+/>

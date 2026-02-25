@@ -1,0 +1,6 @@
+{
+  "id": "30-modern-tooling",
+  "title": "Modern Python Tooling",
+  "description": "Learn the essential tools for writing professional Python code: type hints, package management, virtual environments, and logging.",
+  "order": 30
+}

@@ -8,12 +8,13 @@ import { CheckCircle2, XCircle, Lightbulb, ChevronRight } from 'lucide-react';
 interface InlineQuizProps {
     question: string;
     options: string | string[]; // Can be a JSON string array or a literal string array
-    correct: number;       // 0-indexed correct answer
+    correct?: number;       // 0-indexed correct answer
+    correctAnswer?: string; // Optional exact string match
     explanation: string;
     id?: string;           // optional quiz ID for tracking
 }
 
-export function InlineQuiz({ question, options: optionsRaw, correct, explanation, id }: InlineQuizProps) {
+export function InlineQuiz({ question, options: optionsRaw, correct, correctAnswer, explanation, id }: InlineQuizProps) {
     const [selected, setSelected] = useState<number | null>(null);
     const [submitted, setSubmitted] = useState(false);
     const [showExplanation, setShowExplanation] = useState(false);
@@ -51,7 +52,8 @@ export function InlineQuiz({ question, options: optionsRaw, correct, explanation
         parsedOptions = ['Error: Invalid options format'];
     }
 
-    const isCorrect = selected === correct;
+    const finalCorrectIndex = correct !== undefined ? correct : (correctAnswer ? parsedOptions.indexOf(correctAnswer) : -1);
+    const isCorrect = selected === finalCorrectIndex;
     const alreadyDone = id ? isQuizCompleted(id) : false;
 
     const handleSubmit = () => {
@@ -102,7 +104,7 @@ export function InlineQuiz({ question, options: optionsRaw, correct, explanation
                 {/* Options */}
                 <div className="space-y-2">
                     {parsedOptions.map((option, i) => {
-                        const isThisCorrect = i === correct;
+                        const isThisCorrect = i === finalCorrectIndex;
                         const isThisSelected = i === selected;
 
                         let optionStyle = "border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5";

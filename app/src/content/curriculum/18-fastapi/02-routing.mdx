@@ -1,0 +1,86 @@
+---
+title: "Routing in FastAPI"
+description: "High-performance endpoint routing leveraging Python Type Hints."
+order: 2
+---
+
+# Routing in FastAPI
+
+<ToolingVisualizer initialMode="venv" />
+
+FastAPI's routing system feels very similar to Flask—it relies heavily on decorators. 
+
+However, FastAPI fundamentally differs by combining **Routing** with strict **Pydantic Type Checking**. While Flask requires you to manually parse JSON bodies and hope the user sent `{"age": 25}` and not `{"age": "twenty-five"}`, FastAPI validates the data *before* your function even runs.
+
+## Defining Endpoints
+
+Like Flask's `@app.route()`, you decorate functions with HTTP method decorators like `@app.get()`, `@app.post()`, or `@app.put()`.
+
+<InteractiveCode 
+  initialCode={`from fastapi import FastAPI\n\napp = FastAPI()\n\n# Handle a basic GET request\n@app.get("/")\ndef read_root():\n    # FastAPI automatically converts dictionaries to JSON for you!\n    return {"message": "Hello World"}\n\n# Handle a dynamic GET request\n@app.get("/items/{item_id}")\ndef read_item(item_id: int):\n    return {"item_id": item_id}`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="In the route `@app.get('/users/{user_id}')`, why does adding the type hint `user_id: int` to the function parameters matter in FastAPI?"
+  options={[
+    "It makes the code run faster.",
+    "It tells the browser what type of data to expect.",
+    "FastAPI uses that type hint to automatically validate the incoming URL parameter. If a user visits `/users/foo`, FastAPI returns a clean `422 Unprocessable Entity` error telling them it must be an integer.",
+    "It has no effect at runtime; it is purely for developer readability."
+  ]}
+  correctAnswer="FastAPI uses that type hint to automatically validate the incoming URL parameter. If a user visits `/users/foo`, FastAPI returns a clean `422 Unprocessable Entity` error telling them it must be an integer."
+  explanation="FastAPI's defining feature is that Python type hints actually control runtime behavior and validation logic."
+/>
+
+## Request Bodies (Pydantic Models)
+
+When a client submits data to save to a database (like a new blog post), they typically send a JSON body via a `POST` request.
+
+In FastAPI, you define the expected JSON shape using a **Pydantic Model**, which is simply a class inheriting from `BaseModel`.
+
+<InteractiveCode 
+  initialCode={`from pydantic import BaseModel\nfrom typing import Optional\n\n# This class defines the exact shape of the JSON we expect to receive\nclass Item(BaseModel):\n    name: str\n    description: Optional[str] = None # Optional means it might be missing\n    price: float\n    tax: Optional[float] = None\n\n# In our route, we declare 'item' to be of type 'Item'\n@app.post("/items/")\ndef create_item(item: Item):\n    total_cost = item.price\n    if item.tax:\n        total_cost += item.tax\n        \n    # We can access the validated data instantly as object attributes!\n    return {"item": item.name, "total": total_cost}`}
+  showConsole={false}
+/>
+
+If a user sends a `POST` request missing the required `price` field, or provides a string `"five dollars"` instead of a `float`, FastAPI intercepts the request immediately and sends a 422 tracking error—your `create_item` function never even executes!
+
+<InlineQuiz 
+  question="If a Pydantic Model requires `price: float`, but the incoming JSON explicitly states `{'price': '50.50'}` (a string), what happens?"
+  options={[
+    "FastAPI throws a 422 error because it is strictly checking for a float.",
+    "FastAPI intelligently attempts to coerce the string into a float. Since '50.50' is a valid number, it succeeds and injects `50.50` into your function.",
+    "The function crashes internally when we try to do math on the string.",
+    "It drops the `price` field entirely."
+  ]}
+  correctAnswer="FastAPI intelligently attempts to coerce the string into a float. Since '50.50' is a valid number, it succeeds and injects `50.50` into your function."
+  explanation="Pydantic is smart. It attempts lightweight coercion (casting) before giving up and throwing a validation error, which is incredibly helpful when dealing with web data."
+/>
+
+## Query Parameters
+
+If you define a variable in your function parameters that is *not* in the API path, FastAPI assumes it is a query parameter (`?skip=0&limit=10`).
+
+<InteractiveCode 
+  initialCode={`# URL: /items/?skip=0&limit=10\n@app.get("/items/")\ndef read_item(skip: int = 0, limit: int = 10):\n    return {"skip": skip, "limit": limit}`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="If the URL is `/search?query=fastapi`, how would you define the route to capture 'query'?"
+  options={[
+    "@app.get('/search')\ndef search(query: str):",
+    "@app.get('/search/{query}')\ndef search(query: str):",
+    "@app.get('/search')\ndef search(q: str):",
+    "@app.get('/search?query=x')\ndef search(x: str):"
+  ]}
+  correctAnswer="@app.get('/search')\ndef search(query: str):"
+  explanation="Any parameter in your Python function that isn't declared in the `path` string is automatically interpreted by FastAPI as a query parameter (found after the `?` in the URL)."
+/>
+
+## Auto-Generated Documentation
+
+Because FastAPI forces you to declare all inputs and outputs using type hints and models, it intrinsically understands exactly what your API does.
+
+If you navigate to `/docs` in any running FastAPI application... you get a beautiful, interactive, automatically generated Swagger UI documentation page for free! You can literally click "Try it out" and test your API endpoints directly from the interface.

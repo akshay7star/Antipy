@@ -1,88 +1,145 @@
 ---
-title: "Magic Methods (Dunder)"
-description: "Understanding __init__, __str__, and object lifecycles."
+title: "Data Models & Dunder Methods"
+description: "Mastering the C-level Descriptor Protocol mapping standard operations to Object Architecture."
 order: 2
 ---
 
-# Magic Methods (Dunder)
+# Data Models & Dunder Methods
 
-<OOPVisualizer initialMode="instantiation" />
+Python objects are not sterile boxes holding data. They are capable of natively integrating with the mathematical fabric of the Python language. 
 
-In Python, "Magic Methods" are special methods that have double underscores at the beginning and end of their names. They are often jokingly called "dunder" methods (for **d**ouble **under**score). These methods allow you to implement and customize core Python behavior within your own classes.
+By writing specific **Dunder** (Double Underscore) Methods, you map your completely custom objects into the underlying C-engine's operational hooks. For instance, when you execute `a + b`, you are NOT telling Python to mathematically add two variables together. 
 
-## The Most Famous Dunder: `__init__`
+You are issuing the Bytecode command: "Look inside Object A's `__dict__`, extract the `__add__` memory pointer, and pass Object B into it as an execution payload."
 
-You've already seen `__init__`. It's the constructor method that's automatically called when a new object is created.
+<OOPVisualizer initialMode="magic" />
+
+## 1. Allocation (`__new__`) vs Initialization (`__init__`)
+
+The greatest misconception in Python Object architecture is that `__init__` is the Constructor. This is fundamentally false.
+
+When you call `Class()`, the C-engine immediately intercepts the call and runs `__new__`. The massive `__new__` C-pointer interacts directly with the OS to allocate the physical memory block in RAM and assemble an empty Dictionary. Only *after* the hardware is secured does it hand the physical pointer (`self`) over to `__init__` to begin populating variables.
 
 <interactive-code>
-class Wand:
-    def __init__(self, wood, core):
-        self.wood = wood
-        self.core = core
-        print(f"A new {wood} wand with a {core} core was forged!")
+class ServerNode:
+    
+    # 1. HARDWARE ALLOCATION (The True Constructor)
+    # cls is the strict blueprint pointer.
+    def __new__(cls, *args, **kwargs):
+        print("1. [__new__] Negotiating with Kernel to secure RAM sector...")
+        # We manually order the absolute root Object to allocate memory space
+        instance = super().__new__(cls)
+        return instance
 
-my_wand = Wand("Holly", "Phoenix Feather")
+    # 2. STATE POPULATION (The Initializer)
+    # self is the completely blank, successfully allocated RAM pointer.
+    def __init__(self, ip):
+        print("2. [__init__] Populating physical sector dictionary...")
+        self.ip = ip
+
+node = ServerNode("10.0.0.5")
+print(f"3. Boot sequence complete for IP: {node.ip}")
 </interactive-code>
 
-## String Representation: `__str__` and `__repr__`
+*(Note: In 99% of engineering you ignore `__new__`. You only hijack it when constructing metaclasses, Singletons, or modifying completely immutable Types like `tuple` or `str` where `__init__` cannot function).*
 
-If you try to print an object, Python usually outputs something ugly like `<__main__.Wand object at 0x...>`, which isn't very helpful to users.
+## 2. Advanced C-Level Formatting Maps
 
-You can customize this using `__str__` (for user-friendly strings) and `__repr__` (for developer-friendly representation, usually code needed to recreate the object).
+When an Object references are sent to the standard output buffer (like `print()`), the C-interpreter instantly checks the Object's dictionary for string representations. 
+
+- `__str__`: Generates a formatting map for an end-user. Must be human readable.
+- `__repr__`: The Developer Representation. Must theoretically return a string that could be copied, pasted, and mathematically executed as raw code to identically recreate the object.
 
 <interactive-code>
-class Book:
-    def __init__(self, title, author):
-        self.title = title
-        self.author = author
+class APIEndpoint:
+    def __init__(self, route, rate_limit):
+        self.route = route
+        self.limit = rate_limit
         
     def __str__(self):
-        # This is what prints when you cast to string or print() the object
-        return f"'{self.title}' by {self.author}"
+        # Triggered by print(obj) or str(obj)
+        return f"Endpoint: {self.route} [{self.limit} req/s]"
         
     def __repr__(self):
-        # This is what prints in the REPL or for debugging
-        return f"Book(title='{self.title}', author='{self.author}')"
+        # Triggered globally by the REPL or interactive debugging dumps
+        return f"APIEndpoint('{self.route}', {self.limit})"
 
-book1 = Book("1984", "George Orwell")
-print(str(book1))    # Uses __str__
-print(repr(book1))   # Uses __repr__
-print(book1)         # Uses __str__ implicitly!
+webhook = APIEndpoint("/api/v1/webhook", 500)
+
+print("The Human String  ->", webhook)
+print("The Debugger Dump ->", repr(webhook))
 </interactive-code>
 
-## Operator Overloading: `__add__` and `__eq__`
+## 3. Mathematical Overloading (`__add__`, `__eq__`)
 
-Want to use the `+` operator or `==` operator on your custom objects? You can do that by defining `__add__` and `__eq__`! This is called **Operator Overloading**.
+If you build an enterprise Banking software, you don't calculate raw math directly inside UI files. You mathematically overload the fundamental Operators so the Object *itself* processes safety logic natively.
 
 <interactive-code>
-class Vector:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+class Ledger:
+    def __init__(self, current_balance):
+        self.balance = current_balance
         
-    def __add__(self, other):
-        # Define what happens when we do Vector + Vector
-        return Vector(self.x + other.x, self.y + other.y)
+    # Overload the native '+' operator
+    def __add__(self, payload):
+        # Defensive programming: Only allow integer payload integrations!
+        if not isinstance(payload, int):
+            raise TypeError("System Exception: Can only add fiat integer currencies.")
+        return Ledger(self.balance + payload)
         
+    # Overload the native '==' equality comparison
     def __eq__(self, other):
-        # Define what happens when we do Vector == Vector
-        return self.x == other.x and self.y == other.y
-        
+        # An object is functionally identical if its fiscal balance is identical
+        return self.balance == other.balance
+
     def __str__(self):
-        return f"({self.x}, {self.y})"
+        return f"${self.balance:,.2f}"
 
-v1 = Vector(2, 3)
-v2 = Vector(4, 1)
+bank_a = Ledger(50_000)
+bank_b = Ledger(50_000)
 
-v3 = v1 + v2
-print(v3)           # Output: (6, 4)
-print(v3 == Vector(6, 4)) # Output: True
+# The C-Interpreter converts this instantly to Ledger.__add__(bank_a, 100_000)
+merged_funds = bank_a + 100_000 
+
+print(f"Merged Bank Operations: {merged_funds}")
+print(f"Are Bank A and Bank B fiscally equal structures? {bank_a == bank_b}")
 </interactive-code>
 
 ---
 
-<InlineQuiz id="oop-dunder-1" question="What does 'dunder' stand for in Python?" options={["Dynamic underlying", "Double underscore", "Data unioner", "Dungeon underneath"]} correct={1} explanation="It's short for 'double underscore', indicating the __ at the start and end of magic methods." />
-<InlineQuiz id="oop-dunder-2" question="Which method is called automatically to initialize a newly created object?" options={["__create__", "__new__", "__init__", "__start__"]} correct={2} explanation="__init__ initializes the object. (__new__ actually creates the memory instance, but __init__ sets up the initial state)." />
-<InlineQuiz id="oop-dunder-3" question="If you want your object to print out nicely for end-users when they call print(my_obj), which method should you define?" options={["__repr__", "__print__", "__output__", "__str__"]} correct={3} explanation="__str__ is meant for readable, user-facing output. __repr__ is meant for unambiguous developer output." />
-<InlineQuiz id="oop-dunder-4" question="To allow two custom objects to be added together using the '+' symbol, what method must you define?" options={["__plus__", "__add__", "__concat__", "__sum__"]} correct={1} explanation="Defining __add__ overloads the + operator for your specific class." />
-<InlineQuiz id="oop-dunder-5" question="What does the __eq__ method allow you to do?" options={["Check if two objects' memory addresses are exactly the same", "Use the == operator to compare the values of two objects", "Check if an object equals None or not", "Equate an object to an integer in all contexts"]} correct={1} explanation="__eq__ allows you to define custom logic for the == operator." />
+## Knowledge Check
+
+<InlineQuiz 
+  question="You are attempting to completely overwrite the creation of an Immutable Object (like inheriting from a String to create `UpperCaseString`). Why must you manipulate the internal logic inside `__new__` instead of relying on standard `__init__` population?"
+  options={[
+    "Because Strings are restricted API types.",
+    "Because `__init__` runs strictly after the physical RAM allocation. An Immutable Type mathematically cannot be modified or altered once the memory chunk is fully allocated. You must intercept and change the value physically during the `__new__` pre-allocation phase.",
+    "You cannot inherit from Strings.",
+    "`__init__` is disabled on Immutable variables."
+  ]}
+  correctAnswer="Because `__init__` runs strictly after the physical RAM allocation. An Immutable Type mathematically cannot be modified or altered once the memory chunk is fully allocated. You must intercept and change the value physically during the `__new__` pre-allocation phase."
+  explanation="`__new__` intercepts the Operating System RAM call. It determines what type of hardware structure will be returned. `__init__` simply populates the dictionary attached to that resulting structure."
+/>
+
+<InlineQuiz 
+  question="You deploy a List of your custom objects and run `print(my_list)`. Instead of showing clean text, your terminal spams `<__main__.MyObject at 0x00A13B>` repeating ten times. Why did this fail, and how do you resolve it?"
+  options={[
+    "You did not call `.upper()`.",
+    "The Python `print()` compiler lacks a default template.",
+    "When a container (like a List) dumps its memory to the console, it universally prioritizes reading the `__repr__` developer method, NOT the `__str__` method. Your class is missing a `def __repr__(self):` implementation.",
+    "You cannot print custom Objects within Lists."
+  ]}
+  correctAnswer="When a container (like a List) dumps its memory to the console, it universally prioritizes reading the `__repr__` developer method, NOT the `__str__` method. Your class is missing a `def __repr__(self):` implementation."
+  explanation="`__str__` is strictly for printing singular Objects. Whenever an object undergoes a generic structural dump (printing collections, debugger halts, stack traces), the C-engine triggers the exact raw `__repr__` developer representation."
+/>
+
+<InlineQuiz 
+  question="You define a custom `Vector` class with `def __eq__(self, other): return self.x == other.x`. What happens structurally when you execute `Vector(5) == Vector(5)`?"
+  options={[
+    "Returns `False` because they are two distinct RAM objects.",
+    "Returns `True` because the runtime Bytecode detected `==` and statically mapped the operation to load the `__eq__` Dunder pointer on the first Object, passing the second Object dynamically as the `other` payload.",
+    "Throws a Type collision error.",
+    "Evaluates the hash table integrity."
+  ]}
+  correctAnswer="Returns `True` because the runtime Bytecode detected `==` and statically mapped the operation to load the `__eq__` Dunder pointer on the first Object, passing the second Object dynamically as the `other` payload."
+  explanation="There is no native 'Equality' in generic Python Objects. ALL operators (`<`, `>`, `!=`, `+`) are illusions wrapping C-level Dunder method function calls."
+/>

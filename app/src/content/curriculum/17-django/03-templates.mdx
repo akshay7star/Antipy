@@ -1,0 +1,101 @@
+---
+title: "The Django Template System"
+description: "Design massive websites using the built in Django Template Language."
+order: 3
+---
+
+# The Django Template System
+
+Django's templating engine (DTL) is incredibly similar to Jinja2 (used by Flask). They share roughly 95% of the same syntax for logic and variables.
+
+If you know Jinja, you know Django Templates.
+
+## Context Dictionaries
+
+When a user visits a URL, your view function fetches data from the database. It then packages that data into a **context dictionary** and passes it to the `render()` function.
+
+<InteractiveCode 
+  initialCode={`from django.shortcuts import render\n\n# Views.py\ndef profile(request):\n    # Imagine we fetched this from the database\n    user_data = {\n        'name': 'Bob',\n        'age': 45,\n        'is_premium': True,\n        'friends': ['Alice', 'Charlie', 'Dave']\n    }\n    \n    # Render passes the dictionary to the HTML file\n    return render(request, 'profile.html', context=user_data)`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="What is the purpose of the `context` dictionary in the `render()` function?"
+  options={[
+    "It passes Python variables from the view into the HTML template so they can be displayed to the user.",
+    "It stores the user's password securely in the database.",
+    "It tells Django which URL to redirect to.",
+    "It creates a new HTML file."
+  ]}
+  correctAnswer="It passes Python variables from the view into the HTML template so they can be displayed to the user."
+  explanation="The `context` is simply a bridge. It allows the Python logic to securely pass specific pieces of data over to the HTML presentation layer."
+/>
+
+## DTL Syntax
+
+Inside `profile.html`, you use the same `{{ variable }}` and `{% logic %}` syntax we saw in Flask.
+
+<InteractiveCode 
+  initialCode={`<!-- profile.html -->\n\n<h1>Welcome back, {{ name }}!</h1>\n\n{% if is_premium %}\n    <div class="gold-badge">Premium Member</div>\n{% endif %}\n\n<h3>Your Friends:</h3>\n<ul>\n    {% for friend in friends %}\n        <li>{{ friend }}</li>\n    {% endfor %}\n</ul>`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="If `user_data = {'admin': False}`, what will the following DTL output? `{% if admin %} Hello {% else %} Goodbye {% endif %}`"
+  options={[
+    "Hello",
+    "Goodbye",
+    "Nothing",
+    "An error"
+  ]}
+  correctAnswer="Goodbye"
+  explanation="Because the boolean variable `admin` is `False`, the if-statement evaluates to false and the `else` block containing 'Goodbye' is rendered."
+/>
+
+## Built-In Filters
+
+Django provides dozens of "filters" to transform variables right before they are displayed on the screen. 
+
+Filters use the pipe character `|`.
+
+<InteractiveCode 
+  initialCode={`<!-- If name is 'bob' -->\n<h1>{{ name|title }}</h1> <!-- Outputs 'Bob' -->\n\n<!-- If article_text is 500 words long, truncate it to 10 words -->\n<p>{{ article_text|truncatewords:10 }}</p>\n\n<!-- If the context variable is missing entirely, provide a default -->\n<p>Score: {{ score|default:"0" }}</p>\n\n<!-- Format a Python datetime object safely -->\n<p>Joined: {{ joined_date|date:"F j, Y" }}</p>`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="What does the pipe character `|` do in a Django template expression like `{{ my_variable|lower }}`?"
+  options={[
+    "It creates a new variable.",
+    "It applies a filter that modifies the variable immediately before displaying it.",
+    "It deletes the variable.",
+    "It creates an 'OR' conditional statement."
+  ]}
+  correctAnswer="It applies a filter that modifies the variable immediately before displaying it."
+  explanation="Filters transform data natively inside the template. The `lower` filter converts all characters in a string to lowercase before rendering the HTML."
+/>
+
+## Cross-Site Request Forgery (CSRF)
+
+Django's templating engine provides extreme security out-of-the-box. The most important security feature is the `{% csrf_token %}` tag.
+
+If you build an HTML form that submits a `POST` request (like changing a password, or transferring money), a malicious website could hide a script that tricks a logged-in user's browser into submitting that form without their knowledge (a CSRF attack).
+
+Django protects against this by generating a unique, hidden, cryptographically secure token for every single form. When the form is submitted, Django verifies the token.
+
+<InteractiveCode 
+  initialCode={`<!-- You MUST include this in every POST form! -->\n<form method="POST" action="/transfer-money/">\n    {% csrf_token %}\n    <input type="text" name="amount" />\n    <button type="submit">Submit</button>\n</form>`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="What happens if you submit a `POST` request to a Django view, but forget to include the `{% csrf_token %}` tag in the HTML form?"
+  options={[
+    "Django accepts the form successfully.",
+    "Django rejects the request entirely with an HTTP 403 Forbidden error.",
+    "Django converts it into a GET request.",
+    "The data is emailed to the admin."
+  ]}
+  correctAnswer="Django rejects the request entirely with an HTTP 403 Forbidden error."
+  explanation="Django's built-in CSRF middleware strictly blocks any incoming POST request that doesn't contain a valid, matching CSRF token. This prevents cross-site forging attacks."
+/>

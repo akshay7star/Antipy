@@ -1,0 +1,101 @@
+---
+title: "Authentication"
+description: "How to manage user login sessions securely."
+order: 4
+---
+
+# Authentication in Flask
+
+Building a website is easy; remembering who is visiting your website is hard. HTTP is a **stateless protocol**, meaning your web server suffers from severe amnesia. Every request (clicking a link, submitting a form) is treated as a completely brand-new user.
+
+How do we build a 'Login' system if the server forgets the user the moment the page finishes loading? We use **Sessions**.
+
+## What is a Session?
+
+A session is way for Flask to store information about a specific user as they click around your site. In Flask, the session is stored securely in a **cookie** inside the user's web browser.
+
+<InteractiveCode 
+  initialCode={`from flask import Flask, session, request\n\napp = Flask(__name__)\n# Flask MUST have a secret key to encrypt cookies!\napp.secret_key = 'super_secret_password_do_not_share'\n\n@app.route('/login')\ndef login():\n    # Imagine we checked a database here to ensure the password is correct\n    session['username'] = 'Alice'\n    return "You are logged in!"\n\n@app.route('/dashboard')\ndef dashboard():\n    if 'username' in session:\n        return f"Welcome back, {session['username']}!"\n    \n    return "Access Denied: Please log in."`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="Why does Flask require you to set an `app.secret_key` before you can use the `session` dictionary?"
+  options={[
+    "Because the server needs a password to turn on.",
+    "Because Flask uses the secret key to cryptographically sign the user's session cookie, preventing tampering.",
+    "Because the database requires a password to read user data.",
+    "Flask doesn't actually require it."
+  ]}
+  correctAnswer="Because Flask uses the secret key to cryptographically sign the user's session cookie, preventing tampering."
+  explanation="If the session cookies were not encrypted and signed with a secret key, a malicious user could simply open their Chrome dev tools, change `{'username': 'Alice'}` to `{'username': 'Admin'}`, and steal control of your website."
+/>
+
+## Logging Out
+
+Logging out is delightfully simple: you just delete the user's data from the session dictionary.
+
+<InteractiveCode 
+  initialCode={`# Adding to our previous app:\n@app.route('/logout')\ndef logout():\n    # session.pop() removes the key safely\n    session.pop('username', None)\n    return "You have been logged out."`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="When a user 'logs out' of a standard Flask application, what is actually happening under the hood?"
+  options={[
+    "The server deletes their account from the database.",
+    "The server resets their password.",
+    "The server removes their data from the `session` dictionary, which overwrites the cookie in their browser.",
+    "Flask blocks their IP address."
+  ]}
+  correctAnswer="The server removes their data from the `session` dictionary, which overwrites the cookie in their browser."
+  explanation="Logging out is a purely state-based action. You are simply destroying the temporary session tokens/data that proved they were previously authenticated."
+/>
+
+## Passwords and Hashing
+
+If a user signs up on your website, you **MUST NEVER** save their actual password to the database. If your server is ever hacked, the criminals would steal thousands of passwords (which people reuse on their emails and bank accounts!).
+
+Instead, you save a mathematically mangled version of the password, called a **Hash**.
+
+Fortunately, Werkzeug (the toolkit Flask is built upon) provides this for free.
+
+<InteractiveCode 
+  initialCode={`from werkzeug.security import generate_password_hash, check_password_hash\n\n# User signs up: "ilovecats123"\nstored_hash = generate_password_hash("ilovecats123")\nprint(f"What we store in the DB: {stored_hash}")\n\n# User tries to log in later with "ilovedogs123"\nlogin_attempt1 = check_password_hash(stored_hash, "ilovedogs123")\nprint(f"Login attempt 1: {login_attempt1}")\n\n# User tries again with correct password\nlogin_attempt2 = check_password_hash(stored_hash, "ilovecats123")\nprint(f"Login attempt 2: {login_attempt2}")`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="Why do we use hashes instead of encrypting passwords with a secret key?"
+  options={[
+    "Because hashes are faster to generate.",
+    "Because hashing is a one-way street. Not even the website owner can reverse a hash back into the original password.",
+    "Because hashes take up less database space.",
+    "We should encrypt passwords, hashes are dangerous."
+  ]}
+  correctAnswer="Because hashing is a one-way street. Not even the website owner can reverse a hash back into the original password."
+  explanation="Encryption goes both ways (you can lock it, and unlock it). Hashing is mathematically irrevesible. To verify a login, you simply hash their guessed password and see if the two hashes match! If a hacker steals a database of hashes, they get meaningless jumbled text."
+/>
+
+## Flask-Login Extension
+
+While you can write your own `@app.route` decorators to check `session['username']` manually on every single page of your site, that gets tedious.
+
+The widely popular external library `Flask-Login` handles all the heavy lifting for you, giving you an `@login_required` decorator.
+
+<InteractiveCode 
+  initialCode={`from flask import Flask\nfrom flask_login import login_required\n\napp = Flask(__name__)\n\n@app.route('/settings')\n@login_required\ndef secret_settings():\n    return "Welcome to the secret vault."`}
+  showConsole={false}
+/>
+
+<InlineQuiz 
+  question="What happens if an unauthenticated (anonymous) user tries to access a route decorated with `@login_required`?"
+  options={[
+    "Flask automatically creates an account for them.",
+    "Flask throws a 500 error.",
+    "Flask-Login intercepts the request and redirects them to the login page.",
+    "They are allowed to view the page but cannot make POST requests."
+  ]}
+  correctAnswer="Flask-Login intercepts the request and redirects them to the login page."
+  explanation="The `@login_required` decorator acts as a bouncer. If no valid session is found, it automatically blocks access and redirects the user to the configured login portal."
+/>

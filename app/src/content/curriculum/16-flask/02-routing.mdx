@@ -1,0 +1,92 @@
+---
+title: "Routing"
+description: "How Flask turns a web address into a Python function call."
+order: 2
+---
+
+# Routing
+
+<ToolingVisualizer initialMode="venv" />
+
+When a user types `https://yoursite.com/about` into their browser, the browser sends an HTTP request to your server. Your server needs a way to map the `/about` URL to a specific block of Python code. This mapping is called **Routing**.
+
+In Flask, routing is elegantly handled using Python decorators.
+
+## The `@app.route` Decorator
+
+You define a route by decorating a Python function (called a "view function") with `@app.route()`.
+
+<InteractiveCode 
+  initialCode={`from flask import Flask\n\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    return "Welcome to the Homepage!"\n\n@app.route('/about')\ndef about():\n    return "This is the About page."\n\n# In a real app, you would run this with: app.run()`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="What is the purpose of the `@app.route('/about')` decorator in Flask?"
+  options={[
+    "To tell Python this function should run faster.",
+    "To require users to log in before seeing the page.",
+    "To map the URL '/about' to the function immediately directly below it.",
+    "To create a new HTML file called 'about'."
+  ]}
+  correctAnswer="To map the URL '/about' to the function immediately directly below it."
+  explanation="Decorators in Flask bind a specific URL rule (`/about`) to the view function beneath it."
+/>
+
+## Dynamic URLs (Path Parameters)
+
+Websites rarely have static URLs. Think about a user profile page: `yoursite.com/user/alice`. You wouldn't write a separate function for every single user!
+
+Instead, you use **variable rules** in your routes. By putting a variable name inside angle brackets `<variable_name>`, Flask passes that value as an argument to your view function.
+
+<InteractiveCode 
+  initialCode={`from flask import Flask\n\napp = Flask(__name__)\n\n# Dynamic route catching the username\n@app.route('/user/<username>')\ndef profile(username):\n    return f"Welcome to your profile, {username}!"\n\n# You can also enforce data types!\n@app.route('/post/<int:post_id>')\ndef show_post(post_id):\n    # post_id is guaranteed to be an integer here\n    return f"Viewing blog post #{post_id}"`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="In the route `@app.route('/item/<int:id>')`, what happens if a user visits `/item/apple`?"
+  options={[
+    "It passes the string 'apple' to the function.",
+    "Flask throws a 404 Not Found error.",
+    "Flask throws a 500 Server Error.",
+    "It converts 'apple' to the integer 0."
+  ]}
+  correctAnswer="Flask throws a 404 Not Found error."
+  explanation="Because you specified `<int:id>`, Flask requires the URL segment to be an integer. Since 'apple' isn't an integer, the route doesn't match, resulting in a 404 error."
+/>
+
+## HTTP Methods
+
+By default, an `@app.route` only answers to HTTP `GET` requests (fetching page data). But if a user is submitting a contact form, their browser sends a `POST` request.
+
+You must explicitly tell Flask if a route should accept other methods.
+
+<InteractiveCode 
+  initialCode={`from flask import Flask, request\n\napp = Flask(__name__)\n\n@app.route('/login', methods=['GET', 'POST'])\ndef login():\n    if request.method == 'POST':\n        return "Processing the login form submission..."\n    else:\n        return "Displaying the login form (GET request)"`}
+  showConsole={true}
+/>
+
+<InlineQuiz 
+  question="If a route is defined as `@app.route('/submit')` with no `methods` argument, and a user tries to POST data to it, what happens?"
+  options={[
+    "Flask accepts the POST data natively.",
+    "Flask throws a 405 Method Not Allowed error.",
+    "Flask converts the POST into a GET request.",
+    "Flask crashes the server."
+  ]}
+  correctAnswer="Flask throws a 405 Method Not Allowed error."
+  explanation="Routes only accept `GET` requests by default. Any other request type, like `POST` or `PUT`, will be rejected with an HTTP 405 error unless explicitly allowed in the `methods` list."
+/>
+
+<InlineQuiz 
+  question="Which object in Flask contains information about the current HTTP request (like the method used)?"
+  options={[
+    "app",
+    "session",
+    "request",
+    "response"
+  ]}
+  correctAnswer="request"
+  explanation="The global `request` object imported from `flask` contains all data about the incoming HTTP request, including `request.method`, `request.form`, and `request.args`."
+/>
