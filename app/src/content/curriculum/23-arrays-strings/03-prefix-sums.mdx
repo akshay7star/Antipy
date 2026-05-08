@@ -1,0 +1,293 @@
+---
+title: "Prefix Sums"
+description: "Precompute cumulative sums for O(1) range queries and subarray calculations."
+order: 3
+---
+
+# Prefix Sums: Answering Range Queries in O(1)
+
+Without prefix sums, answering "what is the sum of elements from index 3 to 7?" requires adding 5 numbers — O(k) per query. With a prefix sum array built in O(n), every range query answers in **O(1)**. This is one of the most powerful preprocessing tricks in competitive programming and system design.
+
+## Building the Prefix Sum Array
+
+The prefix array `P` where `P[i]` = sum of `arr[0..i-1]`:
+
+```python
+def build_prefix(arr):
+    n = len(arr)
+    prefix = [0] * (n + 1)   # P[0] = 0 (empty prefix)
+    for i in range(n):
+        prefix[i + 1] = prefix[i] + arr[i]
+    return prefix
+
+arr    = [3, 1, 4, 1, 5, 9, 2, 6]
+#index:   0  1  2  3  4  5  6  7
+prefix = [0, 3, 4, 8, 9, 14, 23, 25, 31]
+#          ↑
+#          P[0]=0, P[1]=3, P[2]=3+1=4, etc.
+```
+
+<MermaidDiagram>
+graph LR
+  A["arr: [3, 1, 4, 1, 5, 9, 2, 6]"] --> B["prefix: [0, 3, 4, 8, 9, 14, 23, 25, 31]"]
+  B --> C["range_sum(2,5) = P[6] - P[2] = 23 - 4 = 19"]
+  style C fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## O(1) Range Sum Query
+
+```python
+def range_sum(prefix, left, right):
+    # Sum of arr[left..right] inclusive
+    return prefix[right + 1] - prefix[left]
+
+arr    = [3, 1, 4, 1, 5, 9, 2, 6]
+prefix = build_prefix(arr)
+
+print(range_sum(prefix, 2, 5))  # 4+1+5+9 = 19 — O(1)!
+print(range_sum(prefix, 0, 7))  # Entire array sum = 31
+print(range_sum(prefix, 0, 0))  # Just arr[0] = 3
+```
+
+> **Why it works**: `P[right+1] - P[left]` = (sum of first `right+1` elements) - (sum of first `left` elements) = sum of elements `left..right`. No loop needed!
+
+## Subarray Sum Equals K
+
+A classic interview problem: "How many subarrays have sum equal to k?"
+
+**Brute force**: O(n²) — check every pair (i,j).  
+**Prefix sum + hash map**: O(n) — pure genius.
+
+```python
+def subarray_sum_equals_k(nums, k):
+    count = 0
+    prefix_sum = 0
+    seen = {0: 1}   # prefix_sum → how many times seen
+
+    for num in nums:
+        prefix_sum += num
+        # If (prefix_sum - k) was seen, those subarrays sum to k
+        count += seen.get(prefix_sum - k, 0)
+        seen[prefix_sum] = seen.get(prefix_sum, 0) + 1
+
+    return count
+
+# Why it works:
+# sum(i..j) = prefix[j+1] - prefix[i] = k
+# → prefix[i] = prefix[j+1] - k
+# So we look for (current_prefix - k) in our hash map!
+```
+
+<MermaidDiagram>
+graph TD
+  A["For each position, compute current prefix sum"] --> B["Check: (prefix_sum - k) in seen?"]
+  B -->|Yes| C["Count those subarrays — they sum to k"]
+  B -->|No| D["Continue"]
+  C --> E["Add current prefix_sum to seen map"]
+  D --> E
+  E --> A
+  style C fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## 2D Prefix Sums: Rectangle Queries
+
+For 2D grids (image processing, matrix problems):
+
+```python
+def build_2d_prefix(matrix):
+    m, n = len(matrix), len(matrix[0])
+    prefix = [[0] * (n + 1) for _ in range(m + 1)]
+
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            prefix[i][j] = (matrix[i-1][j-1]
+                           + prefix[i-1][j]
+                           + prefix[i][j-1]
+                           - prefix[i-1][j-1])  # Subtract double-counted corner
+    return prefix
+
+def rect_sum(prefix, r1, c1, r2, c2):
+    return (prefix[r2+1][c2+1]
+            - prefix[r1][c2+1]
+            - prefix[r2+1][c1]
+            + prefix[r1][c1])  # Add back the corner subtracted twice
+```
+
+<interactive-code>
+# Comprehensive prefix sum demonstrations
+
+def build_prefix(arr):
+    prefix = [0] * (len(arr) + 1)
+    for i, val in enumerate(arr):
+        prefix[i + 1] = prefix[i] + val
+    return prefix
+
+def range_sum(prefix, left, right):
+    return prefix[right + 1] - prefix[left]
+
+# --- Demo 1: Range queries ---
+print("=== Range Queries in O(1) ===")
+arr = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3]
+prefix = build_prefix(arr)
+print(f"Array:  {arr}")
+print(f"Prefix: {prefix}")
+print(f"Sum [2..5]:  {range_sum(prefix, 2, 5)} (expected: {sum(arr[2:6])})")
+print(f"Sum [0..9]:  {range_sum(prefix, 0, 9)} (expected: {sum(arr)})")
+print(f"Sum [7..9]:  {range_sum(prefix, 7, 9)} (expected: {sum(arr[7:10])})")
+
+# --- Demo 2: Subarray sum equals k ---
+print("\n=== Subarray Sum Equals K ===")
+def subarray_sum_k(nums, k):
+    count = 0
+    prefix_sum = 0
+    seen = {0: 1}
+    for num in nums:
+        prefix_sum += num
+        count += seen.get(prefix_sum - k, 0)
+        seen[prefix_sum] = seen.get(prefix_sum, 0) + 1
+    return count
+
+tests = [
+    ([1, 1, 1], 2, 2),
+    ([1, 2, 3], 3, 2),
+    ([-1, -1, 1], 0, 1),
+]
+for nums, k, expected in tests:
+    result = subarray_sum_k(nums, k)
+    status = "✓" if result == expected else "✗"
+    print(f"  {status} nums={nums}, k={k}: {result} subarrays (expected {expected})")
+
+# --- Demo 3: Product array without self ---
+print("\n=== Product Array Without Self (Prefix + Suffix Products) ===")
+def product_except_self(nums):
+    n = len(nums)
+    result = [1] * n
+    # Left pass: result[i] = product of all left of i
+    for i in range(1, n):
+        result[i] = result[i-1] * nums[i-1]
+    # Right pass: multiply in suffix products
+    right_product = 1
+    for i in range(n-1, -1, -1):
+        result[i] *= right_product
+        right_product *= nums[i]
+    return result
+
+nums = [1, 2, 3, 4]
+print(f"  Input:  {nums}")
+print(f"  Output: {product_except_self(nums)}")
+print(f"  Expected: [24, 12, 8, 6]")
+
+# --- Demo 4: 2D prefix sum ---
+print("\n=== 2D Prefix Sums (Rectangle Queries) ===")
+matrix = [
+    [3, 0, 1, 4, 2],
+    [5, 6, 3, 2, 1],
+    [1, 2, 0, 1, 5],
+    [4, 1, 0, 1, 7],
+    [1, 0, 3, 0, 5],
+]
+m, n = len(matrix), len(matrix[0])
+p = [[0]*(n+1) for _ in range(m+1)]
+for i in range(1, m+1):
+    for j in range(1, n+1):
+        p[i][j] = matrix[i-1][j-1] + p[i-1][j] + p[i][j-1] - p[i-1][j-1]
+
+def rect_sum(r1, c1, r2, c2):
+    return p[r2+1][c2+1] - p[r1][c2+1] - p[r2+1][c1] + p[r1][c1]
+
+print(f"  Matrix top-left 3x3 sum: {rect_sum(0,0,2,2)} (expected: {sum(matrix[r][c] for r in range(3) for c in range(3))})")
+print(f"  Matrix full sum:         {rect_sum(0,0,4,4)} (expected: {sum(sum(r) for r in matrix)})")
+</interactive-code>
+
+## Performance Comparison
+
+| Approach | Build | Query | Total for q queries |
+|---|---|---|---|
+| Brute force (no prefix) | O(1) | O(n) | O(n×q) |
+| Prefix sum | O(n) | O(1) | O(n + q) |
+
+When q is large (thousands of queries), prefix sums are transformative. This is why **database query planners** and **signal processing** systems use them.
+
+> **Pro Tip:** Prefix sums work with any **associative** and **invertible** operation — not just addition. XOR prefix arrays answer "what's the XOR of elements i..j?" in O(1). Same pattern, different operator: `prefix[right+1] XOR prefix[left]`.
+
+> **Common Mistake:** Off-by-one errors. Always define `prefix[0] = 0` and `prefix[i] = sum(arr[0..i-1])`. The range sum is `prefix[right+1] - prefix[left]`, not `prefix[right] - prefix[left-1]` — that boundary confusion causes subtle bugs.
+
+<InlineQuiz
+  id="quiz-prefix-1"
+  question="What does a prefix sum array store at index i?"
+  options={["arr[i]", "Sum of arr[0] through arr[i-1]", "The maximum up to index i", "arr[i] * i"]}
+  correct={1}
+  explanation="prefix[i] = arr[0] + arr[1] + ... + arr[i-1]. prefix[0] = 0 by definition. This lets us compute any range sum in O(1)."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-2"
+  question="How do you compute the sum of arr[left..right] using a prefix array?"
+  options={["prefix[right] - prefix[left]", "prefix[right+1] - prefix[left]", "prefix[right] + prefix[left]", "prefix[right] - prefix[left+1]"]}
+  correct={1}
+  explanation="range_sum(left, right) = prefix[right+1] - prefix[left]. The +1 offset is because prefix[i] stores the sum of the first i elements (exclusive of index i)."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-3"
+  question="What is the time complexity to build a prefix sum array?"
+  options={["O(1)", "O(log n)", "O(n)", "O(n²)"]}
+  correct={2}
+  explanation="Building the prefix array requires one pass through the input: prefix[i+1] = prefix[i] + arr[i]. That is O(n) time and O(n) space."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-4"
+  question="What is the time complexity to answer a range sum query with a prefix array?"
+  options={["O(n)", "O(log n)", "O(1)", "O(n²)"]}
+  correct={2}
+  explanation="range_sum(l, r) = prefix[r+1] - prefix[l] — just one subtraction, always O(1) regardless of the range size."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-5"
+  question="In 'subarray sum equals k' with prefix sums and a hash map, what are we checking at each step?"
+  options={["If the current element equals k", "If (current_prefix_sum - k) was seen before", "If the window sum equals k", "If k elements have been visited"]}
+  correct={1}
+  explanation="sum(i..j) = prefix[j+1] - prefix[i] = k → prefix[i] = prefix[j+1] - k. So we check if (current_prefix - k) exists in our seen map of past prefix sums."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-6"
+  question="Why do we initialize seen = {0: 1} in the subarray sum problem?"
+  options={["To avoid division by zero", "To count subarrays starting from index 0 that sum to k", "It is a bug", "To handle negative numbers"]}
+  correct={1}
+  explanation="prefix_sum=0 before any elements. If prefix_sum == k at some index, we need seen[prefix_sum - k] = seen[0] = 1 to count the subarray from index 0. Initializing {0:1} handles this edge case."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-7"
+  question="Can prefix sums work with operators other than addition?"
+  options={["No — only addition", "Yes — XOR prefix sums work for range XOR queries", "Only with multiplication", "Only with sorted arrays"]}
+  correct={1}
+  explanation="Any invertible associative operation works. XOR prefix arrays answer range XOR in O(1): xor(l, r) = prefix[r+1] XOR prefix[l]. Product prefix arrays work similarly."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-8"
+  question="What is the space complexity of prefix sums?"
+  options={["O(1)", "O(log n)", "O(n)", "O(n²)"]}
+  correct={2}
+  explanation="The prefix array has n+1 elements, requiring O(n) extra space. This is the space-time trade-off: spend O(n) memory to get O(1) query time."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-9"
+  question="What is a 2D prefix sum used for?"
+  options={["Sorting a matrix", "O(1) rectangular sub-matrix sum queries", "Finding the matrix diagonal", "Graph shortest paths"]}
+  correct={1}
+  explanation="A 2D prefix array P lets you compute the sum of any rectangle in O(1): rect_sum(r1,c1,r2,c2) = P[r2+1][c2+1] - P[r1][c2+1] - P[r2+1][c1] + P[r1][c1]."
+/>
+
+<InlineQuiz
+  id="quiz-prefix-10"
+  question="The 'product of array except self' problem uses what trick similar to prefix sums?"
+  options={["Hash maps", "Left prefix products multiplied by right suffix products", "Sorting", "Recursion"]}
+  correct={1}
+  explanation="result[i] = (product of all elements left of i) * (product of all elements right of i). One left pass builds prefix products, one right pass multiplies suffix products — O(n) total, O(1) extra space."
+/>

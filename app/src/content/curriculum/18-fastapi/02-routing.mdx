@@ -1,86 +1,190 @@
 ---
-title: "Routing in FastAPI"
-description: "High-performance endpoint routing leveraging Python Type Hints."
+title: "Routing & Data Validation"
+description: "Handling path parameters, query parameters, and JSON request bodies flawlessly."
 order: 2
 ---
 
-# Routing in FastAPI
+# Routing & Data Validation
 
-<ToolingVisualizer initialMode="venv" />
+FastAPI's routing system is designed around one core philosophy: **Declare the shape of your data using Python type hints, and the framework will handle everything else.**
 
-FastAPI's routing system feels very similar to Flask—it relies heavily on decorators. 
+This means you write significantly less boilerplate code. You don't have to manually check if `user_id` is an integer, or if the user included a `username` in their POST request. FastAPI validates it, converts it, and documents it automatically.
 
-However, FastAPI fundamentally differs by combining **Routing** with strict **Pydantic Type Checking**. While Flask requires you to manually parse JSON bodies and hope the user sent `{"age": 25}` and not `{"age": "twenty-five"}`, FastAPI validates the data *before* your function even runs.
+## Path Parameters
 
-## Defining Endpoints
+Path parameters are dynamic segments of the URL, just like in Flask.
 
-Like Flask's `@app.route()`, you decorate functions with HTTP method decorators like `@app.get()`, `@app.post()`, or `@app.put()`.
+<interactive-code>
+from fastapi import FastAPI
 
-<InteractiveCode 
-  initialCode={`from fastapi import FastAPI\n\napp = FastAPI()\n\n# Handle a basic GET request\n@app.get("/")\ndef read_root():\n    # FastAPI automatically converts dictionaries to JSON for you!\n    return {"message": "Hello World"}\n\n# Handle a dynamic GET request\n@app.get("/items/{item_id}")\ndef read_item(item_id: int):\n    return {"item_id": item_id}`}
-  showConsole={true}
-/>
+app = FastAPI()
 
-<InlineQuiz 
-  question="In the route `@app.get('/users/{user_id}')`, why does adding the type hint `user_id: int` to the function parameters matter in FastAPI?"
-  options={[
-    "It makes the code run faster.",
-    "It tells the browser what type of data to expect.",
-    "FastAPI uses that type hint to automatically validate the incoming URL parameter. If a user visits `/users/foo`, FastAPI returns a clean `422 Unprocessable Entity` error telling them it must be an integer.",
-    "It has no effect at runtime; it is purely for developer readability."
-  ]}
-  correctAnswer="FastAPI uses that type hint to automatically validate the incoming URL parameter. If a user visits `/users/foo`, FastAPI returns a clean `422 Unprocessable Entity` error telling them it must be an integer."
-  explanation="FastAPI's defining feature is that Python type hints actually control runtime behavior and validation logic."
-/>
+# By using type hints, FastAPI knows item_id must be an integer
+@app.get("/items/{item_id}")
+def read_item(item_id: int):
+    return {"item_id": item_id, "type": type(item_id).__name__}
+</interactive-code>
 
-## Request Bodies (Pydantic Models)
-
-When a client submits data to save to a database (like a new blog post), they typically send a JSON body via a `POST` request.
-
-In FastAPI, you define the expected JSON shape using a **Pydantic Model**, which is simply a class inheriting from `BaseModel`.
-
-<InteractiveCode 
-  initialCode={`from pydantic import BaseModel\nfrom typing import Optional\n\n# This class defines the exact shape of the JSON we expect to receive\nclass Item(BaseModel):\n    name: str\n    description: Optional[str] = None # Optional means it might be missing\n    price: float\n    tax: Optional[float] = None\n\n# In our route, we declare 'item' to be of type 'Item'\n@app.post("/items/")\ndef create_item(item: Item):\n    total_cost = item.price\n    if item.tax:\n        total_cost += item.tax\n        \n    # We can access the validated data instantly as object attributes!\n    return {"item": item.name, "total": total_cost}`}
-  showConsole={false}
-/>
-
-If a user sends a `POST` request missing the required `price` field, or provides a string `"five dollars"` instead of a `float`, FastAPI intercepts the request immediately and sends a 422 tracking error—your `create_item` function never even executes!
-
-<InlineQuiz 
-  question="If a Pydantic Model requires `price: float`, but the incoming JSON explicitly states `{'price': '50.50'}` (a string), what happens?"
-  options={[
-    "FastAPI throws a 422 error because it is strictly checking for a float.",
-    "FastAPI intelligently attempts to coerce the string into a float. Since '50.50' is a valid number, it succeeds and injects `50.50` into your function.",
-    "The function crashes internally when we try to do math on the string.",
-    "It drops the `price` field entirely."
-  ]}
-  correctAnswer="FastAPI intelligently attempts to coerce the string into a float. Since '50.50' is a valid number, it succeeds and injects `50.50` into your function."
-  explanation="Pydantic is smart. It attempts lightweight coercion (casting) before giving up and throwing a validation error, which is incredibly helpful when dealing with web data."
-/>
+If you visit `/items/5`, FastAPI passes the integer `5` to your function.
+If you visit `/items/apple`, FastAPI intercepts the request and instantly returns a standard HTTP 422 (Unprocessable Entity) JSON error explaining that "apple" is not a valid integer.
 
 ## Query Parameters
 
-If you define a variable in your function parameters that is *not* in the API path, FastAPI assumes it is a query parameter (`?skip=0&limit=10`).
+If a function parameter is **not** part of the path (the `{...}` section), FastAPI automatically assumes it is a "query" parameter. 
 
-<InteractiveCode 
-  initialCode={`# URL: /items/?skip=0&limit=10\n@app.get("/items/")\ndef read_item(skip: int = 0, limit: int = 10):\n    return {"skip": skip, "limit": limit}`}
-  showConsole={false}
+Query parameters appear at the end of the URL after a question mark: `?skip=0&limit=10`.
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+# 'skip' and 'limit' are not in the path string!
+@app.get("/items/")
+def read_items(skip: int = 0, limit: int = 10):
+    return {"reading_from": skip, "amount": limit}
+```
+
+Because we provided default values (`= 0` and `= 10`), these query parameters are **optional**. If a user simply visits `/items/`, it works perfectly.
+
+If we omit the default value, the parameter becomes **required**.
+```python
+# The user MUST provide ?search_query=something
+@app.get("/search/")
+def search_database(search_query: str):
+    return {"results_for": search_query}
+```
+
+## Request Bodies (POST data)
+
+When a client sends data (like a signup form or a JSON payload), it is sent in the **Request Body**.
+
+To declare a request body, you import `BaseModel` from `Pydantic` and create a data model.
+
+<interactive-code>
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# 1. Define the exact shape of the expected JSON
+class User(BaseModel):
+    username: str
+    password: str
+    age: int | None = None # Optional field
+    is_active: bool = True # Optional field with a default
+
+# 2. Use it in your route!
+@app.post("/users/")
+def create_user(user: User):
+    # 'user' is a fully validated Python object, NOT a raw dictionary!
+    # Your IDE will autocomplete user.username!
+    return {
+        "status": "success",
+        "saved_username": user.username,
+        "is_active": user.is_active
+    }
+</interactive-code>
+
+When a POST request arrives at `/users/`, FastAPI will:
+1. Read the body as JSON.
+2. Convert the corresponding types (if a user sends `"age": "25"` as a string, FastAPI smartly converts it to the integer `25`).
+3. Validate the data. If `username` is missing, it returns an error detailing exactly what field was missing.
+4. Give you the data as a Python object.
+
+## Combining Everything
+
+You can combine Path Parameters, Query Parameters, and Request Bodies all in one single function! FastAPI is smart enough to figure out where each piece of data comes from based on its signature.
+
+```python
+@app.put("/items/{item_id}")
+def update_item(item_id: int, item: Item, q: str | None = None):
+    # item_id comes from the URL path
+    # item comes from the JSON body
+    # q comes from the URL query string (?q=search)
+    return {"item_id": item_id, "item": item, "q": q}
+```
+
+---
+
+## Knowledge Check
+
+<InlineQuiz 
+  id="quiz-fastapi-routing-1"
+  question="In FastAPI, how do you define a dynamic path parameter in the URL?"
+  options={["@app.get('/users/<user_id>')", "@app.get('/users/{user_id}')", "@app.get('/users/:user_id')", "@app.get('/users/[user_id]')"]}
+  correct={1}
+  explanation="FastAPI uses standard Python f-string style curly braces `{variable_name}` to denote dynamic path segments."
 />
 
 <InlineQuiz 
-  question="If the URL is `/search?query=fastapi`, how would you define the route to capture 'query'?"
-  options={[
-    "@app.get('/search')\ndef search(query: str):",
-    "@app.get('/search/{query}')\ndef search(query: str):",
-    "@app.get('/search')\ndef search(q: str):",
-    "@app.get('/search?query=x')\ndef search(x: str):"
-  ]}
-  correctAnswer="@app.get('/search')\ndef search(query: str):"
-  explanation="Any parameter in your Python function that isn't declared in the `path` string is automatically interpreted by FastAPI as a query parameter (found after the `?` in the URL)."
+  id="quiz-fastapi-routing-2"
+  question="If a route function has a parameter that is NOT declared in the URL path string, what does FastAPI assume it is?"
+  options={["A syntax error", "A Request Body", "A Query Parameter", "A Header"]}
+  correct={2}
+  explanation="FastAPI automatically treats parameters absent from the path as query parameters (e.g., `?name=alice`)."
 />
 
-## Auto-Generated Documentation
+<InlineQuiz 
+  id="quiz-fastapi-routing-3"
+  question="How do you make a query parameter optional?"
+  options={["Wrap it in `Optional[]`", "Provide a default value (e.g., `limit: int = 10`)", "Add `?` to the parameter name", "Both A and B are common and correct"]}
+  correct={3}
+  explanation="Providing a default value naturally makes the parameter optional. Using `Optional[int] = None` explicitly states it can be missing/null."
+/>
 
-Because FastAPI forces you to declare all inputs and outputs using type hints and models, it intrinsically understands exactly what your API does.
+<InlineQuiz 
+  id="quiz-fastapi-routing-4"
+  question="If a user sends the string `'15'` as a query parameter for a field typed as `age: int`, what does FastAPI do?"
+  options={["It throws an error because it strictly requires an integer", "It automatically converts the string '15' into the integer 15", "It leaves it as a string", "It drops the parameter entirely"]}
+  correct={1}
+  explanation="FastAPI performs automatic type coercion. If a value can be safely converted to the declared type, it does so behind the scenes."
+/>
 
-If you navigate to `/docs` in any running FastAPI application... you get a beautiful, interactive, automatically generated Swagger UI documentation page for free! You can literally click "Try it out" and test your API endpoints directly from the interface.
+<InlineQuiz 
+  id="quiz-fastapi-routing-5"
+  question="What happens if a user visits `/items/apple` but the route expects `item_id: int`?"
+  options={["The view function runs and `item_id` is None", "FastAPI returns an HTML 404 error", "FastAPI returns a JSON HTTP 422 'Unprocessable Entity' error detailing the type mismatch", "The server crashes completely"]}
+  correct={2}
+  explanation="FastAPI's validation catches the bad data before your function even runs, returning a helpful, machine-readable JSON error."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-routing-6"
+  question="Which library does FastAPI use to define and validate Request Bodies?"
+  options={["Flask-WTF", "SQLAlchemy", "Pydantic", "Marshmallow"]}
+  correct={2}
+  explanation="FastAPI is deeply integrated with Pydantic. You define your JSON schemas by creating classes that inherit from `pydantic.BaseModel`."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-routing-7"
+  question="When you receive a Pydantic model in your route (e.g., `user: User`), how do you access its data?"
+  options={["user['username']", "user.get('username')", "user.username", "user.data['username']"]}
+  correct={2}
+  explanation="The data is parsed into a fully-fledged Python object. You access its fields using standard dot notation (`user.username`), which gives you IDE autocomplete!"
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-routing-8"
+  question="Can a single FastAPI route accept a path parameter, a query parameter, AND a JSON body simultaneously?"
+  options={["No, you must pick two maximum", "Yes, FastAPI automatically determines where each piece of data comes from based on its signature (Pydantic model = body, in path = path, otherwise = query)", "Yes, but you have to write manual parsing logic", "Only if you use GraphQL"]}
+  correct={1}
+  explanation="FastAPI is intelligent enough to automatically route the data from the URL, the query string, and the JSON body into the correct function arguments seamlessly."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-routing-9"
+  question="How does FastAPI know that a function parameter should be parsed from the JSON Request Body?"
+  options={["Because you named the variable `body`", "Because its type hint is a Pydantic `BaseModel`", "Because you use the `@app.post` decorator", "Because you use the `json=` keyword"]}
+  correct={1}
+  explanation="The type hint is everything. If the type is a Pydantic `BaseModel`, FastAPI automatically knows to look in the HTTP request body for that data."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-routing-10"
+  question="What HTTP status code does FastAPI automatically return if a user forgets to include a required field in their POST request body?"
+  options={["400 Bad Request", "404 Not Found", "422 Unprocessable Entity", "500 Internal Server Error"]}
+  correct={2}
+  explanation="A 422 status code is returned, along with a detailed JSON array pointing exactly to the missing field, making debugging incredibly easy for API consumers."
+/>

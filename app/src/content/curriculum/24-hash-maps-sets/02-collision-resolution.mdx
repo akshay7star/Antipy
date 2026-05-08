@@ -1,0 +1,276 @@
+---
+title: "Collision Resolution"
+description: "Chaining vs open addressing — what happens when two keys hash to the same bucket."
+order: 2
+---
+
+# Collision Resolution: Inside the Hash Table
+
+<MermaidDiagram>
+graph TD
+  KEY["key: 'python'"] --> HASH["hash('python') % 8 = 3"]
+  HASH --> BUCKET3["Bucket 3"]
+  KEY2["key: 'java'"] --> HASH2["hash('java') % 8 = 3"]
+  HASH2 --> BUCKET3
+  BUCKET3 --> COLLISION["⚠️ COLLISION!"]
+  style COLLISION fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+A **collision** occurs when two different keys hash to the same bucket index. It's not a bug — it's mathematically inevitable. With n keys and m buckets, once n > m (and even before due to the **birthday paradox**), collisions happen. The hash table's secret is how it handles them gracefully.
+
+## Strategy 1: Separate Chaining
+
+Each bucket holds a **linked list** (or Python list) of all key-value pairs that hash to it. On collision, simply append to the chain.
+
+```python
+class ChainingHashMap:
+    def __init__(self, capacity=8):
+        self.capacity = capacity
+        self.buckets = [[] for _ in range(capacity)]   # List of lists
+
+    def _bucket(self, key):
+        return hash(key) % self.capacity
+
+    def put(self, key, value):
+        b = self._bucket(key)
+        for i, (k, v) in enumerate(self.buckets[b]):
+            if k == key:
+                self.buckets[b][i] = (key, value)  # Update
+                return
+        self.buckets[b].append((key, value))         # Insert
+
+    def get(self, key):
+        b = self._bucket(key)
+        for k, v in self.buckets[b]:
+            if k == key:
+                return v
+        raise KeyError(key)
+```
+
+<MermaidDiagram>
+graph TD
+  B0["Bucket 0: → None"]
+  B1["Bucket 1: → (apple,1) → (mango,3)"]
+  B2["Bucket 2: → (banana,2)"]
+  B3["Bucket 3: → None"]
+  B4["Bucket 4: → (grape,4) → (lemon,5)"]
+  style B1 fill:#f59e0b,stroke:#d97706,color:#000
+  style B4 fill:#f59e0b,stroke:#d97706,color:#000
+</MermaidDiagram>
+
+**Chaining Analysis:**
+- Average case: O(1) insert, get, delete (chain length = load factor α = n/m)
+- Worst case: O(n) — every key in one chain (catastrophic hash function)
+- Space: O(n + m) — chains + empty buckets
+
+## Strategy 2: Open Addressing (Linear Probing)
+
+No linked lists. All data lives inside the array. On collision, **probe** to the next available slot.
+
+```python
+class LinearProbingHashMap:
+    def __init__(self, capacity=8):
+        self.capacity = capacity
+        self.slots = [None] * capacity
+        self.size = 0
+        self.DELETED = object()   # Sentinel for deleted slots
+
+    def _probe(self, key):
+        idx = hash(key) % self.capacity
+        while self.slots[idx] is not None:
+            if self.slots[idx] is not self.DELETED and self.slots[idx][0] == key:
+                return idx   # Found
+            idx = (idx + 1) % self.capacity   # Linear probe: +1
+        return idx   # Empty slot
+
+    def put(self, key, value):
+        if self.size / self.capacity > 0.7:
+            self._resize()
+        idx = self._probe(key)
+        if self.slots[idx] is None or self.slots[idx] is self.DELETED:
+            self.size += 1
+        self.slots[idx] = (key, value)
+```
+
+<MermaidDiagram>
+graph LR
+  I0["[0]: python"] --> I1["[1]: java"]
+  I1 --> I2["[2]: EMPTY"]
+  I2 --> I3["[3]: rust"]
+  I3 --> I4["[4]: go"]
+  I4 --> PROBE["New key hashes to 1\n→ 1 occupied, probe to 2\n→ 2 empty, insert here!"]
+  style I2 fill:#22c55e,stroke:#16a34a,color:#fff
+  style PROBE fill:#3b82f6,stroke:#2563eb,color:#fff
+</MermaidDiagram>
+
+## The Load Factor: The Critical Parameter
+
+```python
+load_factor = n / m   # n = keys stored, m = total buckets
+
+# Python dict resizes when load factor > 2/3 (≈ 0.67)
+# Java HashMap resizes at load factor > 0.75
+
+# Low load factor (0.1) → Fast lookups, wastes memory
+# High load factor (0.9) → Memory efficient, slow lookups (long probe chains)
+```
+
+**Clustering Problem**: Linear probing creates "clusters" — long consecutive runs of filled slots. Inserting into a cluster extends it, making future insertions even slower. This is **primary clustering**.
+
+**Quadratic Probing** (`(idx + i²) % m`) and **Double Hashing** (`(idx + i*hash2(key)) % m`) reduce clustering at the cost of complexity.
+
+<interactive-code>
+class HashMapChaining:
+    def __init__(self, capacity=7):
+        self.capacity = capacity
+        self.buckets = [[] for _ in range(capacity)]
+        self.size = 0
+
+    def put(self, key, value):
+        b = hash(key) % self.capacity
+        for i, (k, v) in enumerate(self.buckets[b]):
+            if k == key:
+                self.buckets[b][i] = (key, value)
+                return
+        self.buckets[b].append((key, value))
+        self.size += 1
+
+    def get(self, key, default=None):
+        b = hash(key) % self.capacity
+        for k, v in self.buckets[b]:
+            if k == key:
+                return v
+        return default
+
+    def stats(self):
+        chain_lengths = [len(b) for b in self.buckets]
+        occupied = sum(1 for b in self.buckets if b)
+        print(f"  Capacity: {self.capacity} | Keys: {self.size} | Load: {self.size/self.capacity:.2f}")
+        print(f"  Occupied buckets: {occupied}")
+        print(f"  Chain lengths: {chain_lengths}")
+        print(f"  Max chain length: {max(chain_lengths)} (worst-case lookup: O({max(chain_lengths)}))")
+
+print("=== Chaining Hash Map Demo ===")
+hm = HashMapChaining(capacity=7)
+words = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta"]
+for w in words:
+    hm.put(w, len(w))
+hm.stats()
+
+print(f"\n  Lookup 'gamma': {hm.get('gamma')}")
+print(f"  Lookup 'zeta':  {hm.get('zeta')}")
+print(f"  Lookup 'omega': {hm.get('omega', 'NOT FOUND')}")
+
+print("\n=== Bucket Distribution ===")
+for i, bucket in enumerate(hm.buckets):
+    bar = "█" * len(bucket) if bucket else "·"
+    items = [k for k, v in bucket]
+    print(f"  Bucket {i}: {bar} {items}")
+</interactive-code>
+
+## Python's dict: Real-World Choices
+
+Python's `dict` uses **open addressing with compact tables** (since Python 3.6). Key design choices:
+- **Hash randomization**: Seeds hash with a random value per interpreter run (security)
+- **Resize threshold**: 2/3 load factor — pre-emptive resizing avoids long probes
+- **Deletion**: Uses "dummy" sentinel entries to not break probe chains
+- **Compact layout**: Keys and values stored in separate compact arrays for CPU cache efficiency
+
+```python
+import sys
+
+# Python dict grows with powers of 2 (roughly)
+sizes = []
+d = {}
+for i in range(100):
+    d[i] = i
+    sizes.append(sys.getsizeof(d))
+
+# Shows how Python's dict memory grows in steps (doubling)
+unique_sizes = sorted(set(sizes))
+print(f"Dict memory at: {unique_sizes[:8]} bytes ...")
+```
+
+> **Pro Tip:** Never use a mutable object as a dict key — Python uses `hash()` and `__eq__()`. Lists are mutable and unhashable. Use tuples as composite keys: `d[(row, col)] = value`.
+
+> **Common Mistake:** Assuming dict lookups are always O(1). With a deliberately crafted input (hash DoS attack), an attacker can force all keys into one bucket, making every lookup O(n). Python mitigates this with random hash seeds.
+
+<InlineQuiz
+  id="quiz-collision-1"
+  question="What is a hash collision?"
+  options={["A hash function error", "Two different keys producing the same bucket index", "A memory overflow", "A lookup failure"]}
+  correct={1}
+  explanation="A collision occurs when hash(key1) % m == hash(key2) % m for two different keys. The birthday paradox guarantees collisions even with a perfect hash function once enough keys are inserted."
+/>
+
+<InlineQuiz
+  id="quiz-collision-2"
+  question="What is separate chaining?"
+  options={["Using multiple hash functions", "Each bucket holds a linked list of all entries that hash to it", "Chaining hash tables together", "A probing strategy"]}
+  correct={1}
+  explanation="Separate chaining resolves collisions by storing multiple key-value pairs in each bucket via a linked list (or Python list). On collision, append to the chain."
+/>
+
+<InlineQuiz
+  id="quiz-collision-3"
+  question="What is linear probing?"
+  options={["Searching linearly through the array", "On collision, check the next slot (idx+1), then next (idx+2), until empty slot found", "A sorting algorithm", "A chaining variant"]}
+  correct={1}
+  explanation="Linear probing is open addressing: on collision at bucket b, try b+1, b+2, b+3... wrapping around. All data lives in the main array — no linked lists."
+/>
+
+<InlineQuiz
+  id="quiz-collision-4"
+  question="What is the load factor of a hash table?"
+  options={["Number of buckets", "n/m — ratio of keys stored to total bucket count", "The hash function speed", "Number of collisions"]}
+  correct={1}
+  explanation="Load factor α = n/m. A higher α means more collisions. Python dict resizes when α exceeds 2/3, Java HashMap at 3/4."
+/>
+
+<InlineQuiz
+  id="quiz-collision-5"
+  question="What is primary clustering in linear probing?"
+  options={["Buckets clustering at the start of the array", "Long consecutive runs of filled slots that grow larger with each collision", "A feature of chaining", "A type of hash function"]}
+  correct={1}
+  explanation="Linear probing creates clusters — consecutive filled slots. New keys that hash into a cluster extend it, making the cluster grow and worsen future insertions. Quadratic probing and double hashing reduce this."
+/>
+
+<InlineQuiz
+  id="quiz-collision-6"
+  question="What happens to performance as load factor approaches 1.0 in open addressing?"
+  options={["Gets faster", "Degrades rapidly — almost every insert requires many probes", "Stays constant", "Table automatically shrinks"]}
+  correct={1}
+  explanation="As α → 1 (table nearly full), almost every bucket is occupied. Each insertion/lookup requires probing through many filled slots, degrading to O(n) in the worst case."
+/>
+
+<InlineQuiz
+  id="quiz-collision-7"
+  question="Why must deleted slots in open addressing use a sentinel (tombstone) instead of being cleared to None?"
+  options={["For memory efficiency", "To not break probe chains — lookups beyond a real None would stop prematurely", "It is just a convention", "To speed up inserts"]}
+  correct={1}
+  explanation="Clearing a deleted slot to None would cause lookups to stop there, missing keys that were inserted past it via probing. Tombstone sentinels mark 'deleted but keep probing' for correctness."
+/>
+
+<InlineQuiz
+  id="quiz-collision-8"
+  question="What is double hashing?"
+  options={["Using two hash tables", "The probe step size is hash2(key) — different for each key, reducing clustering", "Hashing the hash", "A chaining variant"]}
+  correct={1}
+  explanation="Double hashing probes at: (hash1(key) + i * hash2(key)) % m. Since hash2 varies per key, different keys create different probe sequences — dramatically reducing clustering."
+/>
+
+<InlineQuiz
+  id="quiz-collision-9"
+  question="Why can't Python lists be used as dict keys?"
+  options={["Lists are too slow", "Lists are mutable — their hash would change if modified, breaking the lookup invariant", "Lists are too large", "Python does not support it"]}
+  correct={1}
+  explanation="Hash-based lookup requires that a key's hash never changes. Mutable objects like lists can be modified after insertion, changing their hash and making them unfindable. Python raises TypeError: unhashable type: 'list'."
+/>
+
+<InlineQuiz
+  id="quiz-collision-10"
+  question="What is a hash DoS attack?"
+  options={["Crashing a hash function", "Crafting inputs that all hash to the same bucket, forcing O(n) lookups on a server", "Overloading the memory", "A network attack"]}
+  correct={1}
+  explanation="An attacker sends inputs designed to collide in your hash table, turning O(1) lookups into O(n). Python defends with random hash seeds (PYTHONHASHSEED). This was a real CVE in older Python/web frameworks."
+/>

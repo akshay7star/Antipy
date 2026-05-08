@@ -1,0 +1,275 @@
+---
+title: "Monotonic Stacks"
+description: "Using a monotonically increasing or decreasing stack to solve Next Greater Element in O(n)."
+order: 2
+---
+
+# Monotonic Stacks: The O(n) Pattern for Range Queries
+
+A **monotonic stack** is a stack that maintains its elements in strictly increasing or decreasing order. Whenever a new element would violate the order, you pop until the order is restored. This seemingly simple invariant solves an entire family of interval problems in O(n) that would otherwise require O(n²).
+
+## The Core Pattern: Next Greater Element
+
+**Problem**: For each element in an array, find the next element to its right that is greater.  
+**Brute force**: O(n²) — nested loops.  
+**Monotonic stack**: O(n) — single pass.
+
+<MermaidDiagram>
+graph LR
+  A["nums: [2, 1, 5, 6, 2, 3]"]
+  A --> RESULT["result: [5, 5, 6, -1, 3, -1]"]
+  STACK["Decreasing Stack\nPop when current > stack top"] --> RESULT
+  style RESULT fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+```python
+def next_greater_element(nums):
+    n = len(nums)
+    result = [-1] * n
+    stack = []   # Stores indices, maintains DECREASING values
+
+    for i in range(n):
+        # Pop all elements smaller than current — current is their answer
+        while stack and nums[stack[-1]] < nums[i]:
+            idx = stack.pop()
+            result[idx] = nums[i]
+        stack.append(i)
+
+    return result   # Remaining in stack have no greater element → -1
+
+# Trace on [2, 1, 5]:
+# i=0: push 0. stack=[0]
+# i=1: nums[0]=2 > nums[1]=1. push 1. stack=[0,1]
+# i=2: nums[1]=1 < 5 → pop 1, result[1]=5. nums[0]=2 < 5 → pop 0, result[0]=5. push 2.
+# Result: [5, 5, -1]
+```
+
+## Decreasing vs Increasing Stacks
+
+| Stack Type | Maintains | Solves |
+|---|---|---|
+| **Decreasing** | Larger values at bottom | Next Greater Element |
+| **Increasing** | Smaller values at bottom | Next Smaller Element |
+
+```python
+def next_smaller_element(nums):
+    n = len(nums)
+    result = [-1] * n
+    stack = []   # INCREASING stack
+
+    for i in range(n):
+        while stack and nums[stack[-1]] > nums[i]:  # Note: > not <
+            idx = stack.pop()
+            result[idx] = nums[i]
+        stack.append(i)
+
+    return result
+```
+
+## Largest Rectangle in Histogram
+
+The canonical hard problem solved by monotonic stack: find the largest rectangle that can be formed in a histogram.
+
+```python
+def largest_rectangle(heights):
+    stack = []   # Increasing stack of indices
+    max_area = 0
+    heights = heights + [0]   # Sentinel: force flush at end
+
+    for i, h in enumerate(heights):
+        while stack and heights[stack[-1]] > h:
+            height = heights[stack.pop()]
+            width = i if not stack else i - stack[-1] - 1
+            max_area = max(max_area, height * width)
+        stack.append(i)
+
+    return max_area
+```
+
+<interactive-code>
+# Comprehensive monotonic stack demos
+
+def next_greater(nums):
+    """Next Greater Element — O(n) with decreasing stack."""
+    result = [-1] * len(nums)
+    stack = []  # Indices, decreasing values
+    for i, val in enumerate(nums):
+        while stack and nums[stack[-1]] < val:
+            result[stack.pop()] = val
+        stack.append(i)
+    return result
+
+def next_smaller(nums):
+    """Next Smaller Element — O(n) with increasing stack."""
+    result = [-1] * len(nums)
+    stack = []  # Indices, increasing values
+    for i, val in enumerate(nums):
+        while stack and nums[stack[-1]] > val:
+            result[stack.pop()] = val
+        stack.append(i)
+    return result
+
+def daily_temperatures(temps):
+    """Days until warmer temperature — classic monotonic stack."""
+    result = [0] * len(temps)
+    stack = []  # Indices
+    for i, t in enumerate(temps):
+        while stack and temps[stack[-1]] < t:
+            idx = stack.pop()
+            result[idx] = i - idx
+        stack.append(i)
+    return result
+
+def largest_rectangle_histogram(heights):
+    """Largest rectangle in histogram — O(n) monotonic stack."""
+    stack = []
+    max_area = 0
+    heights = heights + [0]  # Sentinel
+    for i, h in enumerate(heights):
+        while stack and heights[stack[-1]] > h:
+            height = heights[stack.pop()]
+            width = i if not stack else i - stack[-1] - 1
+            max_area = max(max_area, height * width)
+        stack.append(i)
+    return max_area
+
+# --- Tests ---
+print("=== Next Greater Element ===")
+tests = [
+    [2, 1, 5, 6, 2, 3],
+    [1, 3, 2, 4],
+    [5, 4, 3, 2, 1],  # Decreasing — all -1
+]
+for nums in tests:
+    print(f"  {nums}")
+    print(f"  → {next_greater(nums)}")
+
+print("\n=== Daily Temperatures ===")
+temps = [73, 74, 75, 71, 69, 72, 76, 73]
+print(f"  temps: {temps}")
+print(f"  days:  {daily_temperatures(temps)}")
+print("  (0 means no warmer day found)")
+
+print("\n=== Largest Rectangle in Histogram ===")
+histograms = [
+    ([2, 1, 5, 6, 2, 3], 10),
+    ([2, 4], 4),
+    ([1, 1, 1, 1], 4),
+    ([6, 2, 5, 4, 5, 1, 6], 12),
+]
+for heights, expected in histograms:
+    result = largest_rectangle_histogram(heights)
+    status = "✓" if result == expected else "✗"
+    print(f"  {status} {heights} → area={result}")
+
+print("\n=== Stack State Trace (Next Greater on [2,1,5,6]) ===")
+nums = [2, 1, 5, 6]
+result = [-1] * len(nums)
+stack = []
+for i, val in enumerate(nums):
+    print(f"  i={i} val={val}: ", end="")
+    while stack and nums[stack[-1]] < val:
+        popped = stack.pop()
+        result[popped] = val
+        print(f"pop({nums[popped]})->NGE={val} ", end="")
+    stack.append(i)
+    print(f"| stack={[nums[s] for s in stack]}")
+print(f"  Result: {result}")
+</interactive-code>
+
+## When to Use Monotonic Stacks
+
+> **Recognition**: The problem asks about the **next/previous greater/smaller element** for each position, or about the **maximum rectangle/area** under constraints. Any problem where you need to efficiently find "the nearest element satisfying a condition" in O(n) likely uses a monotonic stack.
+
+| Problem | Stack Direction |
+|---|---|
+| Next Greater Element | Decreasing stack |
+| Next Smaller Element | Increasing stack |
+| Previous Greater Element | Decreasing stack (traverse right to left) |
+| Largest Rectangle in Histogram | Increasing stack |
+| Trapping Rain Water | Two approaches: monotonic stack or two pointers |
+| Daily Temperatures | Decreasing stack |
+
+> **Pro Tip:** The "pop while violating" pattern has O(n) total time even though it has a nested while loop. Each element is pushed exactly once and popped at most once — amortized O(1) per element, O(n) total.
+
+> **Common Mistake:** Storing values instead of indices in the stack. You almost always need the index to compute distances or fill the result array at the correct position. Store indices; access values via `nums[stack[-1]]`.
+
+<InlineQuiz
+  id="quiz-mono-1"
+  question="What is a monotonic stack?"
+  options={["A stack that only stores one value", "A stack maintaining elements in strictly increasing or decreasing order", "A sorted array", "A priority queue"]}
+  correct={1}
+  explanation="A monotonic stack maintains an invariant: elements are always in increasing or decreasing order from bottom to top. Elements violating the order are popped before pushing the new element."
+/>
+
+<InlineQuiz
+  id="quiz-mono-2"
+  question="What is the time complexity of Next Greater Element using a monotonic stack?"
+  options={["O(n²)", "O(n log n)", "O(n) — each element is pushed and popped at most once", "O(1)"]}
+  correct={2}
+  explanation="Despite the nested while loop, each element is pushed exactly once and popped at most once. Total operations = 2n = O(n). This is amortized analysis."
+/>
+
+<InlineQuiz
+  id="quiz-mono-3"
+  question="For 'Next Greater Element', what type of monotonic stack do you use?"
+  options={["Increasing stack", "Decreasing stack — pop when current element is greater than stack top", "Min-heap", "Max-heap"]}
+  correct={1}
+  explanation="A decreasing stack maintains larger values at the bottom. When a new larger element arrives, it is the 'next greater' for all smaller elements at the top — pop them and record the answer."
+/>
+
+<InlineQuiz
+  id="quiz-mono-4"
+  question="Why do you store indices (not values) in a monotonic stack?"
+  options={["Indices are smaller", "To compute distances between elements and to fill the result array at the correct positions", "Values cannot be stored in stacks", "Python requires it"]}
+  correct={1}
+  explanation="You need the index to know which result slot to fill (result[idx] = answer) and to compute distances (i - stack[-1] - 1 for width in histogram problems). Values alone lose this positional information."
+/>
+
+<InlineQuiz
+  id="quiz-mono-5"
+  question="In the Largest Rectangle in Histogram problem, why is a sentinel 0 appended to heights?"
+  options={["To handle empty arrays", "To force all remaining stack elements to be flushed — every bar must be considered as a right boundary", "For symmetry", "To initialize the stack"]}
+  correct={1}
+  explanation="Without the sentinel, bars whose NGE is 'past the end' would remain in the stack unprocessed. The 0 at the end is smaller than any bar, triggering pops for ALL remaining stack elements."
+/>
+
+<InlineQuiz
+  id="quiz-mono-6"
+  question="What does the 'Daily Temperatures' problem ask?"
+  options={["Average temperature", "For each day, how many days until a warmer temperature", "Maximum temperature", "Minimum temperature span"]}
+  correct={1}
+  explanation="For each day i, find the smallest j > i such that temperature[j] > temperature[i]. Return j - i (days to wait). A decreasing monotonic stack solves this in O(n)."
+/>
+
+<InlineQuiz
+  id="quiz-mono-7"
+  question="How is 'Trapping Rain Water' related to monotonic stacks?"
+  options={["It is not related", "Each trapped section requires knowing the nearest taller bar on left and right — a monotonic stack finds these boundaries", "It uses a queue instead", "Only brute force works"]}
+  correct={1}
+  explanation="Trapping rain water requires the nearest greater bar on both sides for each position. This is two 'Next Greater Element' lookups. A monotonic stack solves both in O(n), or two precomputed arrays."
+/>
+
+<InlineQuiz
+  id="quiz-mono-8"
+  question="What is the space complexity of a monotonic stack solution?"
+  options={["O(1)", "O(n) — the stack can hold up to n elements", "O(log n)", "O(n²)"]}
+  correct={1}
+  explanation="The stack holds at most n indices (when the input is strictly decreasing/increasing). Space complexity is O(n)."
+/>
+
+<InlineQuiz
+  id="quiz-mono-9"
+  question="For 'Previous Smaller Element', which direction do you traverse the array?"
+  options={["Left to right", "Right to left with an increasing stack", "Left to right with a decreasing stack", "Right to left with a decreasing stack"]}
+  correct={1}
+  explanation="For PREVIOUS smaller, traverse right to left with an increasing stack. When you reach index i, the stack top is the nearest element to i's right (in the traversal direction) that is smaller — which is the previous element in the original order."
+/>
+
+<InlineQuiz
+  id="quiz-mono-10"
+  question="What is the amortized argument for O(n) time with a nested while loop?"
+  options={["The loop only runs once", "Each element is pushed once and popped at most once — total pushes + pops = 2n = O(n)", "The inner loop is constant", "Python optimizes loops"]}
+  correct={1}
+  explanation="Amortized analysis: track total operations across all iterations. Each element enters the stack once (push) and leaves at most once (pop). n pushes + n pops = 2n operations total, regardless of how the while loop is nested."
+/>

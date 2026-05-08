@@ -1,158 +1,166 @@
 ---
-title: "Django Fundamentals"
-description: "Full-stack web development with Django's batteries-included framework."
+title: "Django Basics"
+description: "Introduction to the batteries-included web framework for perfectionists with deadlines."
 order: 1
 ---
 
-# Django: The Full-Stack Framework
+# Django Basics
 
-<OOPVisualizer />
+If Flask is a lightweight sports car where you build your own dashboard, Django is a massive, fully-equipped luxury SUV. 
 
-Django is Python's most popular web framework. It follows the **"batteries included"** philosophy — authentication, database ORM, admin panel, and more come built-in. Instagram, Pinterest, and Mozilla all use Django.
+Django is a **"batteries-included"** framework. Out of the box, it provides a built-in SQL database ORM, an admin control panel, user authentication, session management, and robust security protections (like CSRF and XSS defense).
 
-## The MVT Pattern
+Because of its massive feature set, it powers some of the largest applications on the internet, including Instagram, Pinterest, and Spotify.
 
-Django uses **Model-View-Template** (similar to MVC in other frameworks):
+## The MTV Architecture
 
-<MermaidDiagram>
-graph TD
-  URL["URL Request"] --> VIEW["View: Business logic"]
-  VIEW --> MODEL["Model: Database query"]
-  VIEW --> TEMPLATE["Template: HTML rendering"]
-  MODEL --> VIEW
-  TEMPLATE --> RESP["HTML Response"]
-  style URL fill:#3b82f6,stroke:#2563eb,color:#fff
-  style VIEW fill:#8b5cf6,stroke:#7c3aed,color:#fff
-  style MODEL fill:#22c55e,stroke:#16a34a,color:#fff  
-  style TEMPLATE fill:#f59e0b,stroke:#d97706,color:#000
-</MermaidDiagram>
+Most modern web frameworks follow the MVC (Model-View-Controller) architecture. Django uses a slight variation called **MTV**:
+1. **M (Model):** Defines your data structure (the Database).
+2. **T (Template):** Defines what the user sees (the HTML).
+3. **V (View):** The brain. The Python function that grabs data from the Model and hands it to the Template.
 
-| Component | Purpose | File |
-|-----------|---------|------|
-| **Model** | Database structure | `models.py` |
-| **View** | Business logic, request handling | `views.py` |
-| **Template** | HTML with dynamic data | `templates/*.html` |
-| **URL** | Route mapping | `urls.py` |
+## Creating a Django Project
 
-## Django Model (ORM)
+Unlike Flask where you just create an `app.py` file, Django projects are generated using a command-line utility.
 
-```python
-from django.db import models
+```bash
+# 1. Install Django
+$ pip install django
 
-class Article(models.Model):
-    title = models.CharField(max_length=200)
-    content = models.TextField()
-    published = models.DateTimeField(auto_now_add=True)
-    author = models.CharField(max_length=100)
-    
-    def __str__(self):
-        return self.title
+# 2. Create the massive project scaffold
+$ django-admin startproject my_website
 ```
 
-The ORM lets you interact with databases using Python instead of SQL:
-
-```python
-# Create
-Article.objects.create(title="Hello", content="World", author="Alice")
-
-# Read
-articles = Article.objects.all()
-recent = Article.objects.filter(author="Alice").order_by("-published")
-
-# Update
-Article.objects.filter(id=1).update(title="New Title")
-
-# Delete
-Article.objects.filter(id=1).delete()
+This generates a complex directory structure:
+```text
+my_website/
+    manage.py       # The command-line utility for your project
+    my_website/     # The project configuration folder
+        settings.py # Master settings (Database info, installed apps)
+        urls.py     # The master router
+        wsgi.py     # Web server entry point
 ```
 
-<MethodUnit category="django" />
+## Creating an "App"
 
-### Practice: ORM Simulation
+A Django Project is composed of multiple smaller "Apps." Think of an App as a specific feature of your website. For example, Amazon might have a `cart` app, a `checkout` app, and an `inventory` app.
+
+```bash
+# Move into the project folder
+$ cd my_website
+
+# Create an app
+$ python manage.py startapp blog
+```
+
+This creates a `blog/` directory with its own `models.py` (for the database) and `views.py` (for the logic). You must then register this new app inside your master `settings.py` file.
 
 <interactive-code>
-# Simulating Django's ORM pattern
-class QuerySet:
-    def __init__(self, data):
-        self._data = data
-    
-    def filter(self, **kwargs):
-        result = self._data
-        for key, value in kwargs.items():
-            result = [item for item in result if item.get(key) == value]
-        return QuerySet(result)
-    
-    def all(self):
-        return self._data
-    
-    def count(self):
-        return len(self._data)
-    
-    def first(self):
-        return self._data[0] if self._data else None
-    
-    def order_by(self, field):
-        reverse = field.startswith("-")
-        key = field.lstrip("-")
-        return QuerySet(sorted(self._data, key=lambda x: x[key], reverse=reverse))
+# Inside my_website/settings.py
 
-# Simulated database
-articles = QuerySet([
-    {"id": 1, "title": "Python Basics", "author": "Alice", "views": 1200},
-    {"id": 2, "title": "Django Guide", "author": "Bob", "views": 800},
-    {"id": 3, "title": "Flask Tutorial", "author": "Alice", "views": 950},
-    {"id": 4, "title": "API Design", "author": "Charlie", "views": 2100},
-])
-
-# Query like Django
-print("All articles:", len(articles.all()))
-
-alice_articles = articles.filter(author="Alice")
-print(f"\nAlice's articles: {alice_articles.count()}")
-for a in alice_articles.all():
-    print(f"  - {a['title']} ({a['views']} views)")
-
-top = articles.order_by("-views").first()
-print(f"\nMost viewed: {top['title']} ({top['views']} views)")
+INSTALLED_APPS = [
+    # Built-in Django Apps
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    
+    # Your Custom Apps!
+    'blog',
+]
 </interactive-code>
 
-## Project Structure
+## The Development Server
 
+Django includes a robust local development server.
+
+```bash
+$ python manage.py runserver
 ```
-myproject/
-├── manage.py            # CLI tool
-├── myproject/
-│   ├── settings.py      # Configuration
-│   ├── urls.py          # Root URL routing
-│   └── wsgi.py          # Deployment entry
-└── blog/                # An "app"
-    ├── models.py        # Database models
-    ├── views.py         # Request handlers
-    ├── urls.py          # App URLs
-    ├── admin.py         # Admin panel registration
-    └── templates/       # HTML templates
-```
+Visiting `http://127.0.0.1:8000/` will show the famous Django rocket taking off, confirming your project is successfully configured!
 
-> **Pro Tip:** Django's admin panel (`/admin`) gives you a free CRUD interface for your models. Register a model with `admin.site.register(Article)` and you get a full management UI.
+---
 
-> **Common Mistake:** Forgetting to run `python manage.py makemigrations` and `python manage.py migrate` after changing models. Without migrations, your database schema won't update.
+## Knowledge Check
 
-<InlineQuiz id="quiz-django-1" question="What is Django?" options={["A database", "A batteries-included Python web framework", "A front-end library", "A testing tool"]} correct={1} explanation="Django is a high-level Python web framework with built-in ORM, admin panel, authentication, and more � 'batteries included'." />
+<InlineQuiz 
+  id="quiz-django-basics-1"
+  question="What does it mean when developers say Django is a 'batteries-included' framework?"
+  options={["It requires a lot of battery power to run on servers", "It comes with everything you need built-in: ORM, admin panel, authentication, and security", "It is built by the Duracell company", "It automatically generates HTML, CSS, and JS"]}
+  correct={1}
+  explanation="Unlike Flask where you must install 10 different extensions to build a full website, Django comes with a massive suite of built-in tools ready to use immediately."
+/>
 
-<InlineQuiz id="quiz-django-2" question="What does Django's ORM do?" options={["Optimizes runtime memory", "Maps Python classes to database tables", "Organizes route mappings", "Obfuscates response messages"]} correct={1} explanation="Object-Relational Mapping lets you interact with databases using Python classes instead of SQL: User.objects.filter(age__gte=18)." />
+<InlineQuiz 
+  id="quiz-django-basics-2"
+  question="What architectural pattern does Django follow?"
+  options={["Model-View-Controller (MVC)", "Model-Template-View (MTV)", "React-Angular-Vue (RAV)", "Client-Server-Database (CSD)"]}
+  correct={1}
+  explanation="Django uses MTV. The 'Model' handles the database, the 'Template' handles the HTML, and the 'View' acts as the controller bridging them together."
+/>
 
-<InlineQuiz id="quiz-django-3" question="What is Django's MTV pattern?" options={["Model-Template-View", "Model-Test-Validate", "Manage-Transform-Verify", "Map-Track-Visualize"]} correct={0} explanation="Django uses Model (data), Template (presentation), View (logic). Similar to MVC but with different naming." />
+<InlineQuiz 
+  id="quiz-django-basics-3"
+  question="What command generates the initial directory structure for a new Django project?"
+  options={["django build", "python start django", "django-admin startproject [name]", "pip install django-app"]}
+  correct={2}
+  explanation="`django-admin startproject` scaffolds the master configuration folder and the vital `manage.py` file."
+/>
 
-<InlineQuiz id="quiz-django-4" question="What is Django Admin?" options={["A CLI tool", "An auto-generated web interface for managing database records", "A deployment tool", "A testing dashboard"]} correct={1} explanation="Django Admin gives you a full web UI for CRUD operations on your models with minimal configuration." />
+<InlineQuiz 
+  id="quiz-django-basics-4"
+  question="What is the purpose of the `manage.py` file?"
+  options={["It contains your HTML templates", "It is the master command-line utility used to interact with your project (run server, create apps, migrate database)", "It manages your CSS files", "It connects to external APIs"]}
+  correct={1}
+  explanation="`manage.py` is a thin wrapper around `django-admin` that automatically points to your project's settings, allowing you to run management commands easily."
+/>
 
-<InlineQuiz id="quiz-django-5" question="What are Django migrations?" options={["Moving to a new server", "Version-controlled database schema changes", "Data backups", "File transfers"]} correct={1} explanation="Migrations track changes to your models and apply them to the database: python manage.py makemigrations && migrate." />
+<InlineQuiz 
+  id="quiz-django-basics-5"
+  question="In Django terminology, what is the difference between a 'Project' and an 'App'?"
+  options={["A project is the entire website; an app is a specific modular feature (like a blog or a forum) within that website", "An app is the entire website; a project is a specific feature", "There is no difference", "An app is for mobile phones, a project is for desktops"]}
+  correct={0}
+  explanation="A Django project encompasses the entire web application and its global settings. A project can contain multiple apps (e.g., `store`, `blog`, `forum`), and an app can be reused across multiple projects."
+/>
 
-<InlineQuiz id="quiz-django-6" question="What is manage.py?" options={["A configuration file", "Django&apos;s command-line utility for administrative tasks", "A migration file", "A test runner"]} correct={1} explanation="manage.py is the entry point for Django commands: runserver, makemigrations, migrate, createsuperuser, test, etc." />
+<InlineQuiz 
+  id="quiz-django-basics-6"
+  question="What command do you use to create a new app within an existing Django project?"
+  options={["django-admin createapp", "python manage.py newapp", "python manage.py startapp [name]", "pip install app"]}
+  correct={2}
+  explanation="Running `python manage.py startapp [name]` generates a folder containing `models.py`, `views.py`, and other boilerplate files for your new modular feature."
+/>
 
-<InlineQuiz id="quiz-django-7" question="What is middleware in Django?" options={["Database queries", "Hooks that process requests/responses globally", "Frontend components", "Template tags"]} correct={1} explanation="Middleware processes every request/response. Django includes built-in middleware for security, sessions, CSRF protection, etc." />
+<InlineQuiz 
+  id="quiz-django-basics-7"
+  question="After creating a new app, what crucial step must you take so Django knows it exists?"
+  options={["Reboot your computer", "Upload the app to PyPI", "Add the app's name to the `INSTALLED_APPS` list in `settings.py`", "Import the app into `urls.py`"]}
+  correct={2}
+  explanation="Django will completely ignore your new app's database models and logic unless you explicitly register it in the `INSTALLED_APPS` list inside the master `settings.py` file."
+/>
 
-<InlineQuiz id="quiz-django-8" question="What is Django REST Framework (DRF)?" options={["Django&apos;s core", "A toolkit for building APIs with Django", "A testing framework", "A database driver"]} correct={1} explanation="DRF adds serializers, viewsets, and routers for building RESTful APIs. It includes browsable API docs and authentication." />
+<InlineQuiz 
+  id="quiz-django-basics-8"
+  question="Where are global configurations, like database connection strings, stored in a Django project?"
+  options={["urls.py", "views.py", "settings.py", "manage.py"]}
+  correct={2}
+  explanation="`settings.py` is the absolute source of truth for the project. It holds database credentials, security keys, timezone info, and a list of installed apps."
+/>
 
-<InlineQuiz id="quiz-django-9" question="What does CSRF protection prevent?" options={["SQL injection", "Cross-Site Request Forgery attacks", "XSS attacks", "Password theft"]} correct={1} explanation="CSRF protection prevents attackers from tricking authenticated users into making unwanted requests. Django includes it by default." />
+<InlineQuiz 
+  id="quiz-django-basics-9"
+  question="What command launches the local development server to test your code?"
+  options={["python start.py", "django run", "python manage.py runserver", "flask run"]}
+  correct={2}
+  explanation="`python manage.py runserver` starts a lightweight, auto-reloading development server, typically available at `http://127.0.0.1:8000`."
+/>
 
-<InlineQuiz id="quiz-django-10" question="When should you use Django vs Flask?" options={["Django for everything", "Django for large apps with many features, Flask for small or API-only projects", "Flask for everything", "It doesn&apos;t matter"]} correct={1} explanation="Django shines for full-featured web apps (admin, auth, ORM). Flask is better for microservices, APIs, or when you want full control." />
+<InlineQuiz 
+  id="quiz-django-basics-10"
+  question="Should you use the `runserver` command to host your live website on the public internet?"
+  options={["Yes, it is extremely secure and fast", "Yes, if you configure it correctly", "No, it is a single-threaded development server meant for testing and is highly insecure for production", "Yes, all major companies use it"]}
+  correct={2}
+  explanation="The built-in `runserver` has not been audited for security or performance. In production, you must use a robust WSGI server like Gunicorn or uWSGI behind a reverse proxy like Nginx."
+/>

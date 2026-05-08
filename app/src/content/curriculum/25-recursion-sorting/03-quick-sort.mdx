@@ -1,0 +1,232 @@
+---
+title: "Quick Sort"
+description: "Partition logic, pivot selection strategies, and why Quick Sort beats Merge Sort in practice."
+order: 3
+---
+
+# Quick Sort: Divide and Conquer with Partitioning
+
+Quick Sort is the most widely used sorting algorithm in practice. It picks a **pivot**, partitions the array around it so smaller elements go left and larger go right, then recursively sorts both sides. No merging step — the pivot lands in its **final sorted position** after each partition.
+
+<MermaidDiagram>
+graph TD
+  A["[3, 6, 8, 10, 1, 2, 1]  pivot=1"] --> LEFT["Left: smaller than 1 → []"]
+  A --> EQ["Equal: [1, 1]"]
+  A --> RIGHT["Right: larger → [3, 6, 8, 10, 2]"]
+  RIGHT --> R2["Recurse → [2, 3, 6, 8, 10]"]
+  LEFT --> DONE["[]"]
+  DONE --> FINAL["[1, 1, 2, 3, 6, 8, 10]"]
+  EQ --> FINAL
+  R2 --> FINAL
+  style FINAL fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## The Lomuto Partition
+
+```python
+def partition(arr, low, high):
+    pivot = arr[high]     # Pivot = last element
+    i = low - 1           # Tracks "smaller zone" boundary
+
+    for j in range(low, high):
+        if arr[j] <= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    return i + 1   # Pivot's final index
+
+def quicksort(arr, low=0, high=None):
+    if high is None:
+        high = len(arr) - 1
+    if low < high:
+        pi = partition(arr, low, high)
+        quicksort(arr, low, pi - 1)
+        quicksort(arr, pi + 1, high)
+    return arr
+```
+
+## Pivot Selection Strategies
+
+| Strategy | Risk |
+|---|---|
+| Last element (naive) | O(n²) on sorted input |
+| Random pivot | Expected O(n log n), attack-resistant |
+| Median of three | Good worst-case avoidance |
+
+```python
+import random
+
+def quicksort_random(arr, low=0, high=None):
+    if high is None:
+        high = len(arr) - 1
+    if low < high:
+        rand_idx = random.randint(low, high)
+        arr[rand_idx], arr[high] = arr[high], arr[rand_idx]
+        pi = partition(arr, low, high)
+        quicksort_random(arr, low, pi - 1)
+        quicksort_random(arr, pi + 1, high)
+    return arr
+```
+
+## The O(n²) Worst Case
+
+On a sorted array with last-element pivot: each partition produces a sub-array of size (n-1) and 0. Total work becomes n + (n-1) + ... + 1 = O(n²).
+
+<MermaidDiagram>
+graph TD
+  W1["[1,2,3,4,5] pivot=5"] --> W2["[1,2,3,4] pivot=4"]
+  W2 --> W3["[1,2,3] pivot=3"]
+  W3 --> W4["[1,2] — depth n, not log n!"]
+  style W1 fill:#ef4444,stroke:#dc2626,color:#fff
+  style W4 fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+<interactive-code>
+import random, time
+
+def partition(arr, low, high):
+    pivot = arr[high]
+    i = low - 1
+    for j in range(low, high):
+        if arr[j] <= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[i+1], arr[high] = arr[high], arr[i+1]
+    return i + 1
+
+def quicksort_last(arr, low=0, high=None):
+    if high is None: high = len(arr) - 1
+    if low < high:
+        pi = partition(arr, low, high)
+        quicksort_last(arr, low, pi - 1)
+        quicksort_last(arr, pi + 1, high)
+
+def quicksort_random(arr, low=0, high=None):
+    if high is None: high = len(arr) - 1
+    if low < high:
+        r = random.randint(low, high)
+        arr[r], arr[high] = arr[high], arr[r]
+        pi = partition(arr, low, high)
+        quicksort_random(arr, low, pi - 1)
+        quicksort_random(arr, pi + 1, high)
+
+def time_sort(func, arr):
+    a = arr[:]
+    t = time.perf_counter()
+    func(a)
+    return (time.perf_counter() - t) * 1000, a
+
+# Random data comparison
+n = 2000
+data = random.sample(range(n * 5), n)
+t1, _ = time_sort(quicksort_last, data)
+t2, _ = time_sort(quicksort_random, data)
+print(f"Random data (n={n}):")
+print(f"  Last-element pivot:  {t1:.2f} ms")
+print(f"  Random pivot:        {t2:.2f} ms")
+
+# Worst case
+n_small = 400
+t_worst, _ = time_sort(quicksort_last, list(range(n_small)))
+t_rand,  _ = time_sort(quicksort_random, list(range(n_small)))
+print(f"\nSorted input (n={n_small}) — worst case for naive pivot:")
+print(f"  Last-element pivot:  {t_worst:.2f} ms  ← O(n²)!")
+print(f"  Random pivot:        {t_rand:.2f} ms   ← O(n log n)")
+
+# Correctness
+arr = [64, 34, 25, 12, 22, 11, 90]
+quicksort_last(arr)
+print(f"\nSorted: {arr}")
+</interactive-code>
+
+## Complexity Summary
+
+| Case | Time | Space (stack) |
+|---|---|---|
+| Best / Average | O(n log n) | O(log n) |
+| Worst | O(n²) | O(n) |
+
+> **Pro Tip:** Quick Sort often beats Merge Sort in practice due to superior **cache locality** — it operates in-place without allocating auxiliary arrays that thrash the CPU cache.
+
+> **Common Mistake:** Using last-element pivot on nearly-sorted data. Always use random pivot or median-of-three in production code.
+
+<InlineQuiz
+  id="quiz-qs-1"
+  question="What is the core operation of Quick Sort?"
+  options={["Merging sorted halves", "Partitioning around a pivot so smaller elements go left, larger go right", "Finding the minimum", "Binary search"]}
+  correct={1}
+  explanation="Partitioning is the key operation. After each partition, the pivot is in its final sorted position, and the problem is split into two independent sub-problems."
+/>
+
+<InlineQuiz
+  id="quiz-qs-2"
+  question="What is Quick Sort's average-case time complexity?"
+  options={["O(n²)", "O(n log n)", "O(n)", "O(log n)"]}
+  correct={1}
+  explanation="With random or good pivot selection, each partition splits the array roughly in half, creating a recursion tree of depth log n with O(n) work per level = O(n log n)."
+/>
+
+<InlineQuiz
+  id="quiz-qs-3"
+  question="When does Quick Sort degrade to O(n²)?"
+  options={["On random data", "When the pivot is always the min or max (e.g., sorted input with last-element pivot)", "When n is even", "When using random pivot"]}
+  correct={1}
+  explanation="If pivot is always smallest/largest, partitions are unbalanced (n-1 and 0). This creates n levels instead of log n, leading to O(n²) total work."
+/>
+
+<InlineQuiz
+  id="quiz-qs-4"
+  question="What is Quick Sort's space complexity?"
+  options={["O(n) — needs auxiliary array", "O(log n) average — recursive call stack", "O(1) including stack", "O(n log n)"]}
+  correct={1}
+  explanation="Quick Sort is in-place (O(1) auxiliary array space), but the recursion uses O(log n) stack space on average, O(n) worst case."
+/>
+
+<InlineQuiz
+  id="quiz-qs-5"
+  question="Why does Quick Sort often beat Merge Sort in practice?"
+  options={["It is always faster", "In-place operation gives better CPU cache locality; Merge Sort allocates auxiliary arrays causing cache misses", "Merge Sort has higher constants", "Quick Sort is parallelizable"]}
+  correct={1}
+  explanation="Cache locality is the key difference. Quick Sort accesses memory sequentially in-place. Merge Sort's auxiliary arrays introduce cache misses. Same O(n log n), but Quick Sort's constants are typically lower."
+/>
+
+<InlineQuiz
+  id="quiz-qs-6"
+  question="What is median-of-three pivot selection?"
+  options={["Select the median of all elements", "Select the median of first, middle, and last elements", "Sort three elements first", "A specific partition scheme"]}
+  correct={1}
+  explanation="Median-of-three picks pivot = median(arr[0], arr[n//2], arr[-1]), avoiding the worst case for sorted/reverse-sorted input with minimal overhead."
+/>
+
+<InlineQuiz
+  id="quiz-qs-7"
+  question="Is Quick Sort a stable sort?"
+  options={["Yes, always", "No — equal elements may change relative order during partitioning", "Only with Lomuto scheme", "Only with random pivot"]}
+  correct={1}
+  explanation="Quick Sort is NOT stable. Equal elements can be swapped during partitioning, changing their relative order. Use Merge Sort or Python's Timsort when stability is required."
+/>
+
+<InlineQuiz
+  id="quiz-qs-8"
+  question="What does Python's sorted() use internally?"
+  options={["Quick Sort", "Merge Sort", "Timsort — a hybrid of Merge Sort and Insertion Sort", "Heap Sort"]}
+  correct={2}
+  explanation="Python uses Timsort, invented by Tim Peters. It identifies naturally ordered runs and merges them. O(n log n) worst case, O(n) best case, and stable."
+/>
+
+<InlineQuiz
+  id="quiz-qs-9"
+  question="What is 3-way partition useful for?"
+  options={["Sorting strings", "Arrays with many duplicates — groups elements into <pivot, =pivot, >pivot sections", "Binary trees", "Linked lists"]}
+  correct={1}
+  explanation="3-way partition avoids re-processing duplicates. For arrays where all elements are equal, it achieves O(n) — a massive win over standard O(n log n)."
+/>
+
+<InlineQuiz
+  id="quiz-qs-10"
+  question="What is Introsort?"
+  options={["A variant of Merge Sort", "A hybrid: Quick Sort until depth exceeds 2 log n, then Heap Sort — guaranteeing O(n log n) worst case", "Quick Sort with 3-way partition", "A stable sort"]}
+  correct={1}
+  explanation="Introsort (used in C++ STL) combines Quick Sort's average-case speed with Heap Sort's O(n log n) guarantee. When recursion depth hits 2 log n, it switches to prevent O(n²)."
+/>

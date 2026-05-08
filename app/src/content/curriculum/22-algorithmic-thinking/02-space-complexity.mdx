@@ -1,0 +1,272 @@
+---
+title: "Space Complexity"
+description: "Auxiliary vs in-place memory — measuring how much RAM your algorithm consumes."
+order: 2
+---
+
+# Space Complexity: Memory Is Not Free
+
+<BigOVisualizer />
+
+When a Senior Engineer reviews your code, they ask two questions: **how fast is it?** and **how much memory does it eat?** Big O for time is half the story. Space complexity is the other half.
+
+Every variable you declare, every list you create, every recursive call you make — all of it consumes RAM. On a server processing 10,000 concurrent requests, an algorithm that leaks memory is catastrophically expensive.
+
+## What Counts as Space?
+
+Space complexity measures the **extra memory** your algorithm uses *beyond the input itself*. This is called **auxiliary space**.
+
+```python
+# O(1) auxiliary space — no extra data structures
+def find_max(nums):
+    maximum = nums[0]       # One variable — constant space
+    for num in nums:
+        if num > maximum:
+            maximum = num
+    return maximum
+
+# O(n) auxiliary space — creates a full copy
+def double_all(nums):
+    return [x * 2 for x in nums]  # New list of size n
+```
+
+<MermaidDiagram>
+graph TD
+  A["Input: nums = [3,1,4,1,5]"] --> B["find_max: O(1) space"]
+  A --> C["double_all: O(n) space"]
+  B --> D["Uses 1 variable: maximum"]
+  C --> E["Creates new list: [6,2,8,2,10]"]
+  style B fill:#22c55e,stroke:#16a34a,color:#fff
+  style C fill:#ef4444,stroke:#dc2626,color:#fff
+  style D fill:#16a34a,stroke:#15803d,color:#fff
+  style E fill:#dc2626,stroke:#b91c1c,color:#fff
+</MermaidDiagram>
+
+## The Call Stack Is Memory Too
+
+This is where most engineers go wrong. Every function call pushes a **stack frame** onto the call stack, consuming memory. Recursive algorithms have hidden space costs.
+
+```python
+# O(n) space — each call adds a frame to the stack
+def factorial(n):
+    if n == 0:
+        return 1
+    return n * factorial(n - 1)
+
+# factorial(5) creates 5 stack frames simultaneously:
+# factorial(5)
+#   factorial(4)
+#     factorial(3)
+#       factorial(2)
+#         factorial(1)
+#           factorial(0) ← base case, start unwinding
+```
+
+<MermaidDiagram>
+graph TD
+  F5["factorial(5) — frame 1"] --> F4["factorial(4) — frame 2"]
+  F4 --> F3["factorial(3) — frame 3"]
+  F3 --> F2["factorial(2) — frame 4"]
+  F2 --> F1["factorial(1) — frame 5"]
+  F1 --> F0["factorial(0) — frame 6 — BASE"]
+  style F0 fill:#22c55e,stroke:#16a34a,color:#fff
+  style F5 fill:#3b82f6,stroke:#2563eb,color:#fff
+</MermaidDiagram>
+
+> **Stack Overflow**: Call `factorial(10000)` in Python and it crashes with `RecursionError: maximum recursion depth exceeded`. The call stack has a finite size — typically ~1000 frames in CPython.
+
+## In-Place vs Out-of-Place
+
+**In-place** algorithms modify the input directly, using O(1) auxiliary space. **Out-of-place** algorithms create new data structures.
+
+```python
+# OUT-OF-PLACE: O(n) auxiliary space
+def merge_sort_out(arr):
+    if len(arr) <= 1:
+        return arr
+    mid = len(arr) // 2
+    left = merge_sort_out(arr[:mid])   # Creates new sub-arrays!
+    right = merge_sort_out(arr[mid:])  # Memory allocations at every level
+    return merge(left, right)
+
+# IN-PLACE: O(1) auxiliary space (ignoring recursion stack)
+def bubble_sort_inplace(arr):
+    n = len(arr)
+    for i in range(n):
+        for j in range(n - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]  # Swap in-place
+    return arr
+```
+
+| Algorithm | Time | Space | Trade-off |
+|---|---|---|---|
+| Bubble Sort | O(n²) | O(1) | Slow but memory-lean |
+| Merge Sort | O(n log n) | O(n) | Fast but eats memory |
+| Quick Sort | O(n log n) avg | O(log n) stack | Best overall balance |
+| Hash Map lookup | O(1) | O(n) to store map | Speed costs memory |
+
+## Practical Space Complexity Table
+
+```python
+# O(1) — Constant space
+x = 42
+nums[0] = nums[-1]
+
+# O(log n) — Recursion stack of binary search / quicksort
+def binary_search(arr, target, lo=0, hi=None): ...
+
+# O(n) — Storing all elements
+seen = set()
+frequencies = {}
+result = []
+
+# O(n²) — 2D matrix
+matrix = [[0] * n for _ in range(n)]
+
+# O(2^n) — Exponential: all subsets of a set
+def all_subsets(s): ...
+```
+
+<interactive-code>
+import sys
+
+# Demonstrate space usage
+def analyze_space():
+    # O(1) - constant extra space
+    def find_sum(nums):
+        total = 0  # One variable
+        for n in nums:
+            total += n
+        return total
+
+    # O(n) - linear extra space
+    def collect_evens(nums):
+        return [n for n in nums if n % 2 == 0]  # New list
+
+    # O(n) - hash map storage
+    def count_frequencies(nums):
+        freq = {}  # Up to n entries
+        for n in nums:
+            freq[n] = freq.get(n, 0) + 1
+        return freq
+
+    data = list(range(1000))
+
+    # Python sys.getsizeof gives memory in bytes
+    result_sum = find_sum(data)
+    result_evens = collect_evens(data)
+    freq_map = count_frequencies(data)
+
+    print(f"Input list size:       {sys.getsizeof(data):>8} bytes")
+    print(f"find_sum result:        {sys.getsizeof(result_sum):>8} bytes (O(1))")
+    print(f"collect_evens result:   {sys.getsizeof(result_evens):>8} bytes (O(n))")
+    print(f"count_freq dict:        {sys.getsizeof(freq_map):>8} bytes (O(n))")
+
+analyze_space()
+
+# Recursive space demo
+def recursive_depth(n, depth=0):
+    if n == 0:
+        print(f"  Max recursion depth reached: {depth} frames on the stack")
+        return
+    recursive_depth(n - 1, depth + 1)
+
+print("\nRecursion stack frames:")
+recursive_depth(10)
+</interactive-code>
+
+## Space-Time Trade-offs: The Golden Rule
+
+> **You can almost always trade space for time, and time for space.**
+
+The **classic example**: Linear search is O(n) time, O(1) space. If you pre-build a hash set, lookup becomes O(1) time but costs O(n) space. This pattern — paying memory to buy speed — is everywhere:
+
+- **Caching / Memoization**: Store computed results to avoid recomputing
+- **Prefix Sums**: Precompute cumulative sums for O(1) range queries
+- **LRU Cache**: Fixed-size memory for O(1) lookup
+- **Lookup Tables**: Pre-computed answers to common sub-problems
+
+> **Pro Tip:** When an interviewer asks you to optimize a solution, think about the space-time axis first. If your current solution is fast but uses too much memory, solve it the other way. If it's slow, spend some memory to cache results.
+
+> **Common Mistake:** Forgetting that Python string slicing `s[a:b]` creates a **new string** — it's O(n) space, not O(1). Same with list slicing `arr[:]`. Always think about what Python copies under the hood.
+
+<InlineQuiz
+  id="quiz-space-1"
+  question="What does 'auxiliary space' mean?"
+  options={["Total memory used", "Extra memory beyond the input", "Stack memory only", "Heap memory only"]}
+  correct={1}
+  explanation="Auxiliary space is the extra memory your algorithm uses, not counting the input itself. Space complexity usually refers to auxiliary space."
+/>
+
+<InlineQuiz
+  id="quiz-space-2"
+  question="What is the space complexity of a recursive function with depth n?"
+  options={["O(1)", "O(n) due to call stack frames", "O(n²)", "O(log n)"]}
+  correct={1}
+  explanation="Each recursive call adds a stack frame. A depth-n recursion holds n frames simultaneously, consuming O(n) stack space."
+/>
+
+<InlineQuiz
+  id="quiz-space-3"
+  question="What is an in-place algorithm?"
+  options={["One that runs fast", "One that uses O(1) extra memory, modifying input directly", "One that sorts data", "One that uses recursion"]}
+  correct={1}
+  explanation="In-place algorithms use O(1) auxiliary space by modifying the input array directly rather than creating new data structures."
+/>
+
+<InlineQuiz
+  id="quiz-space-4"
+  question="What is the space complexity of creating a hash map from n elements?"
+  options={["O(1)", "O(log n)", "O(n)", "O(n²)"]}
+  correct={2}
+  explanation="A hash map with n entries uses O(n) space — one slot (approximately) per element stored."
+/>
+
+<InlineQuiz
+  id="quiz-space-5"
+  question="What happens when recursion exceeds Python's stack depth limit?"
+  options={["The program slows down", "RecursionError: maximum recursion depth exceeded", "The program auto-optimizes", "Memory is freed automatically"]}
+  correct={1}
+  explanation="Python has a default recursion limit (~1000). Exceeding it raises RecursionError. You can increase it with sys.setrecursionlimit() but should prefer iterative solutions for deep recursion."
+/>
+
+<InlineQuiz
+  id="quiz-space-6"
+  question="What is the space complexity of Merge Sort?"
+  options={["O(1)", "O(log n)", "O(n)", "O(n log n)"]}
+  correct={2}
+  explanation="Merge Sort creates auxiliary arrays at each level of the divide step, totaling O(n) extra space. It is NOT in-place."
+/>
+
+<InlineQuiz
+  id="quiz-space-7"
+  question="Which sorting algorithm uses O(1) auxiliary space?"
+  options={["Merge Sort", "Bubble Sort", "Count Sort", "Tim Sort"]}
+  correct={1}
+  explanation="Bubble Sort swaps elements in-place, using only constant extra memory. It is an in-place O(1) space algorithm (ignoring the recursion stack)."
+/>
+
+<InlineQuiz
+  id="quiz-space-8"
+  question="What is the classic space-time trade-off?"
+  options={["Write slower code for less memory", "Use more memory (e.g., caching) to get faster time", "Use less memory to get faster time", "Space and time are unrelated"]}
+  correct={1}
+  explanation="The classic trade-off: spend O(n) memory to cache/memoize results and reduce time from O(n) to O(1) for repeated lookups. More memory buys more speed."
+/>
+
+<InlineQuiz
+  id="quiz-space-9"
+  question="Does Python's list slicing arr[a:b] use O(1) or O(n) space?"
+  options={["O(1) — it is just a view", "O(n) — it creates a new list", "O(log n)", "Depends on the size"]}
+  correct={1}
+  explanation="Python list slicing creates a new list, copying the elements. This is O(k) where k is the slice size. Unlike NumPy views, Python list slices are full copies."
+/>
+
+<InlineQuiz
+  id="quiz-space-10"
+  question="What is the space complexity of Binary Search (iterative)?"
+  options={["O(n)", "O(log n)", "O(1)", "O(n log n)"]}
+  correct={2}
+  explanation="Iterative binary search uses only a few variables (lo, hi, mid) regardless of input size — O(1) space. Recursive binary search uses O(log n) stack space."
+/>

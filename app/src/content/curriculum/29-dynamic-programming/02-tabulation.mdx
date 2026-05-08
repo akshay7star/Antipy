@@ -1,0 +1,311 @@
+---
+title: "Tabulation (Bottom-Up DP)"
+description: "Bottom-up dynamic programming — build the solution iteratively from base cases up."
+order: 2
+---
+
+# Tabulation: Bottom-Up Dynamic Programming
+
+Memoization (top-down DP) starts from the large problem and recursively breaks it down, caching results. **Tabulation** (bottom-up DP) does the opposite: start from the smallest sub-problems, build a table of solutions, and combine them up to the final answer.
+
+The result: **no recursion, no stack overflow risk, and often better performance** due to no function call overhead.
+
+<MermaidDiagram>
+graph LR
+  MEMO["Top-Down (Memoization)\nStart big → recurse → cache"] --> TAB["Bottom-Up (Tabulation)\nStart small → build table → combine"]
+  style MEMO fill:#ef4444,stroke:#dc2626,color:#fff
+  style TAB fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## Fibonacci: Top-Down vs Bottom-Up
+
+```python
+# TOP-DOWN (memoization) — recursive
+from functools import lru_cache
+
+@lru_cache(maxsize=None)
+def fib_memo(n):
+    if n < 2: return n
+    return fib_memo(n-1) + fib_memo(n-2)
+
+# BOTTOM-UP (tabulation) — iterative
+def fib_tab(n):
+    if n < 2: return n
+    dp = [0] * (n + 1)
+    dp[1] = 1
+    for i in range(2, n + 1):
+        dp[i] = dp[i-1] + dp[i-2]
+    return dp[n]
+
+# SPACE-OPTIMIZED bottom-up (only need last 2 values)
+def fib_optimal(n):
+    if n < 2: return n
+    a, b = 0, 1
+    for _ in range(2, n + 1):
+        a, b = b, a + b
+    return b
+```
+
+## Coin Change: The Classic DP Problem
+
+**Problem**: Given coin denominations and a target amount, find the minimum number of coins to make the amount.
+
+```python
+def coin_change(coins, amount):
+    # dp[i] = minimum coins needed to make amount i
+    dp = [float('inf')] * (amount + 1)
+    dp[0] = 0   # Base case: 0 coins to make amount 0
+
+    for amt in range(1, amount + 1):
+        for coin in coins:
+            if coin <= amt:
+                dp[amt] = min(dp[amt], dp[amt - coin] + 1)
+
+    return dp[amount] if dp[amount] != float('inf') else -1
+
+# coins=[1,5,11], amount=15
+# dp[0]=0, dp[1]=1, dp[5]=1, dp[10]=2, dp[11]=1, dp[15]=3 (11+3×1? no: 5+5+5=3!)
+```
+
+<MermaidDiagram>
+graph LR
+  D0["dp[0]=0"] --> D1["dp[1]=1\n(0+coin1)"]
+  D1 --> D2["dp[2]=2"]
+  D2 --> D5["dp[5]=1\n(0+coin5)"]
+  D5 --> D10["dp[10]=2\n(5+5)"]
+  D10 --> D11["dp[11]=1\n(0+coin11)"]
+  D11 --> D15["dp[15]=3\n(11+1+1+1? No!\n5+5+5=3)"]
+  style D0 fill:#22c55e,stroke:#16a34a,color:#fff
+  style D15 fill:#3b82f6,stroke:#2563eb,color:#fff
+</MermaidDiagram>
+
+## Longest Common Subsequence (2D DP)
+
+**Problem**: Find the longest common subsequence (not necessarily contiguous) of two strings.
+
+```python
+def lcs(text1, text2):
+    m, n = len(text1), len(text2)
+    # dp[i][j] = LCS length of text1[:i] and text2[:j]
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if text1[i-1] == text2[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1    # Characters match
+            else:
+                dp[i][j] = max(dp[i-1][j], dp[i][j-1])  # Take best
+
+    return dp[m][n]
+
+# text1="ABCBDAB", text2="BDCAB" → LCS=4 ("BCAB" or "BDAB")
+```
+
+<interactive-code>
+# Tabulation (bottom-up DP) comprehensive demos
+
+print("=== Fibonacci: Three Approaches ===")
+from functools import lru_cache
+import sys
+sys.setrecursionlimit(1000)
+
+@lru_cache(maxsize=None)
+def fib_memo(n):
+    if n < 2: return n
+    return fib_memo(n-1) + fib_memo(n-2)
+
+def fib_tab(n):
+    if n < 2: return n
+    dp = [0, 1] + [0] * (n-1)
+    for i in range(2, n+1):
+        dp[i] = dp[i-1] + dp[i-2]
+    return dp[n]
+
+def fib_opt(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+
+for n in [10, 20, 30, 40]:
+    print(f"  fib({n:2}) = {fib_opt(n):>10,}")
+
+print("\n=== Coin Change ===")
+def coin_change(coins, amount):
+    dp = [float('inf')] * (amount + 1)
+    dp[0] = 0
+    for amt in range(1, amount + 1):
+        for coin in coins:
+            if coin <= amt and dp[amt - coin] + 1 < dp[amt]:
+                dp[amt] = dp[amt - coin] + 1
+    return dp[amount] if dp[amount] != float('inf') else -1
+
+tests = [
+    ([1, 5, 11], 15, 3),
+    ([2], 3, -1),
+    ([1, 2, 5], 11, 3),
+    ([186, 419, 83, 408], 6249, 20),
+]
+for coins, amount, expected in tests:
+    result = coin_change(coins, amount)
+    status = "✓" if result == expected else "✗"
+    print(f"  {status} coins={coins}, amount={amount} → {result}")
+
+print("\n=== Longest Common Subsequence ===")
+def lcs(t1, t2):
+    m, n = len(t1), len(t2)
+    dp = [[0]*(n+1) for _ in range(m+1)]
+    for i in range(1, m+1):
+        for j in range(1, n+1):
+            if t1[i-1] == t2[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+            else:
+                dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+    return dp[m][n]
+
+lcs_tests = [
+    ("ABCBDAB", "BDCAB", 4),
+    ("AGGTAB", "GXTXAYB", 4),
+    ("", "ABC", 0),
+    ("ABC", "ABC", 3),
+]
+for t1, t2, expected in lcs_tests:
+    result = lcs(t1, t2)
+    status = "✓" if result == expected else "✗"
+    print(f"  {status} LCS('{t1}', '{t2}') = {result}")
+
+print("\n=== Unique Paths in Grid ===")
+def unique_paths(m, n):
+    dp = [[1]*n for _ in range(m)]
+    for i in range(1, m):
+        for j in range(1, n):
+            dp[i][j] = dp[i-1][j] + dp[i][j-1]
+    return dp[m-1][n-1]
+
+for m, n in [(3,7), (3,2), (7,3), (10,10)]:
+    print(f"  unique_paths({m},{n}) = {unique_paths(m,n):>10,}")
+
+print("\n=== Jump Game ===")
+def can_jump(nums):
+    max_reach = 0
+    for i, jump in enumerate(nums):
+        if i > max_reach: return False
+        max_reach = max(max_reach, i + jump)
+    return True
+
+jump_tests = [([2,3,1,1,4], True), ([3,2,1,0,4], False), ([0], True)]
+for nums, expected in jump_tests:
+    result = can_jump(nums)
+    status = "✓" if result == expected else "✗"
+    print(f"  {status} {nums} → {'can reach' if result else 'stuck'}")
+</interactive-code>
+
+## The DP Table as a DAG
+
+Every tabulation problem builds a **directed acyclic graph (DAG)** of sub-problems. Each cell depends only on previously computed cells. Filling the table in the right order ensures dependencies are always satisfied.
+
+```python
+# 2D DP dependency pattern:
+# dp[i][j] depends on dp[i-1][j] (above) and dp[i][j-1] (left)
+# So fill row by row, left to right — dependencies always satisfied
+
+for i in range(1, m + 1):      # Row by row
+    for j in range(1, n + 1):  # Left to right
+        dp[i][j] = dp[i-1][j] + dp[i][j-1]
+```
+
+## Identifying Tabulation Opportunities
+
+> **The recurrence is the key**. If you can write the solution as `dp[i] = f(dp[0..i-1])`, tabulation works. The recurrence defines the DAG.
+
+| Problem Type | Recurrence Pattern |
+|---|---|
+| Fibonacci-style | `dp[i] = dp[i-1] + dp[i-2]` |
+| Coin change | `dp[amt] = min(dp[amt-coin]+1)` |
+| LCS | `dp[i][j] = dp[i-1][j-1]+1` or `max(dp[i-1][j], dp[i][j-1])` |
+| Knapsack | `dp[i][w] = max(dp[i-1][w], dp[i-1][w-wt]+val)` |
+| Edit distance | `dp[i][j] = dp[i-1][j-1]` or `min(...)+1` |
+
+> **Pro Tip:** Once you have a working top-down (recursive + memoization) solution, converting to bottom-up is mechanical: identify the base cases, define the table dimensions, determine the fill order (so dependencies are filled first), and translate the recurrence. The code often becomes shorter and faster.
+
+> **Common Mistake:** Wrong fill order. In 2D DP problems, if `dp[i][j]` depends on `dp[i-1][j-1]`, you must fill top-left to bottom-right. Filling in the wrong order uses uninitialized (wrong) values.
+
+<InlineQuiz
+  id="quiz-tab-1"
+  question="What is the key difference between tabulation and memoization?"
+  options={["Tabulation is recursive; memoization is iterative", "Tabulation is iterative (bottom-up); memoization is recursive (top-down)", "They are identical", "Tabulation is slower"]}
+  correct={1}
+  explanation="Tabulation fills a DP table iteratively from base cases up. Memoization uses recursion and caches results as they are computed (top-down). Both are O(n) for Fibonacci but tabulation avoids recursion overhead."
+/>
+
+<InlineQuiz
+  id="quiz-tab-2"
+  question="What is the base case in the Coin Change DP table?"
+  options={["dp[1] = 1", "dp[0] = 0 — zero coins needed to make amount 0", "dp[coin] = 1 for each coin", "All cells start at 1"]}
+  correct={1}
+  explanation="dp[0] = 0 because you need 0 coins to make amount 0. All other cells start at infinity (impossible). The recurrence builds up from this base: dp[amt] = min(dp[amt-coin]+1) for each valid coin."
+/>
+
+<InlineQuiz
+  id="quiz-tab-3"
+  question="In Longest Common Subsequence, what does dp[i][j] represent?"
+  options={["Whether text1[i] equals text2[j]", "The LCS length of text1[:i] and text2[:j]", "The index of the common character", "The edit distance"]}
+  correct={1}
+  explanation="dp[i][j] = length of the longest common subsequence of the first i characters of text1 and the first j characters of text2. The answer is dp[m][n]."
+/>
+
+<InlineQuiz
+  id="quiz-tab-4"
+  question="Why is tabulation often faster than memoization in practice?"
+  options={["Tabulation has better Big-O", "No function call overhead, no hash map lookups for cache — arrays are cache-friendly", "Tabulation uses less memory", "Python optimizes tabulation"]}
+  correct={1}
+  explanation="Memoization involves recursive function calls (stack frames), hash map lookups (cache), and potential cache misses. Tabulation uses a flat array accessed sequentially — much more CPU-cache-friendly."
+/>
+
+<InlineQuiz
+  id="quiz-tab-5"
+  question="How can you optimize Fibonacci tabulation from O(n) space to O(1) space?"
+  options={["Use a dict", "Only keep the last 2 values (a, b = b, a+b) since dp[i] only depends on dp[i-1] and dp[i-2]", "Use a single variable", "Cannot be done"]}
+  correct={1}
+  explanation="Since each Fibonacci number only needs the previous two, you can discard the rest of the array. Keep only `a` and `b`, updating them in-place: `a, b = b, a + b`."
+/>
+
+<InlineQuiz
+  id="quiz-tab-6"
+  question="What is the fill order for 2D DP where dp[i][j] depends on dp[i-1][j] and dp[i][j-1]?"
+  options={["Right to left, bottom to top", "Top-left to bottom-right: row by row, left to right", "Any order works", "Diagonal only"]}
+  correct={1}
+  explanation="To use dp[i-1][j] (above) and dp[i][j-1] (left), both must be computed before dp[i][j]. Filling top-to-bottom, left-to-right ensures this. Violating the order uses uninitialized values."
+/>
+
+<InlineQuiz
+  id="quiz-tab-7"
+  question="What is the time complexity of Coin Change with amount A and |coins| = k?"
+  options={["O(A)", "O(A × k)", "O(k log A)", "O(A²)"]}
+  correct={1}
+  explanation="For each amount from 1 to A, we try all k coins. Total: O(A × k). Space: O(A) for the DP array."
+/>
+
+<InlineQuiz
+  id="quiz-tab-8"
+  question="What is the Unique Paths problem and its recurrence?"
+  options={["Find the shortest path", "Count distinct paths in an m×n grid; dp[i][j] = dp[i-1][j] + dp[i][j-1]", "Find the minimum cost path", "BFS on a grid"]}
+  correct={1}
+  explanation="Unique Paths: robot moves only right or down in an m×n grid. Paths to (i,j) = paths from above + paths from left: dp[i][j] = dp[i-1][j] + dp[i][j-1]. dp[0][j] = dp[i][0] = 1 (base cases)."
+/>
+
+<InlineQuiz
+  id="quiz-tab-9"
+  question="How do you convert a top-down DP solution to bottom-up tabulation?"
+  options={["Rewrite from scratch", "Identify base cases, define table dimensions, determine dependency fill order, translate recurrence iteratively", "Add a loop around the recursive calls", "Use sys.setrecursionlimit"]}
+  correct={1}
+  explanation="The conversion is mechanical: 1) Base cases → initialize table. 2) Recursive state → table index. 3) Memoization cache → table cell. 4) Recursion order → loop order (dependencies first). 5) Return value → final cell."
+/>
+
+<InlineQuiz
+  id="quiz-tab-10"
+  question="What distinguishes a DP problem from a greedy problem?"
+  options={["DP is always slower", "DP problems have OVERLAPPING sub-problems where greedy's locally optimal choice is NOT globally optimal", "Greedy uses recursion", "DP does not use tables"]}
+  correct={1}
+  explanation="Greedy works when local optimal choices lead to global optimal. DP is needed when sub-problems overlap (same sub-problem solved multiple times) and the greedy choice fails. Coin change with arbitrary denominations requires DP; coin change with standard denominations (1,5,10,25) can use greedy."
+/>

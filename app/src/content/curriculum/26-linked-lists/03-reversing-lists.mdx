@@ -1,0 +1,317 @@
+---
+title: "Reversing Linked Lists"
+description: "Iterative and recursive reversal — the pointer manipulation every engineer must master."
+order: 3
+---
+
+# Reversing Linked Lists: Pointer Surgery
+
+Reversing a linked list is the most frequently tested linked list operation. It tests whether you can manipulate pointers precisely without losing references. Done incorrectly, you sever the chain and lose the entire list.
+
+<MermaidDiagram>
+graph LR
+  A["1 →"] --> B["2 →"]
+  B --> C["3 →"]
+  C --> D["4 →"]
+  D --> E["5 → None"]
+  style A fill:#3b82f6,stroke:#2563eb,color:#fff
+</MermaidDiagram>
+
+After reversal:
+
+<MermaidDiagram>
+graph LR
+  E2["5 →"] --> D2["4 →"]
+  D2 --> C2["3 →"]
+  C2 --> B2["2 →"]
+  B2 --> A2["1 → None"]
+  style E2 fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## Iterative Reversal: The Three-Pointer Dance
+
+The key insight: you need **three pointers** to reverse a link without losing the rest of the list.
+
+```python
+def reverse_list(head):
+    prev = None
+    curr = head
+
+    while curr:
+        next_node = curr.next    # 1. Save what comes next
+        curr.next = prev         # 2. Reverse the link
+        prev = curr              # 3. Advance prev
+        curr = next_node         # 4. Advance curr
+
+    return prev   # prev is now the new head
+```
+
+**Step-by-step trace** on `[1, 2, 3]`:
+
+```
+Initial:  prev=None, curr=1→2→3
+Step 1:   save next=2, 1.next=None, prev=1, curr=2
+          None ← 1    2→3
+Step 2:   save next=3, 2.next=1, prev=2, curr=3
+          None ← 1 ← 2    3
+Step 3:   save next=None, 3.next=2, prev=3, curr=None
+          None ← 1 ← 2 ← 3
+Return prev=3 (new head)
+```
+
+## Recursive Reversal
+
+```python
+def reverse_list_recursive(head):
+    # Base case: empty or single node
+    if not head or not head.next:
+        return head
+
+    # Recurse: reverse everything after head
+    new_head = reverse_list_recursive(head.next)
+
+    # Relink: head.next still points to last node of reversed sublist
+    head.next.next = head   # That node should point back to head
+    head.next = None        # Head is now the tail — point to None
+
+    return new_head   # Return the new head (unchanged throughout recursion)
+```
+
+<MermaidDiagram>
+graph TD
+  R5["reverse(5) → returns 5, base case"] --> R4["reverse(4→5) → 5.next=4, 4.next=None → returns 5"]
+  R4 --> R3["reverse(3→4→5) → 4.next=3 → returns 5"]
+  R3 --> R2["reverse(2→3→4→5) → 3.next=2 → returns 5"]
+  R2 --> R1["reverse(1→2→3→4→5) → 2.next=1 → returns 5"]
+  style R1 fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## Reverse a Sub-List (Positions m to n)
+
+```python
+def reverse_between(head, m, n):
+    dummy = ListNode(0)
+    dummy.next = head
+    prev = dummy
+
+    # Move prev to node just before position m
+    for _ in range(m - 1):
+        prev = prev.next
+
+    curr = prev.next   # Start of sub-list to reverse
+
+    # Reverse n-m times (insert curr.next after prev)
+    for _ in range(n - m):
+        next_node = curr.next
+        curr.next = next_node.next
+        next_node.next = prev.next
+        prev.next = next_node
+
+    return dummy.next
+```
+
+<interactive-code>
+class ListNode:
+    def __init__(self, val=0, next_node=None):
+        self.val = val
+        self.next = next_node
+
+def build_list(values):
+    if not values: return None
+    head = ListNode(values[0])
+    curr = head
+    for v in values[1:]:
+        curr.next = ListNode(v)
+        curr = curr.next
+    return head
+
+def to_list(head):
+    result = []
+    while head:
+        result.append(head.val)
+        head = head.next
+    return result
+
+# --- Iterative reversal ---
+def reverse_iterative(head):
+    prev, curr = None, head
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = nxt
+    return prev
+
+# --- Recursive reversal ---
+def reverse_recursive(head):
+    if not head or not head.next:
+        return head
+    new_head = reverse_recursive(head.next)
+    head.next.next = head
+    head.next = None
+    return new_head
+
+# --- Reverse sub-list ---
+def reverse_between(head, m, n):
+    dummy = ListNode(0)
+    dummy.next = head
+    prev = dummy
+    for _ in range(m - 1):
+        prev = prev.next
+    curr = prev.next
+    for _ in range(n - m):
+        nxt = curr.next
+        curr.next = nxt.next
+        nxt.next = prev.next
+        prev.next = nxt
+    return dummy.next
+
+# Tests
+print("=== Iterative vs Recursive Reversal ===")
+test_cases = [[1,2,3,4,5], [1,2], [1], []]
+for values in test_cases:
+    h1 = build_list(values)
+    h2 = build_list(values)
+    rev_it  = to_list(reverse_iterative(h1))
+    rev_rec = to_list(reverse_recursive(h2))
+    expected = values[::-1]
+    match = rev_it == rev_rec == expected
+    print(f"  {'✓' if match else '✗'} {values} → {rev_it}")
+
+print("\n=== Reverse Sub-list [m, n] ===")
+sub_tests = [
+    ([1,2,3,4,5], 2, 4, [1,4,3,2,5]),
+    ([5], 1, 1, [5]),
+    ([1,2,3], 1, 3, [3,2,1]),
+]
+for values, m, n, expected in sub_tests:
+    h = build_list(values)
+    result = to_list(reverse_between(h, m, n))
+    status = "✓" if result == expected else "✗"
+    print(f"  {status} {values} m={m} n={n} → {result}")
+
+# --- Check if palindrome using reversal ---
+print("\n=== Palindrome Check (Fast-Slow + Reverse) ===")
+def is_palindrome(head):
+    # Find middle
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    # Reverse second half
+    second = reverse_iterative(slow)
+    check = second
+    result = True
+    while check:
+        if head.val != check.val:
+            result = False
+            break
+        head = head.next
+        check = check.next
+    return result
+
+palindromes = [
+    ([1,2,2,1], True),
+    ([1,2], False),
+    ([1,2,3,2,1], True),
+    ([1], True),
+]
+for values, expected in palindromes:
+    result = is_palindrome(build_list(values))
+    status = "✓" if result == expected else "✗"
+    print(f"  {status} {values}: {'palindrome' if result else 'not palindrome'}")
+</interactive-code>
+
+## Reversal Patterns in Interviews
+
+| Problem | Technique |
+|---|---|
+| Reverse entire list | 3-pointer iterative |
+| Reverse in groups of k | Reverse k nodes, recurse on rest |
+| Reverse sub-list [m,n] | Navigate to m-1, then insert-front pattern |
+| Check palindrome | Fast-slow to middle + reverse second half |
+| Reorder list (1→n→2→n-1) | Find middle, reverse second half, merge |
+
+> **Pro Tip:** Always use a **dummy node** (sentinel) at the head when the reversal might change the actual head pointer. `dummy.next = head` lets you always return `dummy.next` without tracking whether the head changed.
+
+> **Common Mistake:** Forgetting to save `curr.next` BEFORE redirecting `curr.next`. Once you write `curr.next = prev`, the reference to the rest of the list is gone forever. Save it first: `next_node = curr.next`.
+
+<InlineQuiz
+  id="quiz-reverse-1"
+  question="Why do you need three pointers (prev, curr, next) for iterative reversal?"
+  options={["For speed", "To save the next node before redirecting curr.next — otherwise you lose the rest of the list", "Python requires three pointers", "For stability"]}
+  correct={1}
+  explanation="When you set curr.next = prev, you sever the forward link. Without saving curr.next first, the rest of the list is unreachable (a memory leak or crash). The three-pointer pattern prevents this."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-2"
+  question="What does the recursive reversal return?"
+  options={["The original head", "The new head (the last node of the original list)", "The middle node", "None"]}
+  correct={1}
+  explanation="Recursive reversal returns the new head, which is the LAST node of the original list. It passes this new head all the way up through the call stack unchanged."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-3"
+  question="What is the time complexity of reversing a linked list?"
+  options={["O(1)", "O(log n)", "O(n) — must visit every node", "O(n²)"]}
+  correct={2}
+  explanation="Every node must have its next pointer redirected exactly once. This requires visiting all n nodes: O(n) time."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-4"
+  question="What is the space complexity of iterative vs recursive reversal?"
+  options={["Both O(n)", "Iterative: O(1) — only 3 variables. Recursive: O(n) — n call stack frames", "Iterative: O(n), Recursive: O(1)", "Both O(1)"]}
+  correct={1}
+  explanation="Iterative uses 3 pointers regardless of n: O(1). Recursive creates a stack frame for each node: O(n). For very long lists, recursion risks stack overflow."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-5"
+  question="What does a dummy (sentinel) head node help with?"
+  options={["Faster traversal", "Eliminates edge cases for operations that may change the actual head — always return dummy.next", "Memory savings", "Cycle detection"]}
+  correct={1}
+  explanation="A dummy node before the real head means you never need special logic for 'did the head change?'. Operations that insert/delete near the head work uniformly. Return dummy.next as the new head."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-6"
+  question="In reverse_between(head, m, n), what does 'prev' point to before the reversal loop?"
+  options={["The head", "The node just before position m (the m-1th node)", "Position m", "The dummy node always"]}
+  correct={1}
+  explanation="We advance prev exactly m-1 times from the dummy node. prev then points to the node just before the sub-list to reverse, allowing us to reconnect the reversed segment."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-7"
+  question="How do you check if a linked list is a palindrome in O(n) time and O(1) space?"
+  options={["Copy to array and check", "Find middle with fast/slow, reverse second half, compare both halves", "Sort and compare", "Use a stack"]}
+  correct={1}
+  explanation="1) Fast-slow to find midpoint O(n), O(1). 2) Reverse second half O(n), O(1). 3) Compare both halves node by node O(n), O(1). Total: O(n) time, O(1) space."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-8"
+  question="What happens if you reverse a list and the original head.next is not set to None?"
+  options={["Nothing — it works fine", "The new tail (original head) still points to original second node, creating a partial cycle", "Python handles it automatically", "Only the first node is reversed"]}
+  correct={1}
+  explanation="After reversal, the original head becomes the tail. If head.next is not set to None, it still points to the original second node — creating a cycle or corrupting the reversed list. Always set the new tail's next to None."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-9"
+  question="What is 'reverse in groups of k' (LeetCode 25)?"
+  options={["Reverse every k-th element", "Reverse each consecutive group of k nodes; if remaining nodes < k, leave them as-is", "Reverse entire list k times", "Rotate the list"]}
+  correct={1}
+  explanation="Split into groups of k. Reverse each group. Reconnect groups. If the last group has fewer than k nodes, leave it unchanged. Each reversal takes O(k) and there are n/k groups: total O(n)."
+/>
+
+<InlineQuiz
+  id="quiz-reverse-10"
+  question="Why might you prefer iterative over recursive reversal in production code?"
+  options={["Iterative is always more readable", "Iterative uses O(1) stack space — no risk of RecursionError on very long lists (n > 1000 in Python)", "Recursive is slower asymptotically", "Python does not support recursive reversal"]}
+  correct={1}
+  explanation="Python's default recursion limit is ~1000. A list with 10,000 nodes would crash the recursive version. Iterative reversal uses constant stack space and handles any size list safely."
+/>

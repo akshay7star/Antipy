@@ -6,111 +6,198 @@ order: 3
 
 # Templates (Jinja2)
 
-Returning simple strings like `"Welcome!"` from a route is nice for testing, but real websites return massive, beautifully styled HTML files.
+Returning simple strings like `"Welcome!"` from a route is fine for APIs, but real web applications return massive, beautifully styled HTML files.
 
-Flask handles this using a templating engine called **Jinja2**.
+Writing raw HTML inside your Python strings is messy and unmaintainable. Instead, Flask handles this using a templating engine called **Jinja2**.
 
 ## `render_template`
 
-To use templates, you create a folder named `templates` in the same directory as your Python script. Flask will automatically look for HTML files inside this folder.
+To use templates, you create a folder named `templates` in the exact same directory as your Python script. Flask will automatically look for HTML files inside this folder.
 
-<InteractiveCode 
-  initialCode={`from flask import Flask, render_template\n\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    # Flask looks for "index.html" inside the "templates" folder\n    return render_template('index.html')`}
-  showConsole={true}
-/>
+```python
+from flask import Flask, render_template
 
-<InlineQuiz 
-  question="By default, in what folder does Flask expect to find HTML templates?"
-  options={[
-    "static",
-    "html",
-    "views",
-    "templates"
-  ]}
-  correctAnswer="templates"
-  explanation="Flask automatically looks for a folder named `templates` at the root of your application."
-/>
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    # Flask looks for "index.html" inside the "templates" folder
+    return render_template('index.html')
+```
 
 ## Passing Variables to HTML
 
-The power of Jinja is that you can pass Python variables straight into the HTML structure.
+The true power of Jinja is that you can pass Python variables straight into the HTML structure.
 
 Inside your Python file:
-<InteractiveCode 
-  initialCode={`@app.route('/profile')\ndef profile():\n    user_name = "Alice"\n    user_age = 28\n    return render_template('profile.html', name=user_name, age=user_age)`}
-  showConsole={false}
-/>
+```python
+@app.route('/profile')
+def profile():
+    user_name = "Alice"
+    user_age = 28
+    return render_template('profile.html', name=user_name, age=user_age)
+```
 
 Inside `templates/profile.html`:
-<InteractiveCode 
-  initialCode={`<!-- Jinja uses double curly braces to print variables -->\n<h1>Welcome, {{ name }}!</h1>\n<p>You are {{ age }} years old.</p>`}
-  showConsole={false}
-/>
+```html
+<!-- Jinja uses double curly braces to print variables -->
+<h1>Welcome, {{ name }}!</h1>
+<p>You are {{ age }} years old.</p>
+```
 
-<InlineQuiz 
-  question="In Jinja2 templates, what syntax is used to output the value of a Python variable directly to the browser?"
-  options={[
-    "{ variable }",
-    "<?php echo $variable ?>",
-    "{{ variable }}",
-    "[[ variable ]]"
-  ]}
-  correctAnswer="{{ variable }}"
-  explanation="Jinja2 heavily utilizes double curly braces `{{ }}` to evaluate an expression and print the result into the HTML output."
-/>
+When the user visits `/profile`, Jinja dynamically replaces `{{ name }}` with "Alice" and sends the fully rendered HTML string to the browser.
 
 ## Control Flow in HTML
 
 Jinja doesn't just print variables; it lets you write python-like `if` statements and `for` loops *inside* your HTML layout!
 
-<InteractiveCode 
-  initialCode={`<!-- This syntax uses {% %} for logic -->\n<ul>\n{% for item in cart_items %}\n    <li>{{ item.name }} - ${{ item.price }}</li>\n{% else %}\n    <li>Your cart is empty!</li>\n{% endfor %}\n</ul>`}
-  showConsole={false}
-/>
+### Loops
 
-<InteractiveCode 
-  initialCode={`{% if user.is_logged_in %}\n    <button>Logout</button>\n{% else %}\n    <button>Login</button>\n{% endif %}`}
-  showConsole={false}
-/>
+```html
+<!-- This syntax uses {% %} for logic -->
+<ul>
+{% for item in cart_items %}
+    <li>{{ item.name }} - ${{ item.price }}</li>
+{% else %}
+    <!-- The else block runs if the cart_items list is empty! -->
+    <li>Your cart is empty!</li>
+{% endfor %}
+</ul>
+```
 
-<InlineQuiz 
-  question="What syntax does Jinja use for control flow logic like loops and if statements?"
-  options={[
-    "{{ loop }}",
-    "{% for item in items %}",
-    "<? for ?>",
-    "<script> for </script>"
-  ]}
-  correctAnswer="{% for item in items %}"
-  explanation="While `{{ }}` outputs variables, `{% %}` is used for executing statements like loops (`for`) or conditionals (`if`)."
-/>
+### Conditionals
+
+```html
+{% if user.is_logged_in %}
+    <button>Logout</button>
+{% elif user.is_banned %}
+    <p>Your account is locked.</p>
+{% else %}
+    <button>Login</button>
+{% endif %}
+```
 
 ## Template Inheritance
 
-If your website has 50 pages, you don't want to copy and paste the `<nav>` bar and `<footer>` HTML into all 50 files! 
+If your website has 50 pages, you absolutely do not want to copy and paste the `<nav>` bar and `<footer>` HTML into all 50 files! 
 
 Jinja solves this elegantly with **Template Inheritance**. You create one "base" layout, and other templates "extend" it, filling in specific holes called blocks.
 
-`base.html` (The Parent):
-<InteractiveCode 
-  initialCode={`<html>\n  <body>\n    <nav>My Website Navbar</nav>\n    \n    <!-- Child templates will inject their HTML here -->\n    {% block content %}{% endblock %}\n    \n  </body>\n</html>`}
-  showConsole={false}
-/>
+`base.html` (The Parent Layout):
+```html
+<html>
+  <head>
+    <title>My Cool App</title>
+  </head>
+  <body>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+    </nav>
+    
+    <div class="main-content">
+        <!-- Child templates will inject their HTML here -->
+        {% block content %}
+        {% endblock %}
+    </div>
+    
+    <footer>Copyright 2026</footer>
+  </body>
+</html>
+```
 
-`about.html` (The Child):
-<InteractiveCode 
-  initialCode={`{% extends "base.html" %}\n\n{% block content %}\n  <h1>About Us</h1>\n  <p>We are a cool company.</p>\n{% endblock %}`}
-  showConsole={false}
+`about.html` (The Child Template):
+```html
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>About Us</h1>
+  <p>We are a cool company.</p>
+{% endblock %}
+```
+
+When `render_template('about.html')` is called, Jinja loads `base.html`, rips out the `{% block content %}`, and replaces it with the `<h1>` and `<p>` from `about.html`.
+
+---
+
+## Knowledge Check
+
+<InlineQuiz 
+  id="quiz-flask-templates-1"
+  question="By default, in what folder does Flask expect to find HTML templates?"
+  options={["static", "html", "views", "templates"]}
+  correct={3}
+  explanation="Flask automatically looks for a folder named `templates` at the root of your application."
 />
 
 <InlineQuiz 
+  id="quiz-flask-templates-2"
+  question="In Jinja2 templates, what syntax is used to output the value of a Python variable directly to the browser?"
+  options={["{ variable }", "<?php echo $variable ?>", "{{ variable }}", "[[ variable ]]"]}
+  correct={2}
+  explanation="Jinja2 heavily utilizes double curly braces `{{ }}` to evaluate an expression and print the result into the HTML output."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-templates-3"
+  question="What syntax does Jinja use for control flow logic like loops and if statements?"
+  options={["{{ loop }}", "{% for item in items %}", "<? for ?>", "<script> for </script>"]}
+  correct={1}
+  explanation="While `{{ }}` outputs variables, `{% %}` is used for executing statements like loops (`for`) or conditionals (`if`)."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-templates-4"
   question="What command tells a Jinja template to inherit the layout from another template file?"
-  options={[
-    "{% include 'base.html' %}",
-    "{% require 'base.html' %}",
-    "{% extends 'base.html' %}",
-    "{{ inherit 'base.html' }}"
-  ]}
-  correctAnswer="{% extends 'base.html' %}"
-  explanation="`{% extends 'filename.html' %}` is used at the top of a child template to inherit the structure of a parent template."
+  options={["{% include 'base.html' %}", "{% require 'base.html' %}", "{% extends 'base.html' %}", "{{ inherit 'base.html' }}"]}
+  correct={2}
+  explanation="`{% extends 'filename.html' %}` is used at the very top of a child template to inherit the structure of a parent template."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-templates-5"
+  question="How do you define a 'hole' in a parent template that a child template can fill?"
+  options={["<slot></slot>", "{% block content %} {% endblock %}", "{{ yield }}", "{% fill %}\n{% endfill %}"]}
+  correct={1}
+  explanation="Blocks, defined with `{% block block_name %}` and `{% endblock %}`, act as placeholders in the parent layout that child templates can override."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-templates-6"
+  question="Can you pass multiple variables to `render_template` at once?"
+  options={["No, only one variable per template", "Yes, as long as they are wrapped in a single dictionary", "Yes, by passing them as multiple keyword arguments like `render_template('x.html', a=1, b=2)`", "Yes, but only strings are allowed"]}
+  correct={2}
+  explanation="You can pass as many keyword arguments as you want to `render_template`. Jinja can handle strings, integers, lists, dictionaries, and even custom class objects."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-templates-7"
+  question="What happens if a Jinja `for` loop has an `{% else %}` block?"
+  options={["It throws a syntax error", "The else block executes if the iterable being looped over is empty", "The else block executes after the loop finishes completely", "The else block executes on every odd iteration"]}
+  correct={1}
+  explanation="Similar to Python's native `for...else` construct (but slightly different), Jinja's `{% else %}` block inside a loop renders if the sequence is empty or undefined, perfect for 'No items found' messages."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-templates-8"
+  question="If you have a Python dictionary `user = {'name': 'Alice'}` passed to a template, how do you access the name in Jinja?"
+  options={["{{ user['name'] }}", "{{ user.name }}", "Both A and B are perfectly valid in Jinja", "{{ user->name }}"]}
+  correct={2}
+  explanation="Jinja is incredibly forgiving. It allows you to access dictionary keys using either standard Python bracket notation `['name']` or JavaScript-style dot notation `.name`."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-templates-9"
+  question="How do you write a comment in a Jinja template that will NOT be sent to the browser in the final HTML?"
+  options={["<!-- comment -->", "// comment", "{# comment #}", "/* comment */"]}
+  correct={2}
+  explanation="Jinja comments use `{# ... #}`. Unlike standard HTML `<!-- ... -->` comments, Jinja comments are completely stripped out on the server and are invisible to the user inspecting the page source."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-templates-10"
+  question="Is Jinja logic executed on the user's browser or on the Flask server?"
+  options={["On the user's browser using WebAssembly", "On the Flask server", "Half on the server, half on the client", "It depends on the browser type"]}
+  correct={1}
+  explanation="Jinja is Server-Side Rendering (SSR). The Flask server executes all the `{% if %}` and `{{ var }}` logic, generates pure raw HTML, and sends that static HTML to the browser."
 />

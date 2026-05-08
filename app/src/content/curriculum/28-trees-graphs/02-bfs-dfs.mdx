@@ -1,0 +1,365 @@
+---
+title: "BFS & DFS"
+description: "Graph pathfinding with adjacency lists, BFS for shortest path, and DFS for exploration."
+order: 2
+---
+
+# BFS & DFS: Conquering Graphs
+
+Graphs model everything: social networks, road maps, dependency trees, the web. Two algorithms dominate graph traversal: **Breadth-First Search** (explores level by level) and **Depth-First Search** (dives as deep as possible before backtracking).
+
+<MermaidDiagram>
+graph TD
+  A["A"] --> B["B"]
+  A --> C["C"]
+  B --> D["D"]
+  B --> E["E"]
+  C --> F["F"]
+  BFS["BFS visits: A → B,C → D,E,F (level order)"] --> DFS["DFS visits: A → B → D → E → C → F (deep first)"]
+  style BFS fill:#3b82f6,stroke:#2563eb,color:#fff
+  style DFS fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+## Graph Representations
+
+```python
+# Adjacency List (most common, O(V+E) space)
+graph = {
+    'A': ['B', 'C'],
+    'B': ['A', 'D', 'E'],
+    'C': ['A', 'F'],
+    'D': ['B'],
+    'E': ['B'],
+    'F': ['C'],
+}
+
+# Adjacency Matrix (O(V²) space, O(1) edge lookup)
+# matrix[i][j] = 1 if edge from i to j
+matrix = [
+    [0, 1, 1, 0, 0, 0],   # A
+    [1, 0, 0, 1, 1, 0],   # B
+    [1, 0, 0, 0, 0, 1],   # C
+    # ...
+]
+```
+
+## BFS: Breadth-First Search
+
+Uses a **queue** (FIFO). Visits all nodes at distance 1, then distance 2, etc. Guarantees **shortest path** in unweighted graphs.
+
+```python
+from collections import deque
+
+def bfs(graph, start):
+    visited = set([start])
+    queue = deque([start])
+    order = []
+
+    while queue:
+        node = queue.popleft()    # FIFO
+        order.append(node)
+
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+    return order
+
+def bfs_shortest_path(graph, start, end):
+    visited = {start}
+    queue = deque([(start, [start])])  # (node, path_so_far)
+
+    while queue:
+        node, path = queue.popleft()
+        if node == end:
+            return path
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, path + [neighbor]))
+    return None
+```
+
+## DFS: Depth-First Search
+
+Uses a **stack** (explicit or recursive call stack). Dives deep before backtracking. Used for: cycle detection, topological sort, connected components, maze solving.
+
+```python
+# Recursive DFS
+def dfs_recursive(graph, node, visited=None):
+    if visited is None:
+        visited = set()
+    visited.add(node)
+
+    for neighbor in graph[node]:
+        if neighbor not in visited:
+            dfs_recursive(graph, neighbor, visited)
+
+    return visited
+
+# Iterative DFS (uses explicit stack)
+def dfs_iterative(graph, start):
+    visited = set()
+    stack = [start]
+    order = []
+
+    while stack:
+        node = stack.pop()     # LIFO (vs BFS which uses popleft)
+        if node not in visited:
+            visited.add(node)
+            order.append(node)
+            for neighbor in graph[node]:
+                if neighbor not in visited:
+                    stack.append(neighbor)
+
+    return order
+```
+
+## BFS on a Grid (Very Common in Interviews)
+
+Many problems model grids as graphs (each cell is a node, adjacent cells are neighbors):
+
+```python
+def bfs_grid(grid, start_r, start_c, target_r, target_c):
+    rows, cols = len(grid), len(grid[0])
+    visited = set([(start_r, start_c)])
+    queue = deque([(start_r, start_c, 0)])  # (row, col, distance)
+    directions = [(0,1),(0,-1),(1,0),(-1,0)]  # Right, Left, Down, Up
+
+    while queue:
+        r, c, dist = queue.popleft()
+        if r == target_r and c == target_c:
+            return dist
+        for dr, dc in directions:
+            nr, nc = r + dr, c + dc
+            if (0 <= nr < rows and 0 <= nc < cols
+                    and grid[nr][nc] != '#'   # Not a wall
+                    and (nr, nc) not in visited):
+                visited.add((nr, nc))
+                queue.append((nr, nc, dist + 1))
+
+    return -1   # Unreachable
+```
+
+<interactive-code>
+from collections import deque, defaultdict
+
+# Build sample graphs
+directed = defaultdict(list, {
+    0: [1, 2],
+    1: [3, 4],
+    2: [5],
+    3: [],
+    4: [5],
+    5: [],
+})
+
+undirected = defaultdict(list, {
+    'A': ['B', 'C'],
+    'B': ['A', 'D', 'E'],
+    'C': ['A', 'F'],
+    'D': ['B'],
+    'E': ['B'],
+    'F': ['C'],
+})
+
+def bfs(graph, start):
+    visited = {start}
+    queue = deque([start])
+    order = []
+    while queue:
+        node = queue.popleft()
+        order.append(node)
+        for nb in sorted(str(n) for n in graph[node]):
+            nb_real = type(start)(nb) if not isinstance(start, int) else int(nb)
+            if nb_real not in visited:
+                visited.add(nb_real)
+                queue.append(nb_real)
+    return order
+
+def dfs(graph, start):
+    visited = set()
+    order = []
+    def _dfs(node):
+        visited.add(node)
+        order.append(node)
+        for nb in graph[node]:
+            if nb not in visited:
+                _dfs(nb)
+    _dfs(start)
+    return order
+
+print("=== BFS vs DFS Traversal ===")
+print(f"BFS from A: {bfs(undirected, 'A')}")
+print(f"DFS from A: {dfs(undirected, 'A')}")
+
+# --- Shortest path ---
+def bfs_shortest(graph, start, end):
+    if start == end: return [start]
+    visited = {start}
+    queue = deque([(start, [start])])
+    while queue:
+        node, path = queue.popleft()
+        for nb in graph[node]:
+            if nb not in visited:
+                new_path = path + [nb]
+                if nb == end: return new_path
+                visited.add(nb)
+                queue.append((nb, new_path))
+    return None
+
+print("\n=== Shortest Path (BFS) ===")
+path = bfs_shortest(undirected, 'A', 'F')
+print(f"Shortest A→F: {' → '.join(path)}")
+
+# --- Cycle detection (DFS) ---
+def has_cycle_directed(graph, n_nodes):
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color = [WHITE] * n_nodes
+
+    def dfs_cycle(node):
+        color[node] = GRAY
+        for nb in graph[node]:
+            if color[nb] == GRAY: return True   # Back edge = cycle
+            if color[nb] == WHITE and dfs_cycle(nb): return True
+        color[node] = BLACK
+        return False
+
+    return any(dfs_cycle(i) for i in range(n_nodes) if color[i] == WHITE)
+
+acyclic = defaultdict(list, {0:[1,2], 1:[3], 2:[3], 3:[]})
+cyclic  = defaultdict(list, {0:[1], 1:[2], 2:[0]})
+
+print(f"\n=== Cycle Detection ===")
+print(f"DAG (0→1→3, 0→2→3): has_cycle = {has_cycle_directed(acyclic, 4)}")
+print(f"Cycle (0→1→2→0):    has_cycle = {has_cycle_directed(cyclic, 3)}")
+
+# --- Grid BFS ---
+print("\n=== Grid BFS (Shortest Path) ===")
+grid = [
+    ['S', '.', '.', '#', '.'],
+    ['#', '#', '.', '#', '.'],
+    ['.', '.', '.', '.', '.'],
+    ['.', '#', '#', '#', 'E'],
+]
+rows, cols = len(grid), len(grid[0])
+start = end = None
+for r in range(rows):
+    for c in range(cols):
+        if grid[r][c] == 'S': start = (r, c)
+        if grid[r][c] == 'E': end = (r, c)
+
+visited = {start}
+queue = deque([(*start, 0)])
+dirs = [(0,1),(0,-1),(1,0),(-1,0)]
+result = -1
+while queue:
+    r, c, dist = queue.popleft()
+    if (r, c) == end:
+        result = dist
+        break
+    for dr, dc in dirs:
+        nr, nc = r+dr, c+dc
+        if 0<=nr<rows and 0<=nc<cols and grid[nr][nc]!='#' and (nr,nc) not in visited:
+            visited.add((nr,nc))
+            queue.append((nr,nc,dist+1))
+
+print(f"Grid shortest path S→E: {result} steps")
+for row in grid:
+    print("  " + " ".join(row))
+</interactive-code>
+
+## BFS vs DFS Decision Guide
+
+| Use BFS when... | Use DFS when... |
+|---|---|
+| **Shortest path** in unweighted graph | **Cycle detection** |
+| Finding nodes at distance k | **Topological sort** |
+| Level-order traversal | Exploring all paths |
+| Word ladder / grid problems | Maze solving (find any path) |
+| Social network distance | **Connected components** |
+
+> **Pro Tip:** In grid problems, BFS is almost always the answer for "minimum steps" or "shortest path." For "does a path exist" or "how many regions," DFS is simpler. Time complexity for both on adjacency list: O(V + E).
+
+> **Common Mistake:** Not initializing `visited` before starting BFS/DFS, or adding to visited AFTER popping (instead of BEFORE enqueuing). Always add to visited when you first discover a node (before enqueuing) — otherwise you enqueue the same node multiple times.
+
+<InlineQuiz
+  id="quiz-bfsdfs-1"
+  question="What data structure does BFS use internally?"
+  options={["Stack", "Queue — FIFO (First In First Out)", "Heap", "Hash map"]}
+  correct={1}
+  explanation="BFS uses a queue (deque in Python) for FIFO ordering — process nodes in the order discovered. This guarantees level-by-level expansion and shortest path in unweighted graphs."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-2"
+  question="What data structure does DFS use internally?"
+  options={["Queue", "Stack — LIFO (explicitly or via recursion call stack)", "Heap", "Doubly linked list"]}
+  correct={1}
+  explanation="DFS uses a stack — either an explicit stack in iterative DFS, or the implicit call stack in recursive DFS. LIFO ordering causes the algorithm to go deep before exploring siblings."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-3"
+  question="Why does BFS guarantee the shortest path in an unweighted graph?"
+  options={["It is faster than DFS", "It explores nodes level by level — the first time it reaches a node is via the shortest path", "It sorts the nodes first", "It uses a priority queue"]}
+  correct={1}
+  explanation="BFS explores all nodes at distance 1 before distance 2, distance 2 before 3, etc. The first time BFS reaches the target, it has taken the minimum number of edges — the shortest path."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-4"
+  question="What is the time complexity of BFS/DFS on a graph with V vertices and E edges?"
+  options={["O(V²)", "O(V + E) — visit each vertex once and traverse each edge once", "O(E log V)", "O(V × E)"]}
+  correct={1}
+  explanation="BFS/DFS visit each vertex at most once: O(V). For each vertex, we traverse its edges: sum of all edge lists = E total. Combined: O(V + E)."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-5"
+  question="Why must you add nodes to 'visited' BEFORE enqueuing them (not after dequeuing)?"
+  options={["Style preference", "To prevent the same node from being enqueued multiple times — without this, time complexity degrades", "It makes no difference", "Python requires it"]}
+  correct={1}
+  explanation="If you mark visited on dequeue, multiple paths can enqueue the same node. For a dense graph, a node could be enqueued O(E) times, making BFS O(V + E²) instead of O(V + E)."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-6"
+  question="What is the space complexity of BFS?"
+  options={["O(1)", "O(V) — the queue can hold at most V nodes", "O(E)", "O(V + E)"]}
+  correct={1}
+  explanation="The BFS queue holds at most all nodes at the widest level of the BFS tree. In the worst case (star graph), all V-1 nodes are enqueued simultaneously: O(V)."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-7"
+  question="Which algorithm is better for detecting cycles in a directed graph?"
+  options={["BFS", "DFS — using color states (White/Gray/Black) to detect back edges", "Both are equally good", "Neither — use Union-Find"]}
+  correct={1}
+  explanation="DFS cycle detection uses 3 colors: White (unvisited), Gray (in current path), Black (fully explored). If DFS reaches a Gray node, a back edge exists — a cycle. BFS can also detect cycles but DFS is more natural."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-8"
+  question="In grid BFS problems, how do you represent neighbors?"
+  options={["Diagonal directions only", "The 4 (or 8) adjacent cells — use directions = [(0,1),(0,-1),(1,0),(-1,0)]", "All cells in the same row", "Random cells"]}
+  correct={1}
+  explanation="A grid cell (r,c) has up to 4 cardinal neighbors: right (r,c+1), left (r,c-1), down (r+1,c), up (r-1,c). Check bounds and walls. For 8-directional (diagonal), add 4 more direction tuples."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-9"
+  question="What is topological sort and which traversal does it use?"
+  options={["Sorting nodes alphabetically with BFS", "Ordering directed acyclic graph (DAG) nodes so all edges point forward — uses DFS or Kahn's algorithm", "Reversing BFS order", "Only works on trees"]}
+  correct={1}
+  explanation="Topological sort orders DAG nodes such that for every edge u→v, u appears before v. DFS-based: nodes are added to the result in reverse finish order. Kahn's BFS-based algorithm uses in-degree tracking."
+/>
+
+<InlineQuiz
+  id="quiz-bfsdfs-10"
+  question="What is a connected component in an undirected graph?"
+  options={["A fully connected subgraph", "A maximal set of nodes where every node can reach every other node", "A single node", "A path between two nodes"]}
+  correct={1}
+  explanation="A connected component is a maximal subgraph where all nodes are reachable from each other. DFS/BFS from any unvisited node explores one entire component. Repeat until all nodes are visited to find all components."
+/>

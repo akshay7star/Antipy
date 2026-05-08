@@ -1,79 +1,173 @@
 ---
-title: "Templates in FastAPI"
-description: "Combining high-performance APIs with classic HTML rendering."
+title: "FastAPI Templates (Jinja2)"
+description: "Serving server-side rendered HTML pages using Jinja2 with FastAPI."
 order: 3
 ---
 
-# Templates in FastAPI
+# FastAPI Templates (Jinja2)
 
-While FastAPI is primarily designed for building raw JSON APIs (usually consumed by React, Vue, or mobile apps), you can absolutely use it to render full HTML pages just like Flask or Django!
+While FastAPI's true superpower is building blazingly fast JSON APIs for frontend frameworks (like React, Vue, or iOS apps), you don't *have* to use a separate frontend.
 
-Since FastAPI is unopinionated about which templating engine you use, it does not include one built-in. However, the official recommendation is to simply install **Jinja2** (the exact same engine used by Flask).
+FastAPI fully supports Server-Side Rendering (SSR) using **Jinja2**, the exact same templating engine used by Flask. 
 
-<InteractiveCode 
-  initialCode={`# Requires running: pip install jinja2 aiofiles\nfrom fastapi import FastAPI, Request\nfrom fastapi.templating import Jinja2Templates\n\napp = FastAPI()\n\ntemplates = Jinja2Templates(directory="templates")\n\n@app.get("/hello/{name}")\nasync def say_hello(request: Request, name: str):\n    return templates.TemplateResponse(\n        request=request, \n        name="hello.html", \n        context={"name": name}\n    )`}
-  showConsole={true}
+Because FastAPI is un-opinionated about the frontend, it doesn't include Jinja2 out of the box. You must install it manually alongside your FastAPI installation.
+
+```bash
+# Install Jinja2 explicitly
+$ pip install jinja2
+```
+
+## Configuring Jinja2 in FastAPI
+
+In Flask, templates just work "magically" if you put them in a `templates/` folder. Because FastAPI is explicit, you have to tell it where your templates are located and create a `Jinja2Templates` object.
+
+<interactive-code>
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+
+app = FastAPI()
+
+# 1. Point FastAPI to the directory containing your HTML files
+templates = Jinja2Templates(directory="templates")
+
+# 2. Tell FastAPI this route returns an HTMLResponse (not JSON)
+@app.get("/", response_class=HTMLResponse)
+async def read_item(request: Request):
+    # 3. Render the template, passing the Request object and context data
+    return templates.TemplateResponse(
+        request=request, 
+        name="index.html", 
+        context={"username": "Alice"}
+    )
+</interactive-code>
+
+### Why `Request`?
+Notice that we had to pass `request: Request` into the function, and then pass `request=request` into the `TemplateResponse`. 
+
+Jinja2 requires the HTTP request object to generate absolute URLs, manage sessions, and handle certain security features. In Flask, this is hidden from you. In FastAPI, "Explicit is better than implicit."
+
+## Using Jinja2 Syntax
+
+The HTML files you write for FastAPI are **100% identical** to the ones you write for Flask. You still use `{{ variable }}`, `{% for %}`, and `{% extends %}`.
+
+```html
+<!-- Inside templates/index.html -->
+<html>
+  <head>
+    <title>FastAPI SSR</title>
+  </head>
+  <body>
+    <h1>Welcome to FastAPI, {{ username }}!</h1>
+    
+    {% if is_admin %}
+      <p>You have administrative privileges.</p>
+    {% endif %}
+  </body>
+</html>
+```
+
+## Serving Static Files
+
+A website isn't just HTML; it needs CSS, JavaScript, and images. Just like templates, FastAPI requires you to explicitly "mount" a directory to serve static files.
+
+```python
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
+app = FastAPI()
+
+# "Mount" the local directory named "static" to the URL path "/static"
+app.mount("/static", StaticFiles(directory="static"), name="static")
+```
+
+Once mounted, you can link to a CSS file in your HTML template just like you would in Flask:
+
+```html
+<!-- Inside your Jinja2 template -->
+<link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">
+```
+
+---
+
+## Knowledge Check
+
+<InlineQuiz 
+  id="quiz-fastapi-templates-1"
+  question="Does FastAPI come with a templating engine pre-installed like Flask does?"
+  options={["Yes, it comes with Django Templates", "Yes, it comes with Jinja2", "No, because FastAPI focuses on APIs, you must explicitly install a templating engine like Jinja2 (`pip install jinja2`)", "No, FastAPI is strictly unable to serve HTML"]}
+  correct={2}
+  explanation="FastAPI is modular. It doesn't force a templating engine on you. If you want SSR, you install `jinja2` manually."
 />
 
 <InlineQuiz 
-  question="Why does FastAPI require the user to explicitly pass the `Request` object into the `TemplateResponse`?"
-  options={[
-    "It requires the `Request` to extract the user's IP Address.",
-    "Jinja2 expects a `request` context variable to build absolute URLs using `url_for()`.",
-    "FastAPI doesn't actually require it; it's optional.",
-    "It uses the `Request` to log the template rendering time."
-  ]}
-  correctAnswer="Jinja2 expects a `request` context variable to build absolute URLs using `url_for()`."
-  explanation="Unlike Flask, which uses a global `request` object hidden in the background, FastAPI's design philosophy mandates explicitly passing dependencies. The template engine needs the `Request` to generate accurate internal links."
-/>
-
-## Using Static Files
-
-If you are rendering HTML templates, you inevitably need CSS, Images, and Javascript to make them look good.
-
-FastAPI handles static files brilliantly using its `StaticFiles` mounting system.
-
-<InteractiveCode 
-  initialCode={`from fastapi import FastAPI\nfrom fastapi.staticfiles import StaticFiles\n\napp = FastAPI()\n\n# Mount the 'static' folder onto the '/static' URL path\napp.mount("/static", StaticFiles(directory="static"), name="static")`}
-  showConsole={false}
-/>
-
-Once mounted, you can reference your CSS cleanly inside any Jinja template:
-
-<InteractiveCode 
-  initialCode={`<!-- Inside your templates/hello.html -->\n<html>\n  <head>\n    <!-- Using url_for() requires the 'request' parameter we passed earlier! -->\n    <link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">\n  </head>\n  <body>\n    <h1>Hello, {{ name }}!</h1>\n  </body>\n</html>`}
-  showConsole={false}
+  id="quiz-fastapi-templates-2"
+  question="How do you initialize the templating engine in a FastAPI app?"
+  options={["templates = Jinja2Templates(directory='templates')", "app.use_templates('templates')", "It happens magically automatically", "from fastapi import render_template"]}
+  correct={0}
+  explanation="Because FastAPI is explicit, you create a `Jinja2Templates` instance and tell it exactly which directory contains your HTML files."
 />
 
 <InlineQuiz 
-  question="What happens if you place a `logo.png` image directly inside a FastAPI project folder, without mounting a `StaticFiles` directory?"
-  options={[
-    "FastAPI automatically serves it.",
-    "FastAPI ignores the file, making it completely impossible for users to download or view the image.",
-    "FastAPI deletes it to keep the app folder clean.",
-    "FastAPI compresses it into a zip file."
-  ]}
-  correctAnswer="FastAPI ignores the file, making it completely impossible for users to download or view the image."
-  explanation="By default, FastAPI blocks all file access. If you want a user's browser to read images, CSS, or JS files, you MUST explicitly mount that folder using `StaticFiles`."
-/>
-
-## Asynchronous Rendering
-
-FastAPI shines when dealing with concurrent requests. If your template requires data from a slow database query, you use `async def` and `await` to prevent the server from blocking other users.
-
-<InteractiveCode 
-  initialCode={`@app.get("/dashboard")\nasync def dashboard(request: Request):\n    # While the database fetches the tasks slowly, \n    # FastAPI moves on to serve thousands of other users instantly.\n    tasks = await slow_database_query()\n    \n    return templates.TemplateResponse(\n        request=request,\n        name="dashboard.html",\n        context={"tasks": tasks}\n    )`}
-  showConsole={false}
+  id="quiz-fastapi-templates-3"
+  question="What must you include as a parameter in your route function if you intend to return a Jinja2 template?"
+  options={["response: Response", "html: HTML", "request: Request", "session: Session"]}
+  correct={2}
+  explanation="Jinja2 requires the `Request` object to generate secure URLs and handle context properly, so you must explicitly inject it into your view function."
 />
 
 <InlineQuiz 
-  question="When fetching data for a template inside an `async def` route in FastAPI, what keyword must you use before a database query to ensure the server doesn't freeze while waiting?"
-  options={[
-    "return",
-    "yield",
-    "await",
-    "delay"
-  ]}
-  correctAnswer="await"
-  explanation="The `await` keyword hands execution control back to FastAPI's event loop, letting it process new incoming web traffic while the database finishes its slow work in the background."
+  id="quiz-fastapi-templates-4"
+  question="What is the correct syntax to return the rendered template from your route?"
+  options={["return render_template('index.html')", "return templates.TemplateResponse(request=request, name='index.html', context={'var': 1})", "return HTMLResponse('index.html')", "return templates.render('index.html')"]}
+  correct={1}
+  explanation="You call the `.TemplateResponse()` method on your `templates` object, passing the required `request` object, the template `name`, and the dynamic `context` dictionary."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-templates-5"
+  question="What `response_class` should you assign to the route decorator to tell FastAPI (and its documentation) that this route returns HTML instead of JSON?"
+  options={["HTMLResponse", "JSONResponse", "TextResponse", "WebResponse"]}
+  correct={0}
+  explanation="Adding `@app.get('/', response_class=HTMLResponse)` explicitly documents that the endpoint returns an HTML string, not a JSON object."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-templates-6"
+  question="If you switch a web app from Flask to FastAPI, do you need to rewrite all your `.html` template files?"
+  options={["Yes, FastAPI uses a completely different syntax", "Yes, you must switch to React", "No, both frameworks use Jinja2 under the hood, so the HTML syntax is 100% identical", "Only if you used `if` statements"]}
+  correct={2}
+  explanation="The underlying engine is Jinja2. The `{{ var }}`, `{% for %}`, and `{% extends %}` tags all work exactly the same way in both frameworks."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-templates-7"
+  question="How do you serve CSS and JavaScript files in FastAPI?"
+  options={["Put them in the templates folder", "FastAPI serves them automatically", "You explicitly `mount()` a `StaticFiles` application to a specific URL path", "You embed them directly in the Python code"]}
+  correct={2}
+  explanation="FastAPI does not serve static files magically. You must use `app.mount('/static', StaticFiles(directory='static'))` to expose that directory to the web."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-templates-8"
+  question="How do you generate a dynamic URL to a static file inside a FastAPI Jinja2 template?"
+  options={["<img src='static/img.png'>", "<img src='{{ url_for('static', path='/img.png') }}'>", "<img src='{% static 'img.png' %}'>", "<img src='__static__/img.png'>"]}
+  correct={1}
+  explanation="FastAPI provides the `url_for` function directly to the Jinja2 context, allowing you to dynamically build URLs to your mounted static directories."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-templates-9"
+  question="Why might you choose to use Jinja2 Templates with FastAPI instead of building a separate React frontend?"
+  options={["It is significantly easier and faster to build simple tools or MVP websites without managing a complex Javascript build pipeline", "React is deprecated", "FastAPI cannot connect to React", "Jinja2 is faster than raw HTML"]}
+  correct={0}
+  explanation="For administrative dashboards, simple blogs, or Minimum Viable Products, Server-Side Rendering with Jinja2 avoids the massive overhead of managing a separate frontend SPA architecture."
+/>
+
+<InlineQuiz 
+  id="quiz-fastapi-templates-10"
+  question="Can a single FastAPI application serve BOTH HTML templates and JSON API endpoints simultaneously?"
+  options={["No, you must pick one", "Yes, you can have `@app.get('/page', response_class=HTMLResponse)` alongside `@app.get('/api/data')` returning JSON", "Yes, but they must be on different ports", "Only if you use Flask-Login"]}
+  correct={1}
+  explanation="FastAPI is incredibly flexible. A single application can seamlessly serve SSR templates for web users, and JSON endpoints for mobile apps simultaneously."
 />

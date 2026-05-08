@@ -133,7 +133,7 @@ print(f"Successfully Intercepted and Serialized Complex Object: {secure_payload}
     "`'{\"isActive\": true}'`. The internal `True` is structurally transcoded into the Javascript lowercase `true`, and all standard single-quotes are forcefully reformatted into rigid double-quotes `\"` conforming to the absolute JSON protocol.",
     "It converts to XML."
   ]}
-  correctAnswer="`'{\"isActive\": true}'`. The internal `True` is structurally transcoded into the Javascript lowercase `true`, and all standard single-quotes are forcefully reformatted into rigid double-quotes `\"` conforming to the absolute JSON protocol."
+  correctAnswer={`\`'{"isActive": true}'\`. The internal \`True\` is structurally transcoded into the Javascript lowercase \`true\`, and all standard single-quotes are forcefully reformatted into rigid double-quotes \`"\` conforming to the absolute JSON protocol.`}
   explanation="JSON strictly enforces double-quotes and JS-equivalent data structures internally."
 />
 

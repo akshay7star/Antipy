@@ -141,7 +141,7 @@ os.remove("export.csv")
     "You forgot `encoding='utf-8'`.",
     "You used `.writelines()`"
   ]}
-  correctAnswer="The `newline=''` argument. Natively, Python 3 CSV writers execute OS-level carriage returns `\n`. However, the Windows OS file object natively intercepts all `\n` parameters and violently duplicates them into `\r\n\n`. Deploying `newline=\"\"` strictly bypasses the kernel disruption."
+  correctAnswer={`The \`newline=''\` argument. Natively, Python 3 CSV writers execute OS-level carriage returns \`\\n\`. However, the Windows OS file object natively intercepts all \`\\n\` parameters and violently duplicates them into \`\\r\\n\\n\`. Deploying \`newline=""\` strictly bypasses the kernel disruption.`}
   explanation="Always instantiate `open(..., newline='')` strictly exclusively for CSV payloads to negate cross-platform OS formatting conflicts."
 />
 

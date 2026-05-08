@@ -1,101 +1,188 @@
 ---
 title: "Authentication"
-description: "How to manage user login sessions securely."
+description: "How to manage user login sessions securely and hash passwords."
 order: 4
 ---
 
 # Authentication in Flask
 
-Building a website is easy; remembering who is visiting your website is hard. HTTP is a **stateless protocol**, meaning your web server suffers from severe amnesia. Every request (clicking a link, submitting a form) is treated as a completely brand-new user.
+Building a website is easy; remembering who is visiting your website is hard. 
 
-How do we build a 'Login' system if the server forgets the user the moment the page finishes loading? We use **Sessions**.
+HTTP is a **stateless protocol**. Every time a user clicks a link, submits a form, or refreshes the page, their browser opens a brand-new connection to the server. The server has no memory of the previous request. 
+
+So how do we build a "Login" system if the server forgets the user the moment the page finishes loading? We use **Sessions**.
 
 ## What is a Session?
 
-A session is way for Flask to store information about a specific user as they click around your site. In Flask, the session is stored securely in a **cookie** inside the user's web browser.
+A session is a mechanism that allows Flask to store information about a specific user across multiple requests. In Flask, the session data is encrypted and stored securely in a **cookie** inside the user's web browser.
 
-<InteractiveCode 
-  initialCode={`from flask import Flask, session, request\n\napp = Flask(__name__)\n# Flask MUST have a secret key to encrypt cookies!\napp.secret_key = 'super_secret_password_do_not_share'\n\n@app.route('/login')\ndef login():\n    # Imagine we checked a database here to ensure the password is correct\n    session['username'] = 'Alice'\n    return "You are logged in!"\n\n@app.route('/dashboard')\ndef dashboard():\n    if 'username' in session:\n        return f"Welcome back, {session['username']}!"\n    \n    return "Access Denied: Please log in."`}
-  showConsole={true}
-/>
+Whenever the browser makes a new request, it automatically sends that cookie back to the server, allowing Flask to "remember" who the user is.
 
-<InlineQuiz 
-  question="Why does Flask require you to set an `app.secret_key` before you can use the `session` dictionary?"
-  options={[
-    "Because the server needs a password to turn on.",
-    "Because Flask uses the secret key to cryptographically sign the user's session cookie, preventing tampering.",
-    "Because the database requires a password to read user data.",
-    "Flask doesn't actually require it."
-  ]}
-  correctAnswer="Because Flask uses the secret key to cryptographically sign the user's session cookie, preventing tampering."
-  explanation="If the session cookies were not encrypted and signed with a secret key, a malicious user could simply open their Chrome dev tools, change `{'username': 'Alice'}` to `{'username': 'Admin'}`, and steal control of your website."
-/>
+<interactive-code>
+from flask import Flask, session, request
+
+app = Flask(__name__)
+# Flask MUST have a secret key to encrypt cookies!
+app.secret_key = 'super_secret_password_do_not_share_in_production'
+
+@app.route('/login')
+def login():
+    # Imagine we checked a database here to ensure the password is correct
+    session['username'] = 'Alice'
+    return "You are logged in! We saved your username in a signed cookie."
+
+@app.route('/dashboard')
+def dashboard():
+    # We check if the browser sent back a cookie containing 'username'
+    if 'username' in session:
+        return f"Welcome back, {session['username']}!"
+    
+    return "Access Denied: Please log in."
+</interactive-code>
+
+### The Secret Key
+Notice the `app.secret_key`. This is absolutely critical. Without a secret key, a malicious user could open their browser's developer tools, find the plain-text session cookie `{'username': 'Alice'}`, change it to `{'username': 'Admin'}`, and instantly hack your website.
+
+By setting a secret key, Flask cryptographically signs the cookie. If the user tampers with the cookie, the signature becomes invalid, and Flask rejects the entire session.
 
 ## Logging Out
 
-Logging out is delightfully simple: you just delete the user's data from the session dictionary.
+Logging out is delightfully simple: you just delete the user's data from the session dictionary. Next time their browser makes a request, the session will be empty, and the server will treat them as an anonymous visitor.
 
-<InteractiveCode 
-  initialCode={`# Adding to our previous app:\n@app.route('/logout')\ndef logout():\n    # session.pop() removes the key safely\n    session.pop('username', None)\n    return "You have been logged out."`}
-  showConsole={true}
-/>
-
-<InlineQuiz 
-  question="When a user 'logs out' of a standard Flask application, what is actually happening under the hood?"
-  options={[
-    "The server deletes their account from the database.",
-    "The server resets their password.",
-    "The server removes their data from the `session` dictionary, which overwrites the cookie in their browser.",
-    "Flask blocks their IP address."
-  ]}
-  correctAnswer="The server removes their data from the `session` dictionary, which overwrites the cookie in their browser."
-  explanation="Logging out is a purely state-based action. You are simply destroying the temporary session tokens/data that proved they were previously authenticated."
-/>
+```python
+@app.route('/logout')
+def logout():
+    # session.pop() removes the key safely without throwing an error if it doesn't exist
+    session.pop('username', None)
+    return "You have been successfully logged out."
+```
 
 ## Passwords and Hashing
 
-If a user signs up on your website, you **MUST NEVER** save their actual password to the database. If your server is ever hacked, the criminals would steal thousands of passwords (which people reuse on their emails and bank accounts!).
+If a user signs up on your website, you **MUST NEVER** save their actual password to the database. If your server is ever compromised, the attackers would steal thousands of passwords (which users tragically reuse on their emails and bank accounts).
 
 Instead, you save a mathematically mangled version of the password, called a **Hash**.
 
-Fortunately, Werkzeug (the toolkit Flask is built upon) provides this for free.
+Fortunately, Werkzeug (the foundational toolkit Flask is built upon) provides secure hashing for free.
 
-<InteractiveCode 
-  initialCode={`from werkzeug.security import generate_password_hash, check_password_hash\n\n# User signs up: "ilovecats123"\nstored_hash = generate_password_hash("ilovecats123")\nprint(f"What we store in the DB: {stored_hash}")\n\n# User tries to log in later with "ilovedogs123"\nlogin_attempt1 = check_password_hash(stored_hash, "ilovedogs123")\nprint(f"Login attempt 1: {login_attempt1}")\n\n# User tries again with correct password\nlogin_attempt2 = check_password_hash(stored_hash, "ilovecats123")\nprint(f"Login attempt 2: {login_attempt2}")`}
-  showConsole={true}
-/>
+<interactive-code>
+from werkzeug.security import generate_password_hash, check_password_hash
 
-<InlineQuiz 
-  question="Why do we use hashes instead of encrypting passwords with a secret key?"
-  options={[
-    "Because hashes are faster to generate.",
-    "Because hashing is a one-way street. Not even the website owner can reverse a hash back into the original password.",
-    "Because hashes take up less database space.",
-    "We should encrypt passwords, hashes are dangerous."
-  ]}
-  correctAnswer="Because hashing is a one-way street. Not even the website owner can reverse a hash back into the original password."
-  explanation="Encryption goes both ways (you can lock it, and unlock it). Hashing is mathematically irrevesible. To verify a login, you simply hash their guessed password and see if the two hashes match! If a hacker steals a database of hashes, they get meaningless jumbled text."
-/>
+# 1. User signs up: "ilovecats123"
+# We generate a hash and store THIS in the database.
+stored_hash = generate_password_hash("ilovecats123")
+print(f"What we store in the DB:\n{stored_hash}\n")
+
+# 2. User tries to log in later with wrong password "ilovedogs123"
+# We DO NOT decrypt the hash. We hash the attempt and compare them!
+login_attempt1 = check_password_hash(stored_hash, "ilovedogs123")
+print(f"Login attempt (wrong password): {login_attempt1}")
+
+# 3. User tries again with correct password
+login_attempt2 = check_password_hash(stored_hash, "ilovecats123")
+print(f"Login attempt (correct password): {login_attempt2}")
+</interactive-code>
 
 ## Flask-Login Extension
 
-While you can write your own `@app.route` decorators to check `session['username']` manually on every single page of your site, that gets tedious.
+While you *can* write your own logic to check `if 'username' in session:` manually on every single secure page of your site, that gets tedious.
 
-The widely popular external library `Flask-Login` handles all the heavy lifting for you, giving you an `@login_required` decorator.
+The widely popular external library `Flask-Login` handles all the heavy lifting for you, providing the powerful `@login_required` decorator.
 
-<InteractiveCode 
-  initialCode={`from flask import Flask\nfrom flask_login import login_required\n\napp = Flask(__name__)\n\n@app.route('/settings')\n@login_required\ndef secret_settings():\n    return "Welcome to the secret vault."`}
-  showConsole={false}
+```python
+from flask import Flask
+from flask_login import login_required
+
+app = Flask(__name__)
+
+@app.route('/settings')
+@login_required  # Acts as a bouncer for this route
+def secret_settings():
+    return "Welcome to the secret vault."
+```
+
+If an anonymous user tries to visit `/settings`, Flask-Login intercepts the request and automatically redirects them to your login page.
+
+---
+
+## Knowledge Check
+
+<InlineQuiz 
+  id="quiz-flask-auth-1"
+  question="Why is HTTP considered a 'stateless' protocol?"
+  options={["Because it does not run in the United States", "Because it is unable to transfer state objects like React hooks", "Because the server retains no memory of previous requests from a client", "Because it uses UDP instead of TCP"]}
+  correct={2}
+  explanation="Stateless means each HTTP request is completely independent. The server has no native way of knowing that Request B came from the same person who just sent Request A."
 />
 
 <InlineQuiz 
-  question="What happens if an unauthenticated (anonymous) user tries to access a route decorated with `@login_required`?"
-  options={[
-    "Flask automatically creates an account for them.",
-    "Flask throws a 500 error.",
-    "Flask-Login intercepts the request and redirects them to the login page.",
-    "They are allowed to view the page but cannot make POST requests."
-  ]}
-  correctAnswer="Flask-Login intercepts the request and redirects them to the login page."
-  explanation="The `@login_required` decorator acts as a bouncer. If no valid session is found, it automatically blocks access and redirects the user to the configured login portal."
+  id="quiz-flask-auth-2"
+  question="How does Flask overcome the stateless nature of HTTP to implement user logins?"
+  options={["By keeping the TCP connection open indefinitely", "By tracking the user's IP address in a database", "By using a Session dictionary that stores data in an encrypted cookie on the user's browser", "By using LocalStorage natively via Python"]}
+  correct={2}
+  explanation="Flask uses sessions. When you assign `session['user'] = 'Alice'`, Flask serializes that data, signs it, and sends it to the browser as a cookie. The browser sends it back on the next request."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-auth-3"
+  question="Why must you set `app.secret_key` before using the Flask session?"
+  options={["To pay for the Flask license", "To connect to the database securely", "To cryptographically sign the session cookie, preventing malicious users from tampering with its contents", "To encrypt the HTML templates"]}
+  correct={2}
+  explanation="If session cookies were not signed, anyone could manually edit their cookie to grant themselves admin privileges. The secret key ensures the cookie hasn't been altered."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-auth-4"
+  question="When a user 'logs out' of a standard Flask application, what is actually happening under the hood?"
+  options={["The server deletes their account from the database", "The server resets their password", "The server removes their data from the `session` dictionary, updating the browser cookie", "Flask blocks their IP address temporarily"]}
+  correct={2}
+  explanation="Logging out is a purely state-based action. You are simply destroying the temporary session tokens/data that proved they were previously authenticated."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-auth-5"
+  question="Why must you NEVER store raw, plain-text passwords in your database?"
+  options={["Because plain-text takes up too much storage space", "Because if the database is compromised, hackers gain access to users' raw passwords (which they likely reuse elsewhere)", "Because SQL databases cannot store strings longer than 12 characters", "Because it violates PEP 8"]}
+  correct={1}
+  explanation="Data breaches happen. If you store plain-text passwords, a breach compromises your users' security across the entire internet. Hashes mitigate this disaster."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-auth-6"
+  question="What is the key difference between Encryption and Hashing?"
+  options={["Encryption is for strings, Hashing is for integers", "Encryption is a two-way street (can be decrypted), Hashing is mathematically a one-way street (cannot be reversed)", "Encryption is free, Hashing is paid", "There is no difference"]}
+  correct={1}
+  explanation="You encrypt a message so it can be decrypted later. You hash a password because you NEVER want to reverse it. To verify a password, you hash the guess and compare it to the stored hash."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-auth-7"
+  question="Which built-in toolkit does Flask rely on to generate and check password hashes?"
+  options={["Jinja2", "SQLAlchemy", "Werkzeug", "Click"]}
+  correct={2}
+  explanation="Werkzeug is the comprehensive WSGI web application library that powers Flask. It includes security helpers like `generate_password_hash`."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-auth-8"
+  question="What happens if you use `session.pop('username')` and the user is NOT logged in?"
+  options={["It throws a KeyError and crashes the request", "It silently does nothing", "It creates a new user", "It logs in an anonymous user"]}
+  correct={0}
+  explanation="Dictionaries in Python throw a KeyError if you pop a missing key. This is why you should always provide a default fallback: `session.pop('username', None)`."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-auth-9"
+  question="What is the primary benefit of using the `Flask-Login` extension?"
+  options={["It creates HTML login forms automatically", "It provides the `@login_required` decorator to easily protect routes, and automatically handles redirecting unauthorized users", "It generates SQL databases automatically", "It hashes passwords automatically"]}
+  correct={1}
+  explanation="Flask-Login manages the complex boilerplate of checking sessions on every restricted route. It gives you the clean `@login_required` decorator."
+/>
+
+<InlineQuiz 
+  id="quiz-flask-auth-10"
+  question="Where should you store your `app.secret_key` in a production environment?"
+  options={["Hardcoded in the `app.py` file", "Committed to GitHub so teammates can see it", "In a `.env` environment variable file that is completely hidden from version control", "In a public JSON file"]}
+  correct={2}
+  explanation="Never hardcode secrets in source code. They should be loaded dynamically from environment variables, ensuring that even if your source code leaks, the secret key remains safe."
 />

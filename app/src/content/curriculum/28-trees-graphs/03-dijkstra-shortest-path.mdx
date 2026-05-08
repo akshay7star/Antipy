@@ -1,0 +1,316 @@
+---
+title: "Dijkstra's Shortest Path"
+description: "Greedy weighted graph pathfinding using a priority queue — the algorithm behind GPS navigation."
+order: 3
+---
+
+# Dijkstra's Algorithm: GPS for Graphs
+
+When a graph has **weighted edges** (distances, costs, latency), BFS no longer finds the shortest path. Dijkstra's algorithm solves this using a **greedy strategy** with a priority queue: always expand the cheapest known path next.
+
+This is the algorithm powering GPS navigation, network routing (OSPF), and game AI pathfinding.
+
+<MermaidDiagram>
+graph LR
+  A["A"] -- "4" --> B["B"]
+  A -- "2" --> C["C"]
+  B -- "3" --> D["D"]
+  C -- "1" --> B
+  C -- "5" --> D
+  style A fill:#3b82f6,stroke:#2563eb,color:#fff
+  style D fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+Shortest path A→D: A→C→B→D (cost: 2+1+3 = 6, not the obvious A→B→D = 7)
+
+## The Algorithm
+
+```python
+import heapq
+
+def dijkstra(graph, start):
+    # graph = {node: [(neighbor, weight), ...]}
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0
+    priority_queue = [(0, start)]   # (distance, node)
+    previous = {}
+
+    while priority_queue:
+        curr_dist, curr_node = heapq.heappop(priority_queue)
+
+        # Skip if we already found a shorter path to this node
+        if curr_dist > distances[curr_node]:
+            continue
+
+        for neighbor, weight in graph[curr_node]:
+            new_dist = curr_dist + weight
+
+            if new_dist < distances[neighbor]:
+                distances[neighbor] = new_dist
+                previous[neighbor] = curr_node
+                heapq.heappush(priority_queue, (new_dist, neighbor))
+
+    return distances, previous
+```
+
+## Step-by-Step Trace
+
+```
+Graph: A--(2)--C, A--(4)--B, C--(1)--B, B--(3)--D, C--(5)--D
+Start: A
+
+Initial: dist={A:0, B:∞, C:∞, D:∞}, PQ=[(0,A)]
+
+Step 1: Pop (0,A). Relax edges:
+  A→C: 0+2=2 < ∞ → dist[C]=2, push (2,C)
+  A→B: 0+4=4 < ∞ → dist[B]=4, push (4,B)
+
+Step 2: Pop (2,C). Relax edges:
+  C→B: 2+1=3 < 4 → dist[B]=3, push (3,B)
+  C→D: 2+5=7 < ∞ → dist[D]=7, push (7,D)
+
+Step 3: Pop (3,B). Relax edges:
+  B→D: 3+3=6 < 7 → dist[D]=6, push (6,D)
+
+Step 4: Pop (4,B). curr_dist=4 > dist[B]=3 → SKIP!
+
+Step 5: Pop (6,D). D reached!
+
+Final: {A:0, B:3, C:2, D:6}
+```
+
+<MermaidDiagram>
+graph TD
+  INIT["Initialize: all distances = ∞, start = 0"] --> POP["Pop min from PQ"]
+  POP --> SKIP{"curr_dist > known dist?"}
+  SKIP -->|Yes| POP
+  SKIP -->|No| RELAX["Relax all neighbors:\nif new_dist < known → update & push"]
+  RELAX --> DONE{"PQ empty?"}
+  DONE -->|No| POP
+  DONE -->|Yes| RESULT["Return distances"]
+  style RESULT fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## Path Reconstruction
+
+```python
+def reconstruct_path(previous, start, end):
+    path = []
+    current = end
+    while current != start:
+        path.append(current)
+        current = previous[current]
+    path.append(start)
+    return list(reversed(path))
+```
+
+<interactive-code>
+import heapq
+from collections import defaultdict
+
+def dijkstra(graph, start):
+    distances = defaultdict(lambda: float('inf'))
+    distances[start] = 0
+    previous = {}
+    pq = [(0, start)]
+
+    while pq:
+        dist, node = heapq.heappop(pq)
+        if dist > distances[node]:
+            continue  # Stale entry
+        for neighbor, weight in graph[node]:
+            new_dist = dist + weight
+            if new_dist < distances[neighbor]:
+                distances[neighbor] = new_dist
+                previous[neighbor] = node
+                heapq.heappush(pq, (new_dist, neighbor))
+
+    return dict(distances), previous
+
+def get_path(previous, start, end):
+    if end not in previous and end != start:
+        return None
+    path = []
+    curr = end
+    while curr != start:
+        path.append(curr)
+        curr = previous.get(curr)
+        if curr is None:
+            return None
+    path.append(start)
+    return list(reversed(path))
+
+# --- Test 1: Simple weighted graph ---
+print("=== Dijkstra on Simple Graph ===")
+graph = {
+    'A': [('B', 4), ('C', 2)],
+    'B': [('D', 3)],
+    'C': [('B', 1), ('D', 5)],
+    'D': [],
+}
+distances, previous = dijkstra(graph, 'A')
+print(f"Shortest distances from A: {dict(distances)}")
+for target in ['B', 'C', 'D']:
+    path = get_path(previous, 'A', target)
+    cost = distances[target]
+    print(f"  A → {target}: {' → '.join(path)} (cost={cost})")
+
+# --- Test 2: Network with multiple paths ---
+print("\n=== Network Routing Graph ===")
+network = {
+    's': [('a', 10), ('c', 3)],
+    'a': [('b', 2)],
+    'b': [('t', 1)],
+    'c': [('a', 4), ('d', 8), ('t', 2)],
+    'd': [('b', 5), ('t', 7)],
+    't': [],
+}
+dist, prev = dijkstra(network, 's')
+path_to_t = get_path(prev, 's', 't')
+print(f"Shortest s → t: {' → '.join(path_to_t)} (cost={dist['t']})")
+print(f"All distances from s: {dist}")
+
+# --- Test 3: Grid with costs ---
+print("\n=== Grid Dijkstra (Weighted Grid) ===")
+grid_costs = [
+    [1, 3, 1, 1],
+    [1, 5, 1, 1],
+    [4, 2, 1, 1],
+    [1, 1, 1, 1],
+]
+rows, cols = len(grid_costs), len(grid_costs[0])
+dist_grid = [[float('inf')] * cols for _ in range(rows)]
+dist_grid[0][0] = grid_costs[0][0]
+pq = [(grid_costs[0][0], 0, 0)]
+dirs = [(0,1),(0,-1),(1,0),(-1,0)]
+
+while pq:
+    d, r, c = heapq.heappop(pq)
+    if d > dist_grid[r][c]:
+        continue
+    for dr, dc in dirs:
+        nr, nc = r+dr, c+dc
+        if 0 <= nr < rows and 0 <= nc < cols:
+            new_d = d + grid_costs[nr][nc]
+            if new_d < dist_grid[nr][nc]:
+                dist_grid[nr][nc] = new_d
+                heapq.heappush(pq, (new_d, nr, nc))
+
+print(f"Min cost path from (0,0) to (3,3): {dist_grid[3][3]}")
+print("Distance grid:")
+for row in dist_grid:
+    print("  " + "  ".join(f"{v:2}" for v in row))
+</interactive-code>
+
+## Complexity Analysis
+
+| Implementation | Time | Space |
+|---|---|---|
+| Binary heap (heapq) | O((V + E) log V) | O(V + E) |
+| Fibonacci heap | O(E + V log V) | O(V + E) |
+| Simple array (no heap) | O(V²) | O(V) — good for dense graphs |
+
+> **Why `if curr_dist > distances[curr_node]: continue`?** The priority queue can contain multiple entries for the same node (from successive relaxations). When we pop a stale entry with higher cost than what we already know, we skip it. This "lazy deletion" avoids rebuilding the heap.
+
+## Dijkstra's Limitations
+
+```python
+# Dijkstra FAILS with negative edge weights!
+# A negative edge can make a "longer" path cheaper,
+# but Dijkstra assumes once a node is popped, its distance is final.
+
+# Example where Dijkstra gives wrong answer:
+wrong_graph = {
+    'A': [('B', 1), ('C', 4)],
+    'B': [('C', -3)],   # Negative weight!
+    'C': [],
+}
+# Dijkstra: A→C = 4. But actual shortest: A→B→C = 1+(-3) = -2!
+
+# Solution: Use Bellman-Ford for graphs with negative weights
+# (handles negative edges, detects negative cycles)
+```
+
+> **Pro Tip:** In interviews, Dijkstra problems often disguise themselves: "minimum cost path," "network delay time," "cheapest flights within k stops." The pattern is always: weighted graph + shortest path = Dijkstra with a heap. When you see "k stops," use a modified Dijkstra with state (node, stops_remaining).
+
+> **Common Mistake:** Forgetting to skip stale priority queue entries. Without `if curr_dist > distances[node]: continue`, you'll reprocess nodes with old distances, potentially overwriting shorter paths and degrading to O(V·E) in the worst case.
+
+<InlineQuiz
+  id="quiz-dijkstra-1"
+  question="What problem does Dijkstra's algorithm solve?"
+  options={["Sorting a graph", "Single-source shortest path in a weighted graph with non-negative edges", "Finding cycles", "Minimum spanning tree"]}
+  correct={1}
+  explanation="Dijkstra finds the shortest (minimum weight) path from one source node to all other nodes in a graph with non-negative edge weights."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-2"
+  question="What data structure is central to Dijkstra's efficiency?"
+  options={["Stack", "Priority queue (min-heap) — always expand the cheapest known path next", "Queue", "Hash set"]}
+  correct={1}
+  explanation="The min-heap priority queue ensures we always process the node with the current minimum known distance. This greedy choice is the heart of Dijkstra's correctness and efficiency."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-3"
+  question="What is the time complexity of Dijkstra's with a binary heap?"
+  options={["O(V²)", "O((V + E) log V)", "O(E log E)", "O(V log V)"]}
+  correct={1}
+  explanation="Each vertex is popped once: O(V log V). For each vertex, we push its neighbors: O(E log V) total push operations. Combined: O((V + E) log V)."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-4"
+  question="Why does Dijkstra's algorithm fail with negative edge weights?"
+  options={["Negative numbers break the heap", "Dijkstra assumes a popped node has its final shortest distance — negative edges can create shorter paths discovered later", "It causes infinite loops", "Python does not support negative weights"]}
+  correct={1}
+  explanation="Dijkstra is greedy: once a node is popped, its distance is considered final. With negative edges, a later path (going through a negative edge) could be shorter — but we've already finalized the wrong answer."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-5"
+  question="What is the 'stale entry' optimization in Dijkstra?"
+  options={["Removing old nodes", "if curr_dist > distances[node]: continue — skip outdated heap entries after a shorter path was found", "Rebuilding the heap", "Using a different data structure"]}
+  correct={1}
+  explanation="When a shorter path to a node is found, we push a new heap entry without removing the old one (lazy deletion). When the old entry is popped, its distance is larger than the known best — so we skip it."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-6"
+  question="What algorithm should you use instead of Dijkstra for graphs with negative edge weights?"
+  options={["BFS", "DFS", "Bellman-Ford — handles negative weights and detects negative cycles", "Floyd-Warshall only"]}
+  correct={2}
+  explanation="Bellman-Ford relaxes all edges V-1 times, correctly handling negative edge weights. It can also detect negative cycles (if a V-th relaxation still improves distances, a negative cycle exists)."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-7"
+  question="What is the greedy choice in Dijkstra's algorithm?"
+  options={["Pick the nearest unvisited neighbor", "Always expand the node with the smallest current known distance from the source", "Pick the node with most neighbors", "Pick the last-inserted node"]}
+  correct={1}
+  explanation="Dijkstra's greedy invariant: the node popped from the priority queue has its FINAL shortest distance. This works because all edge weights are non-negative — no future edge can shorten the path."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-8"
+  question="What is Floyd-Warshall used for?"
+  options={["Single-source shortest path", "All-pairs shortest path — finds shortest path between EVERY pair of nodes in O(V³)", "Minimum spanning tree", "Cycle detection"]}
+  correct={1}
+  explanation="Floyd-Warshall computes shortest paths between ALL pairs of nodes using dynamic programming. O(V³) time, O(V²) space. Handles negative edges (but not negative cycles)."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-9"
+  question="In the 'Network Delay Time' problem, what does Dijkstra return?"
+  options={["The shortest path", "max(distances.values()) — the time for the signal to reach ALL nodes (the bottleneck)", "min(distances.values())", "The number of hops"]}
+  correct={1}
+  explanation="Network Delay Time asks: if a signal is sent from node k, what is the minimum time for ALL nodes to receive it? Answer = max of all shortest distances from k. If any node is unreachable, return -1."
+/>
+
+<InlineQuiz
+  id="quiz-dijkstra-10"
+  question="How do you handle 'cheapest flights within k stops' with Dijkstra?"
+  options={["Standard Dijkstra", "Modified Dijkstra with state (node, stops_remaining) — prune paths exceeding k stops", "BFS only", "Cannot be solved with Dijkstra"]}
+  correct={1}
+  explanation="Extend state to (cost, node, stops_left). Push (new_cost, neighbor, stops-1) only if stops > 0. This is Dijkstra on an extended state space. Alternatively, use Bellman-Ford relaxed exactly k+1 times."
+/>

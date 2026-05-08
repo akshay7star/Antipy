@@ -1,0 +1,314 @@
+---
+title: "Fast & Slow Pointers"
+description: "Floyd's Cycle Detection Algorithm — finding cycles, middle nodes, and duplicates."
+order: 2
+---
+
+# Fast & Slow Pointers: Floyd's Tortoise and Hare
+
+The **fast & slow pointer** technique uses two pointers moving at different speeds through a linked list. The slow pointer moves one step; the fast pointer moves two steps. If a cycle exists, they will inevitably meet.
+
+This elegant algorithm — Floyd's Cycle Detection — solves cycle problems in **O(n) time, O(1) space**, without storing visited nodes in a hash set.
+
+<MermaidDiagram>
+graph LR
+  N1["1"] --> N2["2"]
+  N2 --> N3["3"]
+  N3 --> N4["4"]
+  N4 --> N5["5"]
+  N5 --> N3
+  SLOW["🐢 slow"] --> N1
+  FAST["🐇 fast"] --> N1
+  style N3 fill:#ef4444,stroke:#dc2626,color:#fff
+  style SLOW fill:#22c55e,stroke:#16a34a,color:#fff
+  style FAST fill:#3b82f6,stroke:#2563eb,color:#fff
+</MermaidDiagram>
+
+## Problem 1: Detect a Cycle
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def has_cycle(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next           # Move 1 step
+        fast = fast.next.next      # Move 2 steps
+        if slow is fast:           # They met — cycle detected!
+            return True
+    return False   # fast hit None — no cycle
+
+# Why they must meet:
+# In a cycle of length L, fast gains 1 step on slow per iteration.
+# Distance between them decreases by 1 each step → must reach 0.
+```
+
+## Problem 2: Find the Cycle Entry Point
+
+After detecting a cycle, reset one pointer to `head`. Move both one step at a time — they meet at the cycle's entry node.
+
+```python
+def detect_cycle_entry(head):
+    slow = fast = head
+
+    # Phase 1: Detect cycle
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow is fast:
+            break
+    else:
+        return None   # No cycle
+
+    # Phase 2: Find entry point
+    slow = head       # Reset slow to head
+    while slow is not fast:
+        slow = slow.next
+        fast = fast.next   # Both move 1 step now
+
+    return slow   # Cycle entry node
+```
+
+## Problem 3: Find the Middle of a Linked List
+
+When fast hits the end, slow is exactly at the middle:
+
+```python
+def find_middle(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    return slow   # Middle node
+
+# For [1,2,3,4,5]: fast hits end after 2 iterations
+# slow lands on 3 — the middle
+```
+
+## Problem 4: Happy Number
+
+The "happy number" problem reduces to cycle detection: apply a transformation repeatedly, check if it cycles or reaches 1.
+
+```python
+def is_happy(n):
+    def digit_sum_of_squares(x):
+        total = 0
+        while x:
+            digit = x % 10
+            total += digit * digit
+            x //= 10
+        return total
+
+    slow = n
+    fast = digit_sum_of_squares(n)
+
+    while fast != 1 and slow != fast:
+        slow = digit_sum_of_squares(slow)
+        fast = digit_sum_of_squares(digit_sum_of_squares(fast))
+
+    return fast == 1
+```
+
+<interactive-code>
+class ListNode:
+    def __init__(self, val=0, next_node=None):
+        self.val = val
+        self.next = next_node
+    def __repr__(self):
+        return f"Node({self.val})"
+
+def build_list(values, cycle_pos=None):
+    """Build linked list, optionally creating a cycle at cycle_pos."""
+    if not values:
+        return None
+    nodes = [ListNode(v) for v in values]
+    for i in range(len(nodes) - 1):
+        nodes[i].next = nodes[i + 1]
+    if cycle_pos is not None:
+        nodes[-1].next = nodes[cycle_pos]
+    return nodes[0]
+
+def has_cycle(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow is fast:
+            return True
+    return False
+
+def find_middle(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    return slow
+
+def find_middle_of_two_halves(head):
+    """Returns the node before the midpoint (for even-length lists)."""
+    slow = fast = head
+    prev = None
+    while fast and fast.next:
+        prev = slow
+        slow = slow.next
+        fast = fast.next.next
+    return prev, slow
+
+# --- Test cycle detection ---
+print("=== Cycle Detection ===")
+no_cycle = build_list([1, 2, 3, 4, 5])
+cycle_at_2 = build_list([1, 2, 3, 4, 5], cycle_pos=2)  # Cycle: 5→3
+
+print(f"  No cycle: {has_cycle(no_cycle)}")       # False
+print(f"  Cycle at pos 2: {has_cycle(cycle_at_2)}") # True
+
+# --- Find middle ---
+print("\n=== Find Middle of Linked List ===")
+test_cases = [
+    ([1], 1),
+    ([1, 2], 2),
+    ([1, 2, 3], 2),
+    ([1, 2, 3, 4], 3),
+    ([1, 2, 3, 4, 5], 3),
+]
+for values, expected_middle in test_cases:
+    head = build_list(values)
+    mid = find_middle(head)
+    status = "✓" if mid.val == expected_middle else "✗"
+    print(f"  {status} {values} → middle = {mid.val}")
+
+# --- Happy number ---
+print("\n=== Happy Number (Cycle Detection) ===")
+def is_happy(n):
+    def transform(x):
+        return sum(int(d)**2 for d in str(x))
+    slow, fast = n, transform(n)
+    while fast != 1 and slow != fast:
+        slow = transform(slow)
+        fast = transform(transform(fast))
+    return fast == 1
+
+happy_tests = [1, 7, 10, 19, 20, 23, 4, 2]
+for n in happy_tests:
+    result = is_happy(n)
+    print(f"  {n:3}: {'HAPPY ✓' if result else 'not happy'}")
+
+# --- Floyd's meeting point visualization ---
+print("\n=== Floyd's Steps Simulation ===")
+values = [1, 2, 3, 4, 5, 6]
+nodes = [ListNode(v) for v in values]
+for i in range(len(nodes) - 1):
+    nodes[i].next = nodes[i + 1]
+nodes[-1].next = nodes[2]  # Cycle: 6 → 3
+
+slow = fast = nodes[0]
+step = 0
+while True:
+    slow = slow.next
+    fast = fast.next.next
+    step += 1
+    print(f"  Step {step}: slow={slow.val}, fast={fast.val}")
+    if slow is fast:
+        print(f"  They met at node {slow.val}!")
+        break
+    if step > 10:
+        break
+</interactive-code>
+
+## Why Floyd's Algorithm Works (The Math)
+
+Let:
+- `F` = distance from head to cycle entry
+- `C` = cycle length
+- `a` = distance from cycle entry to meeting point
+
+When they meet: fast has traveled `F + a + k*C` steps (k full cycles) and slow `F + a` steps. Since fast moves twice as fast: `F + a + k*C = 2(F + a)` → `F = k*C - a`.
+
+This means: after meeting, if slow resets to head and both move at speed 1, they meet again after exactly `F` more steps — at the **cycle entry point**.
+
+> **Pro Tip:** Fast-slow pointer problems share a common signature: "detect if something eventually repeats" or "find the midpoint in one pass." Whenever you see a linked list cycle, repeated transformation, or "split in half" requirement, fast-slow pointers are your first thought.
+
+> **Common Mistake:** Checking `fast == slow` instead of `fast is slow` in Python. For Python object identity (same node), use `is`. Two different nodes with the same value are `==` but not `is` — and the algorithm cares about the same memory address.
+
+<InlineQuiz
+  id="quiz-fsp-1"
+  question="In Floyd's algorithm, how fast do the slow and fast pointers move?"
+  options={["Slow: 2 steps, Fast: 1 step", "Slow: 1 step, Fast: 2 steps", "Both: 1 step", "Both: 2 steps"]}
+  correct={1}
+  explanation="Slow pointer moves 1 node per iteration. Fast pointer moves 2 nodes per iteration. This speed difference of 1 guarantees they meet in a cycle."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-2"
+  question="How do you find the middle of a linked list using fast and slow pointers?"
+  options={["Count all nodes first", "When fast reaches the end, slow is at the middle", "Traverse twice", "Use a stack"]}
+  correct={1}
+  explanation="Start both at head. Move slow 1 step, fast 2 steps per iteration. When fast hits null (or the last node), slow is at the middle. O(n) time, O(1) space."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-3"
+  question="What is the space complexity of Floyd's cycle detection?"
+  options={["O(n) — stores visited nodes", "O(1) — only two pointer variables", "O(log n)", "O(n²)"]}
+  correct={1}
+  explanation="Floyd's algorithm uses only two pointer variables (slow and fast), regardless of list size. This is O(1) space — a major advantage over hash-set approaches which use O(n)."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-4"
+  question="After Floyd's cycle detection finds a meeting point, how do you find the cycle ENTRY?"
+  options={["The meeting point IS the entry", "Reset slow to head, keep fast at meeting point, advance both 1 step — they meet at the entry", "Count the cycle length first", "Use a hash map"]}
+  correct={1}
+  explanation="Reset slow to head. Move both slow and fast by 1 step per iteration. They will meet exactly at the cycle entry node after F steps (where F = distance from head to entry)."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-5"
+  question="Why must fast and slow pointers always meet inside a cycle (if one exists)?"
+  options={["They are moving in opposite directions", "Fast gains 1 step per iteration on slow — the relative gap decreases by 1 each step until it hits 0", "They start at the same node", "Python ensures this"]}
+  correct={1}
+  explanation="Fast moves at speed 2, slow at speed 1 — relative speed of 1. In a cycle, the distance between them decreases by 1 each iteration. It must eventually reach 0 (they occupy the same node)."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-6"
+  question="What problem can be solved by applying Floyd's algorithm to number sequences?"
+  options={["Sorting numbers", "Finding cycles in transformations — e.g., Happy Number, finding duplicate in array", "Binary search", "Graph traversal"]}
+  correct={1}
+  explanation="Any deterministic sequence that might cycle can use Floyd's: happy numbers (digit square sum), detecting duplicates in an array (treated as a linked list via index jumps), rho factorization."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-7"
+  question="How do you use fast-slow pointers to check if a linked list is a palindrome?"
+  options={["Compare all pairs", "Find the middle with slow/fast, reverse the second half, compare with first half", "Sort the list first", "Use a stack"]}
+  correct={1}
+  explanation="1) Find middle with slow/fast. 2) Reverse the second half of the list. 3) Compare first and second halves node by node. 4) (Optional) Restore the list. All O(n) time, O(1) space."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-8"
+  question="In Python, why should you use 'slow is fast' instead of 'slow == fast' in cycle detection?"
+  options={["is is faster", "is checks object identity (same memory address); == checks value equality — two different nodes with the same value would falsely trigger ==", "They are the same in Python", "slow == fast raises an error"]}
+  correct={1}
+  explanation="Cycle detection needs to know if slow and fast point to THE SAME NODE (same memory). Using == would match any two nodes with the same value, giving false positives."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-9"
+  question="What is the time complexity of Floyd's cycle detection?"
+  options={["O(n²)", "O(n log n)", "O(n) — fast pointer traverses at most 2n nodes before meeting slow", "O(1)"]}
+  correct={2}
+  explanation="In the worst case, fast traverses the list twice (2n steps) before catching slow inside the cycle. Total work is O(n)."
+/>
+
+<InlineQuiz
+  id="quiz-fsp-10"
+  question="What does it mean when fast.next is None vs fast is None in the cycle check?"
+  options={["No difference", "fast.next is None means we are at the last node (odd-length list); checking both handles even and odd lengths without crashing", "Only one is needed", "fast.next is always None at the end"]}
+  correct={1}
+  explanation="We check `while fast and fast.next` — if fast is None, the list ended (even length). If fast.next is None, we are at the last node (odd length). Checking both prevents a NullPointerException when advancing fast two steps."
+/>

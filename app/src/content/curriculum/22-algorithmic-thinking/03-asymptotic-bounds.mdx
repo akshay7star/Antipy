@@ -1,0 +1,259 @@
+---
+title: "Asymptotic Bounds: Big-Θ & Big-Ω"
+description: "Beyond Big-O — understand upper bounds, lower bounds, and tight bounds precisely."
+order: 3
+---
+
+# Asymptotic Bounds: The Full Picture
+
+<BigOVisualizer />
+
+Most engineers know **Big-O** as "worst case." That's close, but not mathematically accurate. Big-O is an *upper bound* — the algorithm won't do *worse* than this. But there are two other notations that complete the picture, and top-tier engineers understand all three.
+
+## The Three Asymptotic Notations
+
+<MermaidDiagram>
+graph LR
+  BIG_OMEGA["Ω(g(n)) — Lower Bound\nBest case guarantee\n'At LEAST this slow'"] --> BIG_THETA["Θ(g(n)) — Tight Bound\nExact growth rate\n'Exactly this fast'"]
+  BIG_THETA --> BIG_O["O(g(n)) — Upper Bound\nWorst case ceiling\n'No WORSE than this'"]
+  style BIG_OMEGA fill:#22c55e,stroke:#16a34a,color:#fff
+  style BIG_THETA fill:#3b82f6,stroke:#2563eb,color:#fff
+  style BIG_O fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+| Notation | Name | Meaning | Analogy |
+|---|---|---|---|
+| **O(g(n))** | Big-O | Upper bound | "I will finish by 6 PM at the latest" |
+| **Ω(g(n))** | Big-Omega | Lower bound | "I will start no earlier than 3 PM" |
+| **Θ(g(n))** | Big-Theta | Tight bound | "I will finish between 5-6 PM, always" |
+
+## Big-O: Upper Bound (Worst Case Ceiling)
+
+f(n) = O(g(n)) means: for sufficiently large n, f(n) grows **no faster than** c × g(n) for some constant c.
+
+```python
+# Linear search: O(n) — worst case scans all n elements
+def linear_search(arr, target):
+    for i, val in enumerate(arr):
+        if val == target:
+            return i        # Best case: O(1) — found at index 0!
+    return -1               # Worst case: O(n) — not found
+```
+
+> **Key insight**: O(n) doesn't mean "always n operations." It means the algorithm does **at most** n operations (times some constant). Linear search might terminate in 1 step — but we can't guarantee that.
+
+## Big-Omega: Lower Bound (Best Case Floor)
+
+f(n) = Ω(g(n)) means: f(n) grows **at least as fast as** g(n). This is the *best case guarantee*.
+
+```python
+# Any comparison-based sorting algorithm is Ω(n log n)
+# You MUST look at at least n log n elements to sort n items.
+# This is a mathematical proof, not an implementation detail.
+
+# Ω(n log n) lower bound for sorting:
+# To correctly sort n elements, we need at least log2(n!) comparisons
+# By Stirling's approximation: log2(n!) ≈ n log n
+
+# This means no matter how clever you are, you cannot beat O(n log n)
+# for a general-purpose comparison sort.
+```
+
+## Big-Theta: Tight Bound (The Truth)
+
+f(n) = Θ(g(n)) means the algorithm is **both** O(g(n)) and Ω(g(n)) — it grows exactly like g(n), tightly sandwiched from above and below.
+
+```python
+# Array traversal: Θ(n) — always visits EXACTLY n elements
+def sum_all(arr):
+    total = 0
+    for x in arr:       # Always iterates exactly n times
+        total += x
+    return total        # No early exit — tight Θ(n)
+
+# Binary search: Θ(log n) in the average case
+# (But O(log n) worst case and Ω(1) best case — NOT tight!)
+def binary_search(arr, target):
+    lo, hi = 0, len(arr) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if arr[mid] == target:
+            return mid      # Ω(1) best case: found immediately
+        elif arr[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1
+```
+
+<MermaidDiagram>
+graph TD
+  SORT["Sorting Algorithms"]
+  SORT --> MS["Merge Sort: Θ(n log n)\nSame in all cases"]
+  SORT --> QS["Quick Sort: O(n log n) avg\nbut O(n²) worst case\nNOT a tight bound!"]
+  SORT --> BS["Bubble Sort: O(n²)\nΩ(n) if already sorted\nNOT tight!"]
+  style MS fill:#22c55e,stroke:#16a34a,color:#fff
+  style QS fill:#f59e0b,stroke:#d97706,color:#000
+  style BS fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+## Why This Matters In Practice
+
+```python
+# Hash table lookup:
+# - Best case:  Ω(1) — no collision, direct bucket access
+# - Worst case: O(n)  — every key hashes to same bucket (degenerate)
+# - Average:    Θ(1)  — with a good hash function
+# We say "O(1) average" but the WORST CASE is O(n)
+
+# Quicksort:
+# - Best case:  Ω(n log n) — perfect pivot splits
+# - Worst case: O(n²)       — already sorted, pivot always smallest
+# - Average:    Θ(n log n)
+# We say "O(n log n) expected" but the GUARANTEE is only O(n²)
+
+# Merge sort:
+# - Best case:  Ω(n log n)
+# - Worst case: O(n log n)
+# - Always:     Θ(n log n) — this is a TIGHT bound
+# Merge sort is the most predictable sorting algorithm
+```
+
+<interactive-code>
+import time
+import random
+
+def measure(func, arr):
+    start = time.perf_counter()
+    func(arr[:])  # Work on copy
+    return (time.perf_counter() - start) * 1000  # ms
+
+# Bubble Sort — O(n²) worst, Ω(n) best (already sorted)
+def bubble_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        swapped = False
+        for j in range(n - i - 1):
+            if arr[j] > arr[j+1]:
+                arr[j], arr[j+1] = arr[j+1], arr[j]
+                swapped = True
+        if not swapped:
+            break  # Already sorted — hits Ω(n) best case!
+    return arr
+
+n = 2000
+sorted_arr   = list(range(n))       # Best case for bubble
+reversed_arr = list(range(n, 0, -1)) # Worst case for bubble
+random_arr   = random.sample(range(n), n)  # Average case
+
+t_best  = measure(bubble_sort, sorted_arr)
+t_worst = measure(bubble_sort, reversed_arr)
+t_avg   = measure(bubble_sort, random_arr)
+
+print(f"Bubble Sort on n={n}:")
+print(f"  Best case  (Ω(n)  — sorted):   {t_best:.2f} ms")
+print(f"  Average    (Θ(n²) — random):   {t_avg:.2f} ms")
+print(f"  Worst case (O(n²) — reversed): {t_worst:.2f} ms")
+print(f"\n  Worst/Best ratio: {t_worst/max(t_best,0.001):.1f}x slower")
+print(f"  This demonstrates WHY bounds matter — huge real-world difference!")
+</interactive-code>
+
+## Amortized Analysis: Averaging Over Time
+
+Sometimes an operation is occasionally expensive but cheap on average. **Amortized analysis** measures the *average cost per operation* over a sequence.
+
+```python
+# Python list.append() — amortized O(1)
+# Most appends are O(1) — just fill a slot
+# Occasional resize is O(n) — copy entire array
+# But resize happens RARELY (array doubles each time)
+# So: n appends cost O(n) total = O(1) amortized per append
+
+lst = []
+for i in range(1000000):
+    lst.append(i)   # O(1) amortized — even though some are O(n)
+```
+
+> **Pro Tip:** In interviews, when you say "O(n)," be precise: say "O(n) worst case" or "O(1) average case." This shows you understand the nuance between upper bounds, tight bounds, and amortized complexity — a signal of senior-level thinking.
+
+> **Common Mistake:** Treating O(n log n) as always better than O(n²). For very small n (like n=10), the constant factors matter more than the asymptotic class. Big-O describes *asymptotic* behavior — what happens as n → ∞.
+
+<InlineQuiz
+  id="quiz-asymptote-1"
+  question="What does Big-O notation formally represent?"
+  options={["The exact runtime", "An upper bound on growth rate", "The average case", "The best case"]}
+  correct={1}
+  explanation="Big-O is a mathematical upper bound. f(n) = O(g(n)) means f grows no faster than a constant multiple of g for large n. It does NOT mean 'worst case' — that's a common misconception."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-2"
+  question="What does Ω(n) (Big-Omega) mean?"
+  options={["The algorithm takes at most n steps", "The algorithm takes at least n steps in the best case", "The algorithm is slow", "The algorithm is optimal"]}
+  correct={1}
+  explanation="Big-Omega is a lower bound. Ω(n) means the algorithm takes at least c×n steps for some constant c and large enough n. It describes the best-case growth rate floor."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-3"
+  question="What does Θ(n log n) (Big-Theta) mean?"
+  options={["Upper bound only", "Lower bound only", "Tight bound — grows exactly like n log n", "It is the worst case"]}
+  correct={2}
+  explanation="Big-Theta is a tight bound: f(n) = Θ(g(n)) means f is both O(g) and Ω(g). The algorithm grows exactly like g(n) — sandwiched above and below."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-4"
+  question="Why is Merge Sort described as Θ(n log n) but Quick Sort only O(n log n)?"
+  options={["Merge sort is faster", "Merge sort ALWAYS takes n log n, Quick sort can degrade to O(n²)", "Quick sort uses more memory", "They are the same"]}
+  correct={1}
+  explanation="Merge sort is Θ(n log n) — it always divides and merges exactly n log n times. Quick sort's worst case (sorted input, bad pivot) is O(n²), so it lacks a tight bound."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-5"
+  question="What is amortized O(1) for list.append()?"
+  options={["Every append is O(1)", "The average cost per append is O(1) over many appends, even though resizes occasionally cost O(n)", "append is always fast", "Python pre-allocates memory"]}
+  correct={1}
+  explanation="Python lists double in capacity when full. The resize is O(n), but it happens so rarely that the amortized cost per append is O(1). n appends total O(n) work."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-6"
+  question="What is the lower bound for comparison-based sorting?"
+  options={["O(n)", "Ω(n log n) — proven mathematically", "O(1)", "Ω(n²)"]}
+  correct={1}
+  explanation="Any comparison-based sort must make at least log2(n!) ≈ n log n comparisons. This is proven via decision tree theory. You cannot beat Ω(n log n) for general sorting."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-7"
+  question="What is the worst-case time complexity of hash table lookup?"
+  options={["O(1)", "O(log n)", "O(n) — if all keys collide into one bucket", "O(n²)"]}
+  correct={2}
+  explanation="In the worst case, all keys hash to the same bucket (a degenerate hash function). Lookup degrades to a linear scan of that bucket: O(n). This is why we say O(1) average, not O(1) always."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-8"
+  question="When is Big-O NOT the same as worst case?"
+  options={["Never — they are always the same", "When the worst case is less than the upper bound, e.g., O(n²) on a usually-O(n) algorithm", "When n is small", "Only in sorting"]}
+  correct={1}
+  explanation="O(g(n)) is an upper bound, not necessarily the tight worst case. Bubble sort is O(n²) as an upper bound, but its actual worst case is also Θ(n²). However, saying O(n³) for bubble sort is also technically correct — just a looser upper bound."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-9"
+  question="For small n (e.g., n=5), which is faster: O(n²) or O(n log n)?"
+  options={["O(n log n) always", "O(n²) can be faster due to lower constant factors", "They are always equal", "Impossible to determine"]}
+  correct={1}
+  explanation="Big-O describes asymptotic (n→∞) behavior. For small n, constant factors dominate. An O(n²) algorithm with constant 1 beats O(n log n) with constant 100 when n is tiny."
+/>
+
+<InlineQuiz
+  id="quiz-asymptote-10"
+  question="What notation would you use to say an algorithm is BOTH O(n) and Ω(n)?"
+  options={["O(n)", "Ω(n)", "Θ(n) — the tight bound", "Cannot be expressed"]}
+  correct={2}
+  explanation="When an algorithm is both O(g) and Ω(g), we write Θ(g). It grows exactly like g. Example: linear scan of an array with no early exit is Θ(n)."
+/>

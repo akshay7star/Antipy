@@ -1,0 +1,302 @@
+---
+title: "Priority Queues & Heaps"
+description: "Binary Min-Heap mathematics, the heapq module, and the Top-K pattern."
+order: 3
+---
+
+# Priority Queues: Always Get the Best Next
+
+A **priority queue** is an abstract data structure where each element has a priority and the dequeue operation always returns the highest-priority element — not the oldest (like a queue) or newest (like a stack).
+
+The classic implementation: a **binary heap** — a complete binary tree where every parent is smaller than its children (min-heap).
+
+<MermaidDiagram>
+graph TD
+  ROOT["1 (root — minimum)"] --> L["3"]
+  ROOT --> R["5"]
+  L --> LL["8"]
+  L --> LR["9"]
+  R --> RL["6"]
+  R --> RR["7"]
+  style ROOT fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+**Min-Heap Property**: Every node ≤ both its children. The minimum is always at the root — O(1) access.
+
+## The Heap Stored as an Array
+
+A complete binary tree maps perfectly to a flat array (no pointers needed!):
+
+```python
+heap = [1, 3, 5, 8, 9, 6, 7]
+#idx:   0  1  2  3  4  5  6
+
+# For node at index i:
+parent    = (i - 1) // 2
+left_child  = 2 * i + 1
+right_child = 2 * i + 2
+
+# Node 3 is at index 1:
+# parent of 1 = (1-1)//2 = 0  → heap[0] = 1 ✓
+# left of 1   = 2*1+1 = 3     → heap[3] = 8 ✓
+# right of 1  = 2*1+2 = 4     → heap[4] = 9 ✓
+```
+
+## Python's `heapq` Module
+
+Python only implements a **min-heap**. For max-heap, negate the values:
+
+```python
+import heapq
+
+# Create a heap
+nums = [5, 1, 8, 2, 9, 3]
+heapq.heapify(nums)       # In-place, O(n)
+print(nums)               # [1, 2, 3, 5, 9, 8] — valid heap
+
+# Push and pop
+heapq.heappush(nums, 4)   # O(log n)
+minimum = heapq.heappop(nums)   # O(log n), returns 1
+
+# Push and pop simultaneously (more efficient)
+result = heapq.heappushpop(nums, 0)   # Push 0, pop min
+
+# Peek at minimum without popping
+minimum = nums[0]         # O(1)
+```
+
+## The Top-K Pattern
+
+Finding the K largest elements: maintain a **min-heap of size K**. If a new element beats the heap's minimum, replace it.
+
+```python
+def top_k_largest(nums, k):
+    heap = nums[:k]
+    heapq.heapify(heap)              # O(k)
+
+    for num in nums[k:]:
+        if num > heap[0]:            # Larger than current minimum of top-k
+            heapq.heapreplace(heap, num)  # Pop min, push num — O(log k)
+
+    return heap   # The k largest elements
+
+# Complexity: O(n log k) — far better than O(n log n) sort for k << n
+```
+
+## Heap Operations Complexity
+
+| Operation | Time | Space |
+|---|---|---|
+| heapify(n items) | O(n) | O(1) — in-place |
+| heappush | O(log n) | O(1) |
+| heappop | O(log n) | O(1) |
+| peek min | O(1) | O(1) |
+| top-k from n | O(n log k) | O(k) |
+| k-way merge | O(n log k) | O(k) |
+
+<interactive-code>
+import heapq
+from collections import Counter
+
+# --- Min-Heap basics ---
+print("=== Min-Heap Basics ===")
+nums = [5, 1, 8, 2, 9, 3, 7, 4, 6]
+heap = nums[:]
+heapq.heapify(heap)
+print(f"Input:    {nums}")
+print(f"After heapify: {heap}")
+print(f"Min (peek): {heap[0]}")
+
+sorted_result = []
+temp = heap[:]
+while temp:
+    sorted_result.append(heapq.heappop(temp))
+print(f"Heap sort result: {sorted_result}")
+
+# --- Max-Heap (negate values) ---
+print("\n=== Max-Heap (negate trick) ===")
+data = [5, 1, 8, 2, 9, 3]
+max_heap = [-x for x in data]
+heapq.heapify(max_heap)
+print(f"Max extracted:")
+for _ in range(3):
+    print(f"  {-heapq.heappop(max_heap)}", end=" ")
+print()
+
+# --- Top-K Largest ---
+print("\n=== Top-K Largest Elements ===")
+def top_k_largest(nums, k):
+    return heapq.nlargest(k, nums)  # Convenient built-in
+
+def top_k_largest_manual(nums, k):
+    min_heap = nums[:k]
+    heapq.heapify(min_heap)
+    for num in nums[k:]:
+        if num > min_heap[0]:
+            heapq.heapreplace(min_heap, num)
+    return sorted(min_heap, reverse=True)
+
+data = [3, 2, 1, 5, 6, 4]
+k = 2
+print(f"nums={data}, k={k}")
+print(f"  nlargest:        {top_k_largest(data, k)}")
+print(f"  manual min-heap: {top_k_largest_manual(data, k)}")
+
+# --- K-th Largest ---
+def kth_largest(nums, k):
+    heap = nums[:k]
+    heapq.heapify(heap)
+    for num in nums[k:]:
+        if num > heap[0]:
+            heapq.heapreplace(heap, num)
+    return heap[0]  # Min of top-k = k-th largest overall
+
+print(f"\n  kth_largest([3,2,1,5,6,4], k=2) = {kth_largest([3,2,1,5,6,4], 2)}")
+
+# --- K Most Frequent ---
+print("\n=== K Most Frequent Elements ===")
+def top_k_frequent(nums, k):
+    counts = Counter(nums)
+    # Min-heap on frequency — keep top k
+    return heapq.nlargest(k, counts.keys(), key=counts.get)
+
+data = [1,1,1,2,2,3]
+print(f"nums={data}")
+print(f"  top-2 frequent: {top_k_frequent(data, 2)}")
+
+# --- Merge K Sorted Lists ---
+print("\n=== Merge K Sorted Arrays ===")
+def merge_k_sorted(arrays):
+    result = []
+    min_heap = []
+    # Initialize: push first element from each array
+    for i, arr in enumerate(arrays):
+        if arr:
+            heapq.heappush(min_heap, (arr[0], i, 0))
+
+    while min_heap:
+        val, arr_idx, elem_idx = heapq.heappop(min_heap)
+        result.append(val)
+        # Push next element from same array
+        if elem_idx + 1 < len(arrays[arr_idx]):
+            next_val = arrays[arr_idx][elem_idx + 1]
+            heapq.heappush(min_heap, (next_val, arr_idx, elem_idx + 1))
+
+    return result
+
+arrays = [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+print(f"Input: {arrays}")
+print(f"Merged: {merge_k_sorted(arrays)}")
+</interactive-code>
+
+## Heap Sort
+
+Heaps enable an in-place O(n log n) sort with O(1) extra space:
+
+```python
+def heap_sort(arr):
+    n = len(arr)
+    # Build max-heap (heapify from bottom)
+    for i in range(n // 2 - 1, -1, -1):
+        _sift_down(arr, i, n)
+
+    # Extract elements one by one
+    for i in range(n - 1, 0, -1):
+        arr[0], arr[i] = arr[i], arr[0]   # Move current max to end
+        _sift_down(arr, 0, i)              # Restore heap property
+
+def _sift_down(arr, i, n):
+    largest = i
+    left, right = 2*i+1, 2*i+2
+    if left < n and arr[left] > arr[largest]:
+        largest = left
+    if right < n and arr[right] > arr[largest]:
+        largest = right
+    if largest != i:
+        arr[i], arr[largest] = arr[largest], arr[i]
+        _sift_down(arr, largest, n)
+```
+
+> **Pro Tip:** When you see "find K largest/smallest," "K most frequent," or "merge K sorted lists" in an interview — heap is the answer. The pattern is always: maintain a size-K heap, O(n log k) total. For k=1, use a simple max/min scan instead.
+
+> **Common Mistake:** Python's `heapq` is a min-heap only. For max-heap behavior, negate values on push: `heapq.heappush(heap, -val)` and negate on pop: `val = -heapq.heappop(heap)`. Easy to forget the negation!
+
+<InlineQuiz
+  id="quiz-heap-1"
+  question="What is the heap property (for a min-heap)?"
+  options={["Each node is greater than its children", "Each node is less than or equal to its children", "The root is the maximum", "All leaves are equal"]}
+  correct={1}
+  explanation="Min-heap property: every parent node ≤ both its children. This guarantees the minimum element is always at the root — accessible in O(1)."
+/>
+
+<InlineQuiz
+  id="quiz-heap-2"
+  question="What is the time complexity of building a heap from n elements (heapify)?"
+  options={["O(n log n)", "O(n) — heapify is linear despite intuition", "O(log n)", "O(n²)"]}
+  correct={1}
+  explanation="heapify is O(n) — not O(n log n). The mathematical proof: most nodes are near the bottom and require few sift-down steps. Summing all sift-down work gives O(n)."
+/>
+
+<InlineQuiz
+  id="quiz-heap-3"
+  question="How do you implement a max-heap using Python's heapq module?"
+  options={["heapq.max_heapify()", "Negate all values: push -val, pop and negate result", "Set reverse=True", "Python does not support max-heaps"]}
+  correct={1}
+  explanation="Python's heapq is min-heap only. To simulate max-heap: heappush(heap, -val) and val = -heappop(heap). The negation trick works because min(-10) = max(10)."
+/>
+
+<InlineQuiz
+  id="quiz-heap-4"
+  question="What is the time complexity of the Top-K Largest elements algorithm using a min-heap?"
+  options={["O(n²)", "O(n log n)", "O(n log k) — far better when k << n", "O(k)"]}
+  correct={2}
+  explanation="Build a size-k min-heap: O(k). For each remaining n-k elements, conditionally heapreplace: O(log k). Total: O(k + (n-k) log k) = O(n log k). Much better than O(n log n) sort when k is small."
+/>
+
+<InlineQuiz
+  id="quiz-heap-5"
+  question="How is a binary heap stored in memory?"
+  options={["As a linked tree with pointers", "As a flat array — parent at (i-1)//2, children at 2i+1 and 2i+2", "As a hash map", "As a doubly linked list"]}
+  correct={1}
+  explanation="A complete binary tree maps perfectly to a flat array without pointers. For node i: parent=(i-1)//2, left=2i+1, right=2i+2. This gives excellent cache performance."
+/>
+
+<InlineQuiz
+  id="quiz-heap-6"
+  question="What is the time complexity of heappush and heappop?"
+  options={["O(1) for both", "O(n) for both", "O(log n) for both", "O(1) push, O(log n) pop"]}
+  correct={2}
+  explanation="Both operations require sifting up or down the heap tree. The tree has O(log n) levels, so both push and pop are O(log n)."
+/>
+
+<InlineQuiz
+  id="quiz-heap-7"
+  question="What is Merge K Sorted Lists and why does a heap solve it efficiently?"
+  options={["Concatenate and sort: O(nk log nk)", "Use a min-heap with one element from each list — always extract the global min: O(nk log k)", "Use recursion", "Binary search across all lists"]}
+  correct={1}
+  explanation="Keep a min-heap with the current front element of each of k lists. Extract global min, push the next element from that list. Total elements = nk, each heap operation O(log k). Total: O(nk log k)."
+/>
+
+<InlineQuiz
+  id="quiz-heap-8"
+  question="What is Heap Sort's time and space complexity?"
+  options={["O(n log n) time, O(n) space", "O(n log n) time, O(1) extra space — in-place", "O(n²) time, O(1) space", "O(n) time, O(n) space"]}
+  correct={1}
+  explanation="Heap Sort builds a max-heap O(n) in-place, then repeatedly extracts the max to the end O(log n) per extraction, n times. Total: O(n log n), O(1) auxiliary space."
+/>
+
+<InlineQuiz
+  id="quiz-heap-9"
+  question="heapq.heappushpop(heap, item) vs heapq.heapreplace(heap, item) — what is the difference?"
+  options={["They are identical", "heappushpop pushes first (heap could grow temporarily); heapreplace pops first then pushes (heap stays same size)", "heapreplace is faster", "Only heappushpop is safe"]}
+  correct={1}
+  explanation="heapreplace is faster (one sift-down) but requires heap to be non-empty and pops the current minimum regardless of item value. heappushpop maintains the invariant that the returned item is ≤ the new item."
+/>
+
+<InlineQuiz
+  id="quiz-heap-10"
+  question="For 'Find the Median of a Data Stream', what is the heap-based approach?"
+  options={["Sort the stream", "Maintain a max-heap for lower half and a min-heap for upper half, balanced in size", "Use a single sorted list", "Binary search on each insert"]}
+  correct={1}
+  explanation="Two heaps: max-heap for lower half, min-heap for upper half. Keep sizes equal (or differ by 1). Median = top of larger heap (odd total) or average of both tops (even total). O(log n) per insert, O(1) median."
+/>

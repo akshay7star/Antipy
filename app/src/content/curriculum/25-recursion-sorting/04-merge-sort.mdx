@@ -1,0 +1,279 @@
+---
+title: "Merge Sort"
+description: "Divide and conquer tree architecture, the merge operation, and O(n) auxiliary space trade-off."
+order: 4
+---
+
+# Merge Sort: Guaranteed O(n log n)
+
+Merge Sort is the gold standard of sorting algorithms when **guaranteed performance** and **stability** matter. Unlike Quick Sort which can degrade to O(n²), Merge Sort always runs in O(n log n) — every time, no exceptions.
+
+The strategy: **split** the array in half recursively until individual elements, then **merge** sorted halves back together.
+
+<MermaidDiagram>
+graph TD
+  A["[38, 27, 43, 3, 9, 82, 10]"] --> L["[38, 27, 43]"]
+  A --> R["[3, 9, 82, 10]"]
+  L --> LL["[38]"]
+  L --> LR["[27, 43]"]
+  R --> RL["[3, 9]"]
+  R --> RR["[82, 10]"]
+  LR --> LRL["[27]"]
+  LR --> LRR["[43]"]
+  RL --> RLL["[3]"]
+  RL --> RLR["[9]"]
+  RR --> RRL["[82]"]
+  RR --> RRR["[10]"]
+  LRL --> MERGED_LR["[27, 43]"]
+  LRR --> MERGED_LR
+  LL --> MERGED_L["[27, 38, 43]"]
+  MERGED_LR --> MERGED_L
+  RLL --> MERGED_RL["[3, 9]"]
+  RLR --> MERGED_RL
+  RRL --> MERGED_RR["[10, 82]"]
+  RRR --> MERGED_RR
+  MERGED_RL --> MERGED_R["[3, 9, 10, 82]"]
+  MERGED_RR --> MERGED_R
+  MERGED_L --> FINAL["[3, 9, 10, 27, 38, 43, 82]"]
+  MERGED_R --> FINAL
+  style FINAL fill:#22c55e,stroke:#16a34a,color:#fff
+</MermaidDiagram>
+
+## The Merge Operation: The Heart of Merge Sort
+
+```python
+def merge(left, right):
+    result = []
+    i = j = 0
+
+    # Compare front of each sorted half — take the smaller
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+
+    # Append remaining elements
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+    return merge(left, right)
+```
+
+## Why the Complexity Is Θ(n log n)
+
+The recursion tree has **log n levels** (each split halves the problem). At each level, the total merge work is **O(n)** across all merges at that level:
+
+```
+Level 0: merge 2 halves of n/2    → n comparisons
+Level 1: merge 4 halves of n/4    → n comparisons total
+Level 2: merge 8 halves of n/8    → n comparisons total
+...
+Level log n: merge n halves of 1  → n comparisons total
+
+Total: n × log n = Θ(n log n) — TIGHT BOUND, always
+```
+
+## The O(n) Space Cost
+
+```python
+# Every merge call creates a new list — this is the cost
+def merge(left, right):
+    result = []          # NEW list allocated — O(n) per level
+    # ...
+
+# At each level of recursion, temporary lists total O(n)
+# There are log n levels... but lists are freed after each merge
+# Peak memory usage: O(n) at any one time
+```
+
+This is why Merge Sort uses **O(n) auxiliary space** — fundamentally different from Quick Sort's in-place partitioning. For very large datasets (hundreds of GBs), this matters.
+
+## In-Place Merge Sort
+
+An in-place merge is possible but complex (O(n log²n) time). Python's `list.sort()` uses an **adaptive Merge Sort** (Timsort) that is partially in-place using galloping mode.
+
+<interactive-code>
+import time
+
+def merge(left, right):
+    result = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    mid = len(arr) // 2
+    return merge(merge_sort(arr[:mid]), merge_sort(arr[mid:]))
+
+# Bottom-up iterative merge sort (no recursion!)
+def merge_sort_iterative(arr):
+    n = len(arr)
+    result = arr[:]
+    width = 1
+    while width < n:
+        for i in range(0, n, 2 * width):
+            left = result[i:i + width]
+            right = result[i + width:i + 2 * width]
+            merged = merge(left, right)
+            result[i:i + len(merged)] = merged
+        width *= 2
+    return result
+
+import random
+
+# Verify correctness
+print("=== Merge Sort Correctness ===")
+tests = [
+    [38, 27, 43, 3, 9, 82, 10],
+    [1],
+    [],
+    [5, 4, 3, 2, 1],  # Reversed
+    [1, 1, 1, 1],     # All same
+]
+for arr in tests:
+    recursive = merge_sort(arr[:])
+    iterative = merge_sort_iterative(arr[:])
+    builtin   = sorted(arr)
+    match = recursive == iterative == builtin
+    print(f"  {'✓' if match else '✗'} {arr} → {recursive}")
+
+# Performance on different input types
+print("\n=== Performance (n=5000) ===")
+n = 5000
+inputs = {
+    "Random":   random.sample(range(n*3), n),
+    "Sorted":   list(range(n)),
+    "Reversed": list(range(n, 0, -1)),
+    "AllSame":  [42] * n,
+}
+
+for label, data in inputs.items():
+    t = time.perf_counter()
+    merge_sort(data[:])
+    elapsed = (time.perf_counter() - t) * 1000
+    print(f"  {label:10}: {elapsed:.2f} ms  ← Θ(n log n) always!")
+
+# Merge operation visualized
+print("\n=== Merge Operation Demo ===")
+left  = [2, 5, 8, 12]
+right = [1, 4, 7, 15]
+print(f"  Left:   {left}")
+print(f"  Right:  {right}")
+print(f"  Merged: {merge(left, right)}")
+</interactive-code>
+
+## Merge Sort vs Quick Sort Decision Matrix
+
+| Factor | Merge Sort | Quick Sort |
+|---|---|---|
+| Worst case time | **O(n log n)** | O(n²) |
+| Average time | O(n log n) | O(n log n) |
+| Space | O(n) | O(log n) |
+| Stable? | **Yes** | No |
+| Cache performance | Poor (auxiliary arrays) | **Better** |
+| Linked list sorting | **Optimal** | Needs random access |
+| External sort (disk) | **Standard choice** | Impractical |
+
+> **Pro Tip:** Use Merge Sort when you need: (1) **stability** (preserving equal element order), (2) **guaranteed** O(n log n) with no worst-case degradation, or (3) sorting a **linked list** (where Quick Sort's random access is slow).
+
+> **Common Mistake:** Thinking Merge Sort is always "better" than Quick Sort. Merge Sort uses O(n) extra memory and has poor cache performance on arrays. For in-memory sorting of arrays where stability isn't needed, Quick Sort is typically faster.
+
+<InlineQuiz
+  id="quiz-ms-1"
+  question="What are the two phases of Merge Sort?"
+  options={["Hash then sort", "Divide (split in half) then Conquer (merge sorted halves)", "Search then replace", "Partition then pivot"]}
+  correct={1}
+  explanation="Merge Sort divides the array in half recursively (split until single elements), then merges the sorted halves back together in sorted order."
+/>
+
+<InlineQuiz
+  id="quiz-ms-2"
+  question="What is Merge Sort's time complexity in ALL cases?"
+  options={["O(n²) worst case", "O(n log n) always — a tight Θ(n log n) bound", "O(n) best case", "O(n) average"]}
+  correct={1}
+  explanation="Merge Sort is Θ(n log n) — always. The recursion tree always has log n levels, and each level does exactly n total comparisons. There is no best/worst case variation for time."
+/>
+
+<InlineQuiz
+  id="quiz-ms-3"
+  question="Why does Merge Sort use O(n) auxiliary space?"
+  options={["For the call stack", "The merge operation creates a new temporary list to hold merged results", "To store the pivot", "For sorting stability"]}
+  correct={1}
+  explanation="Each merge call allocates a new temporary list of size proportional to the two halves being merged. At peak, this requires O(n) extra space across all merges at one level."
+/>
+
+<InlineQuiz
+  id="quiz-ms-4"
+  question="Is Merge Sort stable?"
+  options={["No", "Yes — equal elements maintain their original relative order", "Only for integers", "Only for strings"]}
+  correct={1}
+  explanation="Merge Sort is stable because the merge step uses `<=` (not `<`): when two elements are equal, the left array's element is taken first, preserving relative order."
+/>
+
+<InlineQuiz
+  id="quiz-ms-5"
+  question="Why is Merge Sort preferred over Quick Sort for sorting linked lists?"
+  options={["It is faster", "Merge Sort does not need random access — it only traverses sequentially; Quick Sort's random pivoting is O(n) on linked lists", "Linked lists are sorted", "No reason"]}
+  correct={1}
+  explanation="Linked list nodes can only be accessed sequentially. Merge Sort merges from the front, fitting perfectly. Quick Sort needs random access to pick a pivot and partition, which is O(n) per step on linked lists."
+/>
+
+<InlineQuiz
+  id="quiz-ms-6"
+  question="What is the recursion depth of Merge Sort for n elements?"
+  options={["n", "log n — each split halves the problem", "n²", "sqrt(n)"]}
+  correct={1}
+  explanation="Each recursive call splits the array in half. Starting with n, the sequence is n → n/2 → n/4 → ... → 1. This takes log2(n) levels, so recursion depth = O(log n)."
+/>
+
+<InlineQuiz
+  id="quiz-ms-7"
+  question="What is bottom-up (iterative) Merge Sort?"
+  options={["Same as recursive but written with a loop", "Starts by merging pairs of 1-element sublists, doubling the width each pass — avoids recursion overhead", "A different algorithm", "Faster than recursive"]}
+  correct={1}
+  explanation="Bottom-up Merge Sort starts with window size 1, merging pairs, then size 2, 4, 8... until the whole array is sorted. Same Θ(n log n) time, but no call stack overhead — good for large arrays."
+/>
+
+<InlineQuiz
+  id="quiz-ms-8"
+  question="Where is Merge Sort the standard choice in real systems?"
+  options={["CPU cache sorting", "External sorting — sorting data larger than RAM, where data lives on disk", "GPU sorting", "Database indexing"]}
+  correct={1}
+  explanation="External sort (sorting files too large for RAM) uses Merge Sort. Data is divided into RAM-sized chunks, each sorted and written to disk, then merged. Quick Sort's random access is terrible for disk seeks."
+/>
+
+<InlineQuiz
+  id="quiz-ms-9"
+  question="What is 'galloping mode' in Python's Timsort?"
+  options={["A fast pivot selection", "An optimization where if one run dominates, binary search jumps exponentially instead of comparing one-by-one", "A parallel merge", "A stability guarantee"]}
+  correct={1}
+  explanation="Galloping mode detects when one sorted run is consistently smaller than the other. Instead of comparing one element at a time, it binary-searches for where to merge, reducing comparisons dramatically for nearly-sorted data."
+/>
+
+<InlineQuiz
+  id="quiz-ms-10"
+  question="What makes Timsort superior to basic Merge Sort for real-world data?"
+  options={["It is faster asymptotically", "It detects and exploits natural runs (already-sorted subsequences), achieving O(n) on already-sorted input", "It uses less memory", "It is not stable"]}
+  correct={1}
+  explanation="Real-world data is often partially sorted. Timsort scans for natural runs and merges them, achieving O(n) on already-sorted arrays vs Merge Sort's Θ(n log n). Asymptotically same worst case but much faster in practice."
+/>

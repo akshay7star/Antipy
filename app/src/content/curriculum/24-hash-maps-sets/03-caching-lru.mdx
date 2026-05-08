@@ -1,0 +1,315 @@
+---
+title: "LRU Cache"
+description: "Implementing a Least Recently Used cache with O(1) get and put using hash map + doubly linked list."
+order: 3
+---
+
+# LRU Cache: The O(1) Memory Manager
+
+Every time Google Chrome fetches a webpage, every time a CDN serves an asset, every time a CPU retrieves data from RAM — a **cache** is involved. The most important cache eviction policy in systems is **LRU: Least Recently Used**.
+
+When the cache is full and a new item arrives, the **least recently accessed** item is evicted to make room. This matches the **temporal locality** principle: data accessed recently is likely to be accessed again soon.
+
+## The Design Constraint
+
+- `get(key)` → O(1) — must be instant
+- `put(key, value)` → O(1) — even when eviction is needed
+- Both operations must update the "recently used" order
+
+**Why is this hard?** O(1) lookup demands a hash map. But reordering by "recency" demands a data structure that supports O(1) move-to-front. A regular list is O(n) to reorder. The solution: **hash map + doubly linked list**.
+
+<MermaidDiagram>
+graph LR
+  HEAD["HEAD\n(Most Recent)"] <--> N1["key=5\nval=4"]
+  N1 <--> N2["key=2\nval=2"]
+  N2 <--> N3["key=1\nval=1"]
+  N3 <--> TAIL["TAIL\n(Least Recent)"]
+  MAP["Hash Map\n5→N1, 2→N2, 1→N3"] --> N1
+  MAP --> N2
+  MAP --> N3
+  style HEAD fill:#22c55e,stroke:#16a34a,color:#fff
+  style TAIL fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+## The Architecture
+
+```python
+class Node:
+    def __init__(self, key=0, val=0):
+        self.key = key
+        self.val = val
+        self.prev = None
+        self.next = None
+
+class LRUCache:
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.cache = {}          # key → Node (O(1) lookup)
+
+        # Sentinel nodes: no boundary checks needed
+        self.head = Node()       # Most recently used side
+        self.tail = Node()       # Least recently used side
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove(self, node):
+        """Remove node from doubly linked list — O(1)"""
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    def _insert_front(self, node):
+        """Insert node right after head (most recent position) — O(1)"""
+        node.next = self.head.next
+        node.prev = self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, key: int) -> int:
+        if key not in self.cache:
+            return -1
+        node = self.cache[key]
+        self._remove(node)       # Remove from current position
+        self._insert_front(node) # Move to most-recent
+        return node.val
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            self._remove(self.cache[key])
+        node = Node(key, value)
+        self.cache[key] = node
+        self._insert_front(node)
+
+        if len(self.cache) > self.capacity:
+            # Evict: remove from tail (least recently used)
+            lru = self.tail.prev
+            self._remove(lru)
+            del self.cache[lru.key]
+```
+
+## Operation Walkthrough
+
+```
+capacity = 3
+
+put(1, 1): [1] ← most recent
+put(2, 2): [2, 1]
+put(3, 3): [3, 2, 1]
+get(1):    [1, 3, 2]   ← 1 accessed, moved to front
+put(4, 4): [4, 1, 3]   ← capacity exceeded, evict 2 (tail)
+get(2):    -1           ← 2 was evicted!
+get(3):    [3, 4, 1]   ← 3 accessed, moved to front
+```
+
+<MermaidDiagram>
+graph TD
+  PUT1["put(1,1)"] --> STATE1["HEAD ↔ [1] ↔ TAIL"]
+  PUT2["put(2,2)"] --> STATE2["HEAD ↔ [2] ↔ [1] ↔ TAIL"]
+  PUT3["put(3,3)"] --> STATE3["HEAD ↔ [3] ↔ [2] ↔ [1] ↔ TAIL\n(Full!)"]
+  GET1["get(1) → move to front"] --> STATE4["HEAD ↔ [1] ↔ [3] ↔ [2] ↔ TAIL"]
+  PUT4["put(4,4) → evict tail (2)"] --> STATE5["HEAD ↔ [4] ↔ [1] ↔ [3] ↔ TAIL\n2 is GONE"]
+  style STATE5 fill:#ef4444,stroke:#dc2626,color:#fff
+</MermaidDiagram>
+
+<interactive-code>
+class Node:
+    def __init__(self, key=0, val=0):
+        self.key = key
+        self.val = val
+        self.prev = self.next = None
+
+class LRUCache:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.cache = {}
+        self.head = Node()  # Most recent sentinel
+        self.tail = Node()  # Least recent sentinel
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove(self, node):
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    def _insert_front(self, node):
+        node.next = self.head.next
+        node.prev = self.head
+        self.head.next.prev = node
+        self.head.next = node
+
+    def get(self, key):
+        if key not in self.cache:
+            return -1
+        node = self.cache[key]
+        self._remove(node)
+        self._insert_front(node)
+        return node.val
+
+    def put(self, key, value):
+        if key in self.cache:
+            self._remove(self.cache[key])
+        node = Node(key, value)
+        self.cache[key] = node
+        self._insert_front(node)
+        if len(self.cache) > self.capacity:
+            lru = self.tail.prev
+            self._remove(lru)
+            del self.cache[lru.key]
+
+    def state(self):
+        order = []
+        cur = self.head.next
+        while cur != self.tail:
+            order.append(f"({cur.key}:{cur.val})")
+            cur = cur.next
+        return "MRU → [" + ", ".join(order) + "] ← LRU"
+
+# Demo: LRU Cache with capacity 3
+print("=== LRU Cache Demo (capacity=3) ===\n")
+lru = LRUCache(3)
+
+ops = [
+    ("put", 1, 10),
+    ("put", 2, 20),
+    ("put", 3, 30),
+    ("get", 1, None),    # Access 1 → moves to front
+    ("put", 4, 40),      # Evicts LRU (key=2)
+    ("get", 2, None),    # Should return -1 (evicted)
+    ("get", 3, None),    # Returns 30, moves to front
+    ("put", 5, 50),      # Evicts LRU (key=1)
+    ("get", 1, None),    # Should return -1 (evicted)
+]
+
+for op in ops:
+    if op[0] == "put":
+        lru.put(op[1], op[2])
+        print(f"put({op[1]}, {op[2]}) → {lru.state()}")
+    else:
+        result = lru.get(op[1])
+        print(f"get({op[1]}) → {result:>3}  |  {lru.state()}")
+
+# Bonus: Python's built-in LRU cache
+print("\n=== Python functools.lru_cache ===")
+from functools import lru_cache
+
+@lru_cache(maxsize=8)
+def fibonacci(n):
+    if n < 2:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+import time
+start = time.perf_counter()
+result = fibonacci(40)
+elapsed = (time.perf_counter() - start) * 1000
+print(f"fibonacci(40) = {result} in {elapsed:.3f}ms (cached!)")
+print(f"Cache info: {fibonacci.cache_info()}")
+</interactive-code>
+
+## Python's Built-in: `functools.lru_cache`
+
+Python ships with a production-grade LRU cache as a decorator:
+
+```python
+from functools import lru_cache
+
+@lru_cache(maxsize=128)   # Caches last 128 unique calls
+def expensive_computation(n):
+    # ... complex work ...
+    return result
+
+# Or as a class method alternative:
+from functools import cached_property
+
+class Circle:
+    def __init__(self, r):
+        self.r = r
+
+    @cached_property   # Computed once, then cached forever
+    def area(self):
+        import math
+        return math.pi * self.r ** 2
+```
+
+> **Pro Tip:** `@lru_cache` is the most underused optimization in Python. Any pure function (same input always gives same output) that's called repeatedly with the same arguments is a prime caching candidate. Time complexity drops from O(T) to O(1) for cached calls.
+
+> **Common Mistake:** Using `@lru_cache` on methods that reference `self`. Since `self` becomes part of the cache key, it creates a reference cycle and prevents garbage collection. Use `@cached_property` for instance computations, or cache at the module level.
+
+<InlineQuiz
+  id="quiz-lru-1"
+  question="What does LRU stand for and what does it evict?"
+  options={["Last Recently Used — evicts newest", "Least Recently Used — evicts the item accessed longest ago", "Largest Recently Used — evicts biggest item", "Least Required Unit"]}
+  correct={1}
+  explanation="LRU = Least Recently Used. When the cache is full, it evicts the item that was accessed (get or put) the longest time ago. This matches temporal locality — recently used items are likely needed again."
+/>
+
+<InlineQuiz
+  id="quiz-lru-2"
+  question="Why does LRU cache need both a hash map AND a doubly linked list?"
+  options={["For redundancy", "Hash map provides O(1) lookup; doubly linked list provides O(1) reorder (move to front)", "The list stores keys, the map stores values", "Python requires it"]}
+  correct={1}
+  explanation="Hash map alone can't do O(1) reordering. A doubly linked list with sentinel nodes allows O(1) node removal and insertion anywhere. Together they achieve O(1) get and put."
+/>
+
+<InlineQuiz
+  id="quiz-lru-3"
+  question="What are the sentinel head and tail nodes for?"
+  options={["To mark start and end for iteration", "To eliminate boundary checks — no need to handle empty list or end-of-list edge cases", "For memory alignment", "To store metadata"]}
+  correct={1}
+  explanation="Sentinel nodes (dummy head and tail) always exist and are never evicted. This means insert_front and remove never need to check if prev/next is None — dramatically simplifying the code."
+/>
+
+<InlineQuiz
+  id="quiz-lru-4"
+  question="What is the time complexity of get() and put() in a correctly implemented LRU cache?"
+  options={["O(n)", "O(log n)", "O(1) for both", "O(n) for put due to eviction"]}
+  correct={2}
+  explanation="Both get and put are O(1). Hash map lookup is O(1). The doubly linked list remove and insert_front are O(1). Eviction is O(1) — just remove the tail.prev node."
+/>
+
+<InlineQuiz
+  id="quiz-lru-5"
+  question="What happens to a cache entry on a successful get(key)?"
+  options={["It is deleted", "It is moved to the most-recently-used position (front of list)", "Nothing changes", "Its value is incremented"]}
+  correct={1}
+  explanation="get() counts as a 'use'. The node is removed from its current position and reinserted at the front (most-recently-used). This prevents it from being evicted soon."
+/>
+
+<InlineQuiz
+  id="quiz-lru-6"
+  question="What does Python's @lru_cache decorator require to work correctly?"
+  options={["The function must be a class method", "The function must be pure — same arguments must always return the same result", "The function must be async", "No requirements"]}
+  correct={1}
+  explanation="@lru_cache caches results by argument values. If the function has side effects or returns different results for the same arguments (e.g., reads from a database), caching will return stale results."
+/>
+
+<InlineQuiz
+  id="quiz-lru-7"
+  question="What is the space complexity of an LRU cache with capacity k?"
+  options={["O(1)", "O(k) — stores at most k entries in the hash map and linked list", "O(n) where n is total puts", "O(k²)"]}
+  correct={1}
+  explanation="The cache holds at most k entries (evicting LRU when full). Both the hash map and doubly linked list store exactly k nodes at full capacity, so space = O(k)."
+/>
+
+<InlineQuiz
+  id="quiz-lru-8"
+  question="Why is a singly linked list insufficient for LRU cache?"
+  options={["Too slow for lookup", "Cannot remove a node in O(1) without access to the previous node — requires O(n) traversal", "Python does not support it", "No reason — it works fine"]}
+  correct={1}
+  explanation="Removing a node from a singly linked list requires finding its predecessor (O(n)). A doubly linked list's prev pointer makes removal O(1), essential for moving any node to the front in O(1)."
+/>
+
+<InlineQuiz
+  id="quiz-lru-9"
+  question="What is @cached_property used for vs @lru_cache?"
+  options={["They are identical", "@cached_property caches an instance attribute computed once; @lru_cache caches a function's return value by arguments", "@cached_property is faster", "@lru_cache is newer"]}
+  correct={1}
+  explanation="@cached_property computes an attribute the first time it's accessed, then stores it on the instance. @lru_cache caches a function's return value keyed by its arguments, with a max size limit."
+/>
+
+<InlineQuiz
+  id="quiz-lru-10"
+  question="What problem arises when using @lru_cache on a method with 'self'?"
+  options={["self cannot be hashed", "self is part of the cache key, creating a reference cycle that prevents garbage collection of instances", "It is too slow", "It works perfectly"]}
+  correct={1}
+  explanation="The cache holds a reference to self (as the cache key), so instances are never garbage collected. This is a memory leak. Use @cached_property for instance-level caching instead."
+/>
