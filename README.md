@@ -55,10 +55,14 @@ These scripts will automatically:
 
 ---
 
-## 🛠 Manual Installation
+## 🛠 Manual Installation & Local Startup
 
-If you prefer to clone and install manually, ensure you have **Node.js 18+** installed.
+If you prefer to clone and run the project locally, ensure you have **Node.js 18+** installed.
 
+### 🪟 Windows (Automatic Launcher)
+If you are on Windows, simply double-click or run `start.bat` in the root directory. It will automatically check for Node.js/npm, install dependencies if missing, start the dev server, and open the platform in your browser.
+
+### 🐧 macOS / Linux / Manual
 ```bash
 git clone https://github.com/akshay7star/Antipy.git
 cd Antipy/app
@@ -80,5 +84,7 @@ AntiPy is built using modern web development standards:
 ---
 
 ## 📅 Changelog & Latest Updates
+*   **v0.3.1**: Added Windows `start.bat` launcher script for automated environment checks and startup.
+*   **v0.3.0**: Added 16 new Master-Class MDX lessons (Frameworks, Databases, Python Tooling) and exactly 160 new interactive quizzes.
 *   **v0.2.0**: Added 8 robust Data Structures & Algorithms Visualizers, responsive layout fixes, and achieved **100% Interactive Visualizer Coverage** across all 48 lessons!
 *   **v0.1.0**: Initial Release - Core curriculum, Monaco Editor, and Light/Dark Mode implemented.
